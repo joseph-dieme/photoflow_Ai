@@ -10,7 +10,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { prompt, currentAdjustments } = await request.json();
+    const { prompt, currentAdjustments, model } = await request.json();
 
     const systemPrompt = `You are an expert photo editing assistant. Your job is to translate the user's natural language photo editing request into specific slider adjustments.
 The available adjustments are:
@@ -59,15 +59,20 @@ Example output format:
 }`;
 
     // List of active models on OpenRouter to cycle through as fallbacks (prioritizing fast/cheap paid models, followed by the auto-routing free endpoint and specific free models)
-    const MODELS = [
+    let MODELS = [
       'google/gemini-2.5-flash',
-      'meta-llama/llama-3.3-70b-instruct',
+      'openai/gpt-4o-mini',
+      'openai/gpt-4o',
+      'google/gemini-2.5-flash:free',
       'openrouter/free',
-      'google/gemma-4-31b-it:free',
       'meta-llama/llama-3.3-70b-instruct:free',
-      'meta-llama/llama-3.2-3b-instruct:free',
-      'nousresearch/hermes-3-llama-3.1-405b:free'
+      'google/gemma-4-31b-it:free'
     ];
+
+    if (model) {
+      // Put the requested model at the front of the queue
+      MODELS = [model, ...MODELS.filter(m => m !== model)];
+    }
 
     let lastError = null;
     let content = '';

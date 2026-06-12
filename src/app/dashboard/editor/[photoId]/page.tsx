@@ -317,6 +317,7 @@ export default function EditorPage() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [aiPromptText, setAiPromptText] = useState('');
   const [isAiPromptGenerating, setIsAiPromptGenerating] = useState(false);
+  const [selectedAiModel, setSelectedAiModel] = useState('google/gemini-2.5-flash');
   // Image editing states
   const [adjustments, setAdjustments] = useState<PhotoAdjustments>(DEFAULT_ADJUSTMENTS);
   const [originalUrl, setOriginalUrl] = useState<string>('');
@@ -1496,6 +1497,7 @@ export default function EditorPage() {
           prompt: aiPromptText,
           currentAdjustments: adjustments,
           image: base64Image,
+          model: selectedAiModel,
         }),
       });
 
@@ -2789,6 +2791,25 @@ export default function EditorPage() {
                         </button>
                       )}
                     </div>
+                    
+                    {/* Model Selector */}
+                    <div className="space-y-1">
+                      <label className="text-[9px] font-bold text-on-surface-variant uppercase tracking-wider block">
+                        {lang === 'fr' ? 'Modèle / Moteur IA' : 'AI Model / Engine'}
+                      </label>
+                      <select
+                        value={selectedAiModel}
+                        onChange={(e) => setSelectedAiModel(e.target.value)}
+                        className="w-full bg-surface-container border border-outline-variant/30 focus:border-primary/50 rounded-xl px-3 py-2 text-xs outline-none text-on-surface transition-colors cursor-pointer"
+                      >
+                        <option value="google/gemini-2.5-flash">Gemini 2.5 Flash</option>
+                        <option value="openai/gpt-4o-mini">OpenAI GPT-4o Mini</option>
+                        <option value="openai/gpt-4o">OpenAI GPT-4o (Premium)</option>
+                        <option value="google/gemini-2.5-flash:free">Gemini 2.5 Flash (Free)</option>
+                        <option value="openrouter/free">Auto-route Free AI</option>
+                      </select>
+                    </div>
+
                     <button
                       type="button"
                       disabled={isAiPromptGenerating || !aiPromptText.trim()}
