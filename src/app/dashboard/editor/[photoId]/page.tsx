@@ -5,7 +5,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import { applyAdjustments, PhotoAdjustments, DEFAULT_ADJUSTMENTS, loadImage } from '@/lib/image-processing';
+import { applyAdjustments, PhotoAdjustments, DEFAULT_ADJUSTMENTS, loadImage, compressAndConvert } from '@/lib/image-processing';
 import Navigation from '@/components/Navigation';
 import { useLanguage } from '@/hooks/useLanguage';
 
@@ -372,6 +372,82 @@ export default function EditorPage() {
   
   const imageRef = useRef<HTMLImageElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [colorMixerTab, setColorMixerTab] = useState<'saturation' | 'luminance'>('saturation');
+
+  const handleWBPresetChange = (preset: string) => {
+    pushToHistory();
+    switch (preset) {
+      case 'as-shot':
+        setAdjustments(prev => ({ ...prev, temperature: 0, tint: 0 }));
+        break;
+      case 'auto':
+        setAdjustments(prev => ({ ...prev, temperature: 6, tint: -3 }));
+        break;
+      case 'daylight':
+        setAdjustments(prev => ({ ...prev, temperature: 10, tint: 2 }));
+        break;
+      case 'cloudy':
+        setAdjustments(prev => ({ ...prev, temperature: 18, tint: 4 }));
+        break;
+      case 'shade':
+        setAdjustments(prev => ({ ...prev, temperature: 25, tint: 5 }));
+        break;
+      case 'tungsten':
+        setAdjustments(prev => ({ ...prev, temperature: -28, tint: -10 }));
+        break;
+      case 'fluorescent':
+        setAdjustments(prev => ({ ...prev, temperature: -12, tint: -4 }));
+        break;
+      case 'flash':
+        setAdjustments(prev => ({ ...prev, temperature: 14, tint: 3 }));
+        break;
+    }
+  };
+
+  const handleRawImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    setIsProcessing(true);
+    showNotification('info', lang === 'fr' ? 'Développement RAW...' : 'Developing RAW...', lang === 'fr' ? 'Extraction de l\'image haute fidélité en cours...' : 'Extracting high fidelity image...');
+    
+    try {
+      const developedFile = await compressAndConvert(file, {
+        quality: 1.0,
+        format: 'image/webp'
+      });
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64Url = event.target?.result as string;
+        setOriginalUrl(base64Url);
+        setProcessedUrl(base64Url);
+        setAdjustments(DEFAULT_ADJUSTMENTS);
+        setPhoto((prev: any) => ({
+          ...prev,
+          filename: file.name,
+          size_bytes: file.size,
+          format: file.name.split('.').pop()?.toUpperCase() || 'RAW'
+        }));
+        showNotification(
+          'success', 
+          lang === 'fr' ? 'RAW Développé !' : 'RAW Developed!', 
+          lang === 'fr' ? `Le fichier ${file.name} a été importé avec succès.` : `Successfully imported ${file.name}.`
+        );
+      };
+      reader.readAsDataURL(developedFile);
+    } catch (err) {
+      console.error('RAW import failed:', err);
+      showNotification(
+        'error', 
+        lang === 'fr' ? 'Échec de l\'importation' : 'Import Failed', 
+        lang === 'fr' ? 'Impossible de décoder ce fichier RAW.' : 'Could not decode this RAW file.'
+      );
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
   // Sync Modal states
   const [isSyncModalOpen, setIsSyncModalOpen] = useState(false);
@@ -1952,6 +2028,43 @@ export default function EditorPage() {
     window.open(whatsappUrl, '_blank');
   };
 
+  const renderSlider = (
+    label: string, 
+    key: keyof PhotoAdjustments, 
+    min: number, 
+    max: number, 
+    customTrackClass?: string
+  ) => {
+    const val = (adjustments as any)[key] ?? 0;
+    return (
+      <div className="space-y-1">
+        <div className="flex justify-between items-center text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">
+          <span>{label}</span>
+          <input
+            type="number"
+            min={min}
+            max={max}
+            value={val}
+            onChange={(e) => {
+              const parsedVal = parseInt(e.target.value);
+              const clampedVal = isNaN(parsedVal) ? 0 : Math.max(min, Math.min(max, parsedVal));
+              handleSliderChange(key, clampedVal);
+            }}
+            className="w-10 bg-surface-container border border-outline-variant/30 rounded text-center text-white text-[9px] font-mono p-0.5 outline-none focus:border-primary"
+          />
+        </div>
+        <input
+          type="range"
+          min={min}
+          max={max}
+          value={val}
+          onChange={(e) => handleSliderChange(key, parseInt(e.target.value))}
+          className={`w-full h-1 bg-outline-variant rounded-lg appearance-none cursor-pointer slider-thumb ${customTrackClass || 'accent-primary'}`}
+        />
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background text-on-surface flex items-center justify-center">
@@ -2070,13 +2183,31 @@ export default function EditorPage() {
             <div className="absolute top-8 left-1/2 -translate-x-1/2 w-3/4 h-[2px] flow-progress z-30 opacity-80" id="ai-loader"></div>
           )}
 
-          {/* Close Editor button */}
-          <Link 
-            href={`/dashboard/projects/${project?.id}`} 
-            className="absolute top-4 left-4 z-40 bg-black/60 hover:bg-black/90 p-2.5 rounded-full text-white/80 hover:text-white border border-outline-variant/30 flex items-center justify-center shadow-lg transition-colors"
-          >
-            <span className="material-symbols-outlined text-sm">close</span>
-          </Link>
+          {/* Close Editor button & Importer RAW */}
+          <div className="absolute top-4 left-4 z-40 flex items-center gap-2">
+            <Link 
+              href={`/dashboard/projects/${project?.id}`} 
+              className="bg-black/60 hover:bg-black/90 p-2.5 rounded-full text-white/80 hover:text-white border border-outline-variant/30 flex items-center justify-center shadow-lg transition-colors"
+              title={lang === 'fr' ? 'Retour au projet' : 'Back to project'}
+            >
+              <span className="material-symbols-outlined text-sm">close</span>
+            </Link>
+
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="bg-primary-container text-on-primary-container hover:brightness-110 hover:scale-[1.02] active:scale-[0.98] font-bold text-[11px] px-3.5 py-1.5 rounded-full border border-primary/20 flex items-center gap-1.5 shadow-lg transition-all cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-sm">upload_file</span>
+              <span>{lang === 'fr' ? 'Importer RAW / Image' : 'Import RAW / Image'}</span>
+            </button>
+            <input 
+              ref={fileInputRef}
+              type="file"
+              accept=".raw,.cr2,.nef,.arw,.dng,.pef,.jpg,.jpeg,.png,.webp"
+              onChange={handleRawImport}
+              className="hidden"
+            />
+          </div>
 
           {/* Image Display Container */}
           <div className="relative max-w-full max-h-full shadow-2xl overflow-hidden group">
@@ -2876,138 +3007,64 @@ export default function EditorPage() {
                 </div>
               </section>
 
-          {/* Sliders Manual Panel */}
-          <section className="space-y-6" onMouseDown={handleSlidersMouseDown}>
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="font-label-md text-xs font-bold text-on-surface uppercase tracking-wider">{t.manualHeader}</h3>
-              <button onClick={resetAdjustments} className="text-xs text-primary hover:underline cursor-pointer">
+          {/* Sliders Manual Panel (Camera Raw Style) */}
+          <section className="space-y-6 animate-fade-in" onMouseDown={handleSlidersMouseDown}>
+            <div className="flex items-center justify-between border-b border-outline-variant/30 pb-3">
+              <div className="flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-primary text-md" style={{ fontVariationSettings: "'FILL' 1" }}>tune</span>
+                <h3 className="font-label-md text-xs font-bold text-on-surface uppercase tracking-wider">{lang === 'fr' ? 'Réglages Camera Raw' : 'Camera Raw Settings'}</h3>
+              </div>
+              <button 
+                onClick={resetAdjustments} 
+                className="text-[10px] font-bold text-primary hover:underline cursor-pointer bg-primary/10 border border-primary/20 px-2 py-0.5 rounded-full"
+              >
                 {t.manualReset}
               </button>
             </div>
 
-            {/* 1. Lumière & Tons Accordion */}
+            {/* 1. Réglages de base (Basic Panel) */}
             <details open className="group border border-outline-variant/30 rounded-xl overflow-hidden bg-surface-container/20">
               <summary className="flex justify-between items-center p-3 font-semibold text-xs text-white uppercase tracking-wider cursor-pointer hover:bg-surface-container-high transition-colors select-none list-none [&::-webkit-details-marker]:hidden">
                 <span className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary text-sm">wb_sunny</span>
-                  {t.accordionLight}
+                  <span className="material-symbols-outlined text-primary text-sm">filter_hdr</span>
+                  {lang === 'fr' ? 'Réglages de base' : 'Basic Settings'}
                 </span>
                 <span className="material-symbols-outlined text-sm transition-transform group-open:rotate-180">keyboard_arrow_down</span>
               </summary>
               <div className="p-4 space-y-4 border-t border-outline-variant/20">
-                {/* Exposure */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-[10px] font-bold text-on-surface-variant">
-                    <span>{t.adjustExposure}</span>
-                    <span>{adjustments.exposure > 0 ? `+${adjustments.exposure}` : adjustments.exposure}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="-100"
-                    max="100"
-                    value={adjustments.exposure}
-                    onChange={(e) => handleSliderChange('exposure', parseInt(e.target.value))}
-                    className="w-full h-1 bg-outline-variant rounded-lg appearance-none cursor-pointer slider-thumb accent-primary"
-                  />
+                {/* White Balance Preset Select */}
+                <div className="space-y-1">
+                  <label className="text-[9px] font-bold text-on-surface-variant uppercase tracking-wider block">
+                    {lang === 'fr' ? 'Balance des blancs' : 'White Balance'}
+                  </label>
+                  <select
+                    onChange={(e) => handleWBPresetChange(e.target.value)}
+                    className="w-full bg-surface-container border border-outline-variant/30 focus:border-primary/50 rounded-xl px-2.5 py-1.5 text-xs outline-none text-on-surface transition-colors cursor-pointer"
+                    defaultValue="as-shot"
+                  >
+                    <option value="as-shot">{lang === 'fr' ? 'Tel quel' : 'As Shot'}</option>
+                    <option value="auto">Auto</option>
+                    <option value="daylight">{lang === 'fr' ? 'Lumière du jour' : 'Daylight'}</option>
+                    <option value="cloudy">{lang === 'fr' ? 'Nuageux' : 'Cloudy'}</option>
+                    <option value="shade">{lang === 'fr' ? 'Ombre' : 'Shade'}</option>
+                    <option value="tungsten">{lang === 'fr' ? 'Tungstène' : 'Tungsten'}</option>
+                    <option value="fluorescent">Fluorescent</option>
+                    <option value="flash">Flash</option>
+                  </select>
                 </div>
 
-                {/* Contrast */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-[10px] font-bold text-on-surface-variant">
-                    <span>{t.adjustContrast}</span>
-                    <span>{adjustments.contrast > 0 ? `+${adjustments.contrast}` : adjustments.contrast}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="-100"
-                    max="100"
-                    value={adjustments.contrast}
-                    onChange={(e) => handleSliderChange('contrast', parseInt(e.target.value))}
-                    className="w-full h-1 bg-outline-variant rounded-lg appearance-none cursor-pointer slider-thumb accent-primary"
-                  />
-                </div>
-
-                {/* Highlights */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-[10px] font-bold text-on-surface-variant">
-                    <span>{t.adjustHighlights}</span>
-                    <span>{adjustments.highlights > 0 ? `+${adjustments.highlights}` : adjustments.highlights}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="-100"
-                    max="100"
-                    value={adjustments.highlights}
-                    onChange={(e) => handleSliderChange('highlights', parseInt(e.target.value))}
-                    className="w-full h-1 bg-outline-variant rounded-lg appearance-none cursor-pointer slider-thumb accent-primary"
-                  />
-                </div>
-
-                {/* Shadows */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-[10px] font-bold text-on-surface-variant">
-                    <span>{t.adjustShadows}</span>
-                    <span>{adjustments.shadows > 0 ? `+${adjustments.shadows}` : adjustments.shadows}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="-100"
-                    max="100"
-                    value={adjustments.shadows}
-                    onChange={(e) => handleSliderChange('shadows', parseInt(e.target.value))}
-                    className="w-full h-1 bg-outline-variant rounded-lg appearance-none cursor-pointer slider-thumb accent-primary"
-                  />
-                </div>
-
-                {/* Whites */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-[10px] font-bold text-on-surface-variant">
-                    <span>{t.adjustWhites}</span>
-                    <span>{adjustments.whites > 0 ? `+${adjustments.whites}` : adjustments.whites}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="-100"
-                    max="100"
-                    value={adjustments.whites}
-                    onChange={(e) => handleSliderChange('whites', parseInt(e.target.value))}
-                    className="w-full h-1 bg-outline-variant rounded-lg appearance-none cursor-pointer slider-thumb accent-primary"
-                  />
-                </div>
-
-                {/* Blacks */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-[10px] font-bold text-on-surface-variant">
-                    <span>{t.adjustBlacks}</span>
-                    <span>{adjustments.blacks > 0 ? `+${adjustments.blacks}` : adjustments.blacks}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="-100"
-                    max="100"
-                    value={adjustments.blacks}
-                    onChange={(e) => handleSliderChange('blacks', parseInt(e.target.value))}
-                    className="w-full h-1 bg-outline-variant rounded-lg appearance-none cursor-pointer slider-thumb accent-primary"
-                  />
-                </div>
-              </div>
-            </details>
-
-            {/* 2. Balance des blancs & Couleur Accordion */}
-            <details className="group border border-outline-variant/30 rounded-xl overflow-hidden bg-surface-container/20">
-              <summary className="flex justify-between items-center p-3 font-semibold text-xs text-white uppercase tracking-wider cursor-pointer hover:bg-surface-container-high transition-colors select-none list-none [&::-webkit-details-marker]:hidden">
-                <span className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary text-sm">palette</span>
-                  {t.accordionColor}
-                </span>
-                <span className="material-symbols-outlined text-sm transition-transform group-open:rotate-180">keyboard_arrow_down</span>
-              </summary>
-              <div className="p-4 space-y-4 border-t border-outline-variant/20">
-                {/* Temperature */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-[10px] font-bold text-on-surface-variant">
+                {/* Temperature (gradient track) */}
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">
                     <span>{t.adjustTemp}</span>
-                    <span>{adjustments.temperature > 0 ? `+${adjustments.temperature}` : adjustments.temperature}</span>
+                    <input
+                      type="number"
+                      min="-100"
+                      max="100"
+                      value={adjustments.temperature}
+                      onChange={(e) => handleSliderChange('temperature', Math.max(-100, Math.min(100, parseInt(e.target.value) || 0)))}
+                      className="w-10 bg-surface-container border border-outline-variant/30 rounded text-center text-white text-[9px] font-mono p-0.5 outline-none focus:border-primary"
+                    />
                   </div>
                   <input
                     type="range"
@@ -3015,15 +3072,23 @@ export default function EditorPage() {
                     max="100"
                     value={adjustments.temperature}
                     onChange={(e) => handleSliderChange('temperature', parseInt(e.target.value))}
-                    className="w-full h-1 bg-outline-variant rounded-lg appearance-none cursor-pointer slider-thumb warm-cool-slider"
+                    className="w-full h-1 rounded-lg appearance-none cursor-pointer slider-thumb"
+                    style={{ background: 'linear-gradient(to right, #3b82f6, #eab308)', WebkitAppearance: 'none' }}
                   />
                 </div>
 
-                {/* Tint */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-[10px] font-bold text-on-surface-variant">
+                {/* Tint (gradient track) */}
+                <div className="space-y-1">
+                  <div className="flex justify-between items-center text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">
                     <span>{t.adjustTint}</span>
-                    <span>{adjustments.tint > 0 ? `+${adjustments.tint}` : adjustments.tint}</span>
+                    <input
+                      type="number"
+                      min="-100"
+                      max="100"
+                      value={adjustments.tint}
+                      onChange={(e) => handleSliderChange('tint', Math.max(-100, Math.min(100, parseInt(e.target.value) || 0)))}
+                      className="w-10 bg-surface-container border border-outline-variant/30 rounded text-center text-white text-[9px] font-mono p-0.5 outline-none focus:border-primary"
+                    />
                   </div>
                   <input
                     type="range"
@@ -3031,219 +3096,250 @@ export default function EditorPage() {
                     max="100"
                     value={adjustments.tint}
                     onChange={(e) => handleSliderChange('tint', parseInt(e.target.value))}
-                    className="w-full h-1 bg-outline-variant rounded-lg appearance-none cursor-pointer slider-thumb tint-slider"
+                    className="w-full h-1 rounded-lg appearance-none cursor-pointer slider-thumb"
+                    style={{ background: 'linear-gradient(to right, #16a34a, #db2777)', WebkitAppearance: 'none' }}
                   />
                 </div>
 
-                {/* Vibrance */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-[10px] font-bold text-on-surface-variant">
-                    <span>{t.adjustVibrance}</span>
-                    <span>{adjustments.vibrance > 0 ? `+${adjustments.vibrance}` : adjustments.vibrance}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="-100"
-                    max="100"
-                    value={adjustments.vibrance}
-                    onChange={(e) => handleSliderChange('vibrance', parseInt(e.target.value))}
-                    className="w-full h-1 bg-outline-variant rounded-lg appearance-none cursor-pointer slider-thumb accent-primary"
-                  />
-                </div>
+                <div className="h-[1px] bg-outline-variant/20 my-3"></div>
 
-                {/* Saturation */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-[10px] font-bold text-on-surface-variant">
-                    <span>{t.adjustSaturation}</span>
-                    <span>{adjustments.saturation > 0 ? `+${adjustments.saturation}` : adjustments.saturation}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="-100"
-                    max="100"
-                    value={adjustments.saturation}
-                    onChange={(e) => handleSliderChange('saturation', parseInt(e.target.value))}
-                    className="w-full h-1 bg-outline-variant rounded-lg appearance-none cursor-pointer slider-thumb accent-primary"
-                  />
-                </div>
+                {/* Tone sliders */}
+                {renderSlider(t.adjustExposure, 'exposure', -100, 100)}
+                {renderSlider(t.adjustContrast, 'contrast', -100, 100)}
+                {renderSlider(t.adjustHighlights, 'highlights', -100, 100)}
+                {renderSlider(t.adjustShadows, 'shadows', -100, 100)}
+                {renderSlider(t.adjustWhites, 'whites', -100, 100)}
+                {renderSlider(t.adjustBlacks, 'blacks', -100, 100)}
+
+                <div className="h-[1px] bg-outline-variant/20 my-3"></div>
+
+                {/* Presence sliders */}
+                {renderSlider(t.adjustClarity, 'clarity', -100, 100)}
+                {renderSlider(lang === 'fr' ? 'Correction du voile' : 'Dehaze', 'dehaze', -100, 100)}
+                {renderSlider(t.adjustVibrance, 'vibrance', -100, 100)}
+                {renderSlider(t.adjustSaturation, 'saturation', -100, 100)}
               </div>
             </details>
 
-            {/* 3. Présence & Effets Accordion */}
+            {/* 2. Courbe de tonalités (Tone Curve Panel) */}
             <details className="group border border-outline-variant/30 rounded-xl overflow-hidden bg-surface-container/20">
               <summary className="flex justify-between items-center p-3 font-semibold text-xs text-white uppercase tracking-wider cursor-pointer hover:bg-surface-container-high transition-colors select-none list-none [&::-webkit-details-marker]:hidden">
                 <span className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary text-sm">blur_on</span>
-                  {t.accordionEffects}
+                  <span className="material-symbols-outlined text-primary text-sm">show_chart</span>
+                  {lang === 'fr' ? 'Courbe des tonalités' : 'Tone Curve'}
                 </span>
                 <span className="material-symbols-outlined text-sm transition-transform group-open:rotate-180">keyboard_arrow_down</span>
               </summary>
               <div className="p-4 space-y-4 border-t border-outline-variant/20">
-                {/* Clarity */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-[10px] font-bold text-on-surface-variant">
-                    <span>{t.adjustClarity}</span>
-                    <span>{adjustments.clarity > 0 ? `+${adjustments.clarity}` : adjustments.clarity}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="-100"
-                    max="100"
-                    value={adjustments.clarity}
-                    onChange={(e) => handleSliderChange('clarity', parseInt(e.target.value))}
-                    className="w-full h-1 bg-outline-variant rounded-lg appearance-none cursor-pointer slider-thumb accent-primary"
-                  />
+                {/* SVG Curve Display */}
+                <div className="w-full bg-[#121214] border border-outline-variant/40 rounded-xl p-2 flex items-center justify-center">
+                  <svg viewBox="0 0 100 100" className="w-full h-24 overflow-visible">
+                    {/* Background Grid */}
+                    <line x1="0" y1="25" x2="100" y2="25" stroke="rgba(255,255,255,0.07)" strokeWidth="0.5" />
+                    <line x1="0" y1="50" x2="100" y2="50" stroke="rgba(255,255,255,0.07)" strokeWidth="0.5" />
+                    <line x1="0" y1="75" x2="100" y2="75" stroke="rgba(255,255,255,0.07)" strokeWidth="0.5" />
+                    <line x1="25" y1="0" x2="25" y2="100" stroke="rgba(255,255,255,0.07)" strokeWidth="0.5" />
+                    <line x1="50" y1="0" x2="50" y2="100" stroke="rgba(255,255,255,0.07)" strokeWidth="0.5" />
+                    <line x1="75" y1="0" x2="75" y2="100" stroke="rgba(255,255,255,0.07)" strokeWidth="0.5" />
+                    
+                    {/* Diagonal baseline */}
+                    <line x1="0" y1="100" x2="100" y2="0" stroke="rgba(255,255,255,0.15)" strokeWidth="0.75" strokeDasharray="2,2" />
+                    
+                    {/* Curve line */}
+                    {(() => {
+                      const shVal = (adjustments.curveShadows || 0) * 0.25;
+                      const dkVal = (adjustments.curveDarks || 0) * 0.25;
+                      const ltVal = (adjustments.curveLights || 0) * 0.25;
+                      const hiVal = (adjustments.curveHighlights || 0) * 0.25;
+                      
+                      const pShadY = Math.max(0, Math.min(100, 85 - shVal));
+                      const pDarkY = Math.max(0, Math.min(100, 65 - dkVal));
+                      const pLightY = Math.max(0, Math.min(100, 35 - ltVal));
+                      const pHighY = Math.max(0, Math.min(100, 15 - hiVal));
+
+                      const pathStr = `M 0 100 C 15 ${pShadY}, 35 ${pDarkY}, 65 ${pLightY}, 100 ${pHighY}`;
+                      return (
+                        <path 
+                          d={pathStr} 
+                          fill="none" 
+                          stroke="#818cf8" 
+                          strokeWidth="2"
+                          className="transition-all duration-150 ease-out"
+                        />
+                      );
+                    })()}
+                  </svg>
                 </div>
 
-                {/* Vignette */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-[10px] font-bold text-on-surface-variant">
-                    <span>{t.adjustVignette}</span>
-                    <span>{adjustments.vignette > 0 ? `+${adjustments.vignette}` : adjustments.vignette}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="-100"
-                    max="100"
-                    value={adjustments.vignette}
-                    onChange={(e) => handleSliderChange('vignette', parseInt(e.target.value))}
-                    className="w-full h-1 bg-outline-variant rounded-lg appearance-none cursor-pointer slider-thumb accent-primary"
-                  />
-                  
-                  {/* Vignette Color Presets & Custom Picker */}
-                  <div className="flex items-center justify-between text-[9px] font-bold text-on-surface-variant/80 mt-1">
-                    <span>{t.vignetteColorLabel || "Couleur Vignette"}</span>
-                    <div className="flex items-center gap-1.5">
-                      {[
-                        { name: 'Noir', value: '#000000' },
-                        { name: 'Beige', value: '#c2a68c' },
-                        { name: 'Marron', value: '#6b4c35' },
-                        { name: 'Blanc', value: '#ffffff' }
-                      ].map((c) => (
-                        <button
-                          key={c.value}
-                          type="button"
-                          onClick={() => handleSliderChange('vignetteColor', c.value)}
-                          className={`w-3.5 h-3.5 rounded-full border transition-all ${
-                            adjustments.vignetteColor === c.value 
-                              ? 'border-primary scale-110 shadow-sm ring-1 ring-primary' 
-                              : 'border-outline hover:scale-105'
-                          }`}
-                          style={{ backgroundColor: c.value }}
-                          title={c.name}
-                        />
-                      ))}
-                      <div className="relative w-3.5 h-3.5 rounded-full border border-outline overflow-hidden hover:scale-105 cursor-pointer">
-                        <input
-                          type="color"
-                          value={adjustments.vignetteColor || '#000000'}
-                          onChange={(e) => handleSliderChange('vignetteColor', e.target.value)}
-                          className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                        />
-                        <div 
-                          className="w-full h-full" 
-                          style={{ 
-                            background: adjustments.vignetteColor && !['#000000','#ffffff','#c2a68c','#6b4c35'].includes(adjustments.vignetteColor) 
-                              ? adjustments.vignetteColor 
-                              : 'conic-gradient(red, yellow, green, cyan, blue, magenta, red)' 
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Sharpening */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-[10px] font-bold text-on-surface-variant">
-                    <span>{t.adjustSharpening}</span>
-                    <span>{adjustments.sharpening}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={adjustments.sharpening}
-                    onChange={(e) => handleSliderChange('sharpening', parseInt(e.target.value))}
-                    className="w-full h-1 bg-outline-variant rounded-lg appearance-none cursor-pointer slider-thumb accent-primary"
-                  />
-                </div>
+                {/* Parametric Curve sliders */}
+                {renderSlider(lang === 'fr' ? 'Hautes lumières' : 'Highlights', 'curveHighlights', -100, 100)}
+                {renderSlider(lang === 'fr' ? 'Tons clairs' : 'Lights', 'curveLights', -100, 100)}
+                {renderSlider(lang === 'fr' ? 'Tons sombres' : 'Darks', 'curveDarks', -100, 100)}
+                {renderSlider(lang === 'fr' ? 'Ombres' : 'Shadows', 'curveShadows', -100, 100)}
               </div>
             </details>
 
-            {/* 4. Color Grading (HSL) Accordion */}
+            {/* 3. Mélangeur de couleurs / HSL (Color Mixer Panel) */}
             <details className="group border border-outline-variant/30 rounded-xl overflow-hidden bg-surface-container/20">
               <summary className="flex justify-between items-center p-3 font-semibold text-xs text-white uppercase tracking-wider cursor-pointer hover:bg-surface-container-high transition-colors select-none list-none [&::-webkit-details-marker]:hidden">
                 <span className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-primary text-sm">filter_b_and_w</span>
-                  {t.accordionHsl}
+                  {lang === 'fr' ? 'Mélangeur de couleurs' : 'Color Mixer (HSL)'}
                 </span>
                 <span className="material-symbols-outlined text-sm transition-transform group-open:rotate-180">keyboard_arrow_down</span>
               </summary>
               <div className="p-4 space-y-4 border-t border-outline-variant/20">
-                {/* Red Saturation */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-[10px] font-bold text-on-surface-variant">
-                    <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-red-500"></span>{t.adjustHslRed}</span>
-                    <span>{adjustments.hslRedSaturation > 0 ? `+${adjustments.hslRedSaturation}` : adjustments.hslRedSaturation}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="-100"
-                    max="100"
-                    value={adjustments.hslRedSaturation}
-                    onChange={(e) => handleSliderChange('hslRedSaturation', parseInt(e.target.value))}
-                    className="w-full h-1 bg-outline-variant rounded-lg appearance-none cursor-pointer slider-thumb accent-primary"
-                  />
+                {/* Sub-tabs Saturation / Luminance */}
+                <div className="flex bg-surface-container-low rounded-lg p-1 border border-outline-variant/20">
+                  <button
+                    type="button"
+                    onClick={() => setColorMixerTab('saturation')}
+                    className={`flex-1 text-[10px] font-bold py-1.5 rounded-md cursor-pointer transition-all ${
+                      colorMixerTab === 'saturation' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:text-white'
+                    }`}
+                  >
+                    Saturation
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setColorMixerTab('luminance')}
+                    className={`flex-1 text-[10px] font-bold py-1.5 rounded-md cursor-pointer transition-all ${
+                      colorMixerTab === 'luminance' ? 'bg-primary text-on-primary shadow-sm' : 'text-on-surface-variant hover:text-white'
+                    }`}
+                  >
+                    Luminance
+                  </button>
                 </div>
 
-                {/* Orange Saturation */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-[10px] font-bold text-on-surface-variant">
-                    <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-orange-500"></span>{t.adjustHslOrange}</span>
-                    <span>{adjustments.hslOrangeSaturation > 0 ? `+${adjustments.hslOrangeSaturation}` : adjustments.hslOrangeSaturation}</span>
+                {/* HSL Sliders */}
+                <div className="space-y-3 pt-2">
+                  {colorMixerTab === 'saturation' ? (
+                    <>
+                      {renderSlider('Rouge', 'hslRedSaturation', -100, 100, 'accent-red-500')}
+                      {renderSlider('Orange', 'hslOrangeSaturation', -100, 100, 'accent-orange-500')}
+                      {renderSlider('Jaune', 'hslYellowSaturation', -100, 100, 'accent-yellow-500')}
+                      {renderSlider('Vert', 'hslGreenSaturation', -100, 100, 'accent-green-500')}
+                      {renderSlider('Aqua', 'hslAquaSaturation', -100, 100, 'accent-teal-500')}
+                      {renderSlider('Bleu', 'hslBlueSaturation', -100, 100, 'accent-blue-500')}
+                      {renderSlider('Violet', 'hslPurpleSaturation', -100, 100, 'accent-purple-500')}
+                      {renderSlider('Magenta', 'hslMagentaSaturation', -100, 100, 'accent-pink-500')}
+                    </>
+                  ) : (
+                    <>
+                      {renderSlider('Rouge', 'hslRedLuminance', -100, 100, 'accent-red-500')}
+                      {renderSlider('Orange', 'hslOrangeLuminance', -100, 100, 'accent-orange-500')}
+                      {renderSlider('Jaune', 'hslYellowLuminance', -100, 100, 'accent-yellow-500')}
+                      {renderSlider('Vert', 'hslGreenLuminance', -100, 100, 'accent-green-500')}
+                      {renderSlider('Aqua', 'hslAquaLuminance', -100, 100, 'accent-teal-500')}
+                      {renderSlider('Bleu', 'hslBlueLuminance', -100, 100, 'accent-blue-500')}
+                      {renderSlider('Violet', 'hslPurpleLuminance', -100, 100, 'accent-purple-500')}
+                      {renderSlider('Magenta', 'hslMagentaLuminance', -100, 100, 'accent-pink-500')}
+                    </>
+                  )}
+                </div>
+              </div>
+            </details>
+
+            {/* 4. Détail (Detail Panel) */}
+            <details className="group border border-outline-variant/30 rounded-xl overflow-hidden bg-surface-container/20">
+              <summary className="flex justify-between items-center p-3 font-semibold text-xs text-white uppercase tracking-wider cursor-pointer hover:bg-surface-container-high transition-colors select-none list-none [&::-webkit-details-marker]:hidden">
+                <span className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary text-sm">blur_on</span>
+                  {lang === 'fr' ? 'Détails' : 'Details'}
+                </span>
+                <span className="material-symbols-outlined text-sm transition-transform group-open:rotate-180">keyboard_arrow_down</span>
+              </summary>
+              <div className="p-4 space-y-4 border-t border-outline-variant/20">
+                {renderSlider(t.adjustSharpening, 'sharpening', 0, 100)}
+                {renderSlider(lang === 'fr' ? 'Réduction bruit (Luminance)' : 'Noise Reduction (Luminance)', 'noiseReductionLuminance', 0, 100)}
+                {renderSlider(lang === 'fr' ? 'Réduction bruit (Couleur)' : 'Noise Reduction (Color)', 'noiseReductionColor', 0, 100)}
+              </div>
+            </details>
+
+            {/* 5. Effets (Effects Panel) */}
+            <details className="group border border-outline-variant/30 rounded-xl overflow-hidden bg-surface-container/20">
+              <summary className="flex justify-between items-center p-3 font-semibold text-xs text-white uppercase tracking-wider cursor-pointer hover:bg-surface-container-high transition-colors select-none list-none [&::-webkit-details-marker]:hidden">
+                <span className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary text-sm">grain</span>
+                  {lang === 'fr' ? 'Effets' : 'Effects'}
+                </span>
+                <span className="material-symbols-outlined text-sm transition-transform group-open:rotate-180">keyboard_arrow_down</span>
+              </summary>
+              <div className="p-4 space-y-4 border-t border-outline-variant/20">
+                {/* Vignette */}
+                {renderSlider(t.adjustVignette, 'vignette', -100, 100)}
+
+                {/* Vignette Color Presets & Custom Picker */}
+                <div className="flex items-center justify-between text-[9px] font-bold text-on-surface-variant/80 mt-1">
+                  <span>{t.vignetteColorLabel || "Couleur Vignette"}</span>
+                  <div className="flex items-center gap-1.5">
+                    {[
+                      { name: 'Noir', value: '#000000' },
+                      { name: 'Beige', value: '#c2a68c' },
+                      { name: 'Marron', value: '#6b4c35' },
+                      { name: 'Blanc', value: '#ffffff' }
+                    ].map((c) => (
+                      <button
+                        key={c.value}
+                        type="button"
+                        onClick={() => handleSliderChange('vignetteColor', c.value)}
+                        className={`w-3.5 h-3.5 rounded-full border transition-all ${
+                          adjustments.vignetteColor === c.value 
+                            ? 'border-primary scale-110 shadow-sm ring-1 ring-primary' 
+                            : 'border-outline hover:scale-105'
+                        }`}
+                        style={{ backgroundColor: c.value }}
+                        title={c.name}
+                      />
+                    ))}
+                    <div className="relative w-3.5 h-3.5 rounded-full border border-outline overflow-hidden hover:scale-105 cursor-pointer">
+                      <input
+                        type="color"
+                        value={adjustments.vignetteColor || '#000000'}
+                        onChange={(e) => handleSliderChange('vignetteColor', e.target.value)}
+                        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                      />
+                      <div 
+                        className="w-full h-full" 
+                        style={{ 
+                          background: adjustments.vignetteColor && !['#000000','#ffffff','#c2a68c','#6b4c35'].includes(adjustments.vignetteColor) 
+                            ? adjustments.vignetteColor 
+                            : 'conic-gradient(red, yellow, green, cyan, blue, magenta, red)' 
+                        }}
+                      />
+                    </div>
                   </div>
-                  <input
-                    type="range"
-                    min="-100"
-                    max="100"
-                    value={adjustments.hslOrangeSaturation}
-                    onChange={(e) => handleSliderChange('hslOrangeSaturation', parseInt(e.target.value))}
-                    className="w-full h-1 bg-outline-variant rounded-lg appearance-none cursor-pointer slider-thumb accent-primary"
-                  />
                 </div>
 
-                {/* Orange Luminance */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-[10px] font-bold text-on-surface-variant">
-                    <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-orange-300"></span>{t.adjustHslOrangeLum}</span>
-                    <span>{adjustments.hslOrangeLuminance > 0 ? `+${adjustments.hslOrangeLuminance}` : adjustments.hslOrangeLuminance}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="-100"
-                    max="100"
-                    value={adjustments.hslOrangeLuminance}
-                    onChange={(e) => handleSliderChange('hslOrangeLuminance', parseInt(e.target.value))}
-                    className="w-full h-1 bg-outline-variant rounded-lg appearance-none cursor-pointer slider-thumb accent-primary"
-                  />
-                </div>
+                <div className="h-[1px] bg-outline-variant/20 my-3"></div>
 
-                {/* Blue Saturation */}
-                <div className="space-y-1.5">
-                  <div className="flex justify-between text-[10px] font-bold text-on-surface-variant">
-                    <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded-full bg-blue-500"></span>{t.adjustHslBlue}</span>
-                    <span>{adjustments.hslBlueSaturation > 0 ? `+${adjustments.hslBlueSaturation}` : adjustments.hslBlueSaturation}</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="-100"
-                    max="100"
-                    value={adjustments.hslBlueSaturation}
-                    onChange={(e) => handleSliderChange('hslBlueSaturation', parseInt(e.target.value))}
-                    className="w-full h-1 bg-outline-variant rounded-lg appearance-none cursor-pointer slider-thumb accent-primary"
-                  />
-                </div>
+                {/* Grain sliders */}
+                {renderSlider(lang === 'fr' ? 'Quantité de Grain' : 'Grain Amount', 'grainAmount', 0, 100)}
+                {renderSlider(lang === 'fr' ? 'Taille du Grain' : 'Grain Size', 'grainSize', 1, 50)}
+                {renderSlider(lang === 'fr' ? 'Rugosité du Grain' : 'Grain Roughness', 'grainRoughness', 0, 100)}
+              </div>
+            </details>
+
+            {/* 6. Étalonnage (Calibration Panel) */}
+            <details className="group border border-outline-variant/30 rounded-xl overflow-hidden bg-surface-container/20">
+              <summary className="flex justify-between items-center p-3 font-semibold text-xs text-white uppercase tracking-wider cursor-pointer hover:bg-surface-container-high transition-colors select-none list-none [&::-webkit-details-marker]:hidden">
+                <span className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-primary text-sm">settings_input_component</span>
+                  {lang === 'fr' ? 'Étalonnage' : 'Calibration'}
+                </span>
+                <span className="material-symbols-outlined text-sm transition-transform group-open:rotate-180">keyboard_arrow_down</span>
+              </summary>
+              <div className="p-4 space-y-4 border-t border-outline-variant/20">
+                {renderSlider(lang === 'fr' ? 'Teinte des ombres' : 'Shadow Tint', 'shadowTint', -100, 100, 'accent-teal-500')}
+                <div className="h-[1px] bg-outline-variant/20 my-2"></div>
+                {renderSlider(lang === 'fr' ? 'Teinte Primaire Rouge' : 'Red Primary Hue', 'redPrimaryHue', -100, 100, 'accent-red-500')}
+                {renderSlider(lang === 'fr' ? 'Sat. Primaire Rouge' : 'Red Primary Sat.', 'redPrimarySaturation', -100, 100, 'accent-red-500')}
+                <div className="h-[1px] bg-outline-variant/20 my-2"></div>
+                {renderSlider(lang === 'fr' ? 'Teinte Primaire Verte' : 'Green Primary Hue', 'greenPrimaryHue', -100, 100, 'accent-green-500')}
+                {renderSlider(lang === 'fr' ? 'Sat. Primaire Verte' : 'Green Primary Sat.', 'greenPrimarySaturation', -100, 100, 'accent-green-500')}
+                <div className="h-[1px] bg-outline-variant/20 my-2"></div>
+                {renderSlider(lang === 'fr' ? 'Teinte Primaire Bleue' : 'Blue Primary Hue', 'bluePrimaryHue', -100, 100, 'accent-blue-500')}
+                {renderSlider(lang === 'fr' ? 'Sat. Primaire Bleue' : 'Blue Primary Sat.', 'bluePrimarySaturation', -100, 100, 'accent-blue-500')}
               </div>
             </details>
           </section>
