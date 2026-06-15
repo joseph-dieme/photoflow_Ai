@@ -2045,6 +2045,7 @@ export default function EditorPage() {
             min={min}
             max={max}
             value={val}
+            onFocus={() => pushToHistory()}
             onChange={(e) => {
               const parsedVal = parseInt(e.target.value);
               const clampedVal = isNaN(parsedVal) ? 0 : Math.max(min, Math.min(max, parsedVal));
@@ -2058,6 +2059,8 @@ export default function EditorPage() {
           min={min}
           max={max}
           value={val}
+          onMouseDown={() => pushToHistory()}
+          onTouchStart={() => pushToHistory()}
           onChange={(e) => handleSliderChange(key, parseInt(e.target.value))}
           className={`w-full h-1 bg-outline-variant rounded-lg appearance-none cursor-pointer slider-thumb ${customTrackClass || 'accent-primary'}`}
         />
@@ -3062,6 +3065,7 @@ export default function EditorPage() {
                       min="-100"
                       max="100"
                       value={adjustments.temperature}
+                      onFocus={() => pushToHistory()}
                       onChange={(e) => handleSliderChange('temperature', Math.max(-100, Math.min(100, parseInt(e.target.value) || 0)))}
                       className="w-10 bg-surface-container border border-outline-variant/30 rounded text-center text-white text-[9px] font-mono p-0.5 outline-none focus:border-primary"
                     />
@@ -3071,6 +3075,8 @@ export default function EditorPage() {
                     min="-100"
                     max="100"
                     value={adjustments.temperature}
+                    onMouseDown={() => pushToHistory()}
+                    onTouchStart={() => pushToHistory()}
                     onChange={(e) => handleSliderChange('temperature', parseInt(e.target.value))}
                     className="w-full h-1 rounded-lg appearance-none cursor-pointer slider-thumb"
                     style={{ background: 'linear-gradient(to right, #3b82f6, #eab308)', WebkitAppearance: 'none' }}
@@ -3086,6 +3092,7 @@ export default function EditorPage() {
                       min="-100"
                       max="100"
                       value={adjustments.tint}
+                      onFocus={() => pushToHistory()}
                       onChange={(e) => handleSliderChange('tint', Math.max(-100, Math.min(100, parseInt(e.target.value) || 0)))}
                       className="w-10 bg-surface-container border border-outline-variant/30 rounded text-center text-white text-[9px] font-mono p-0.5 outline-none focus:border-primary"
                     />
@@ -3095,6 +3102,8 @@ export default function EditorPage() {
                     min="-100"
                     max="100"
                     value={adjustments.tint}
+                    onMouseDown={() => pushToHistory()}
+                    onTouchStart={() => pushToHistory()}
                     onChange={(e) => handleSliderChange('tint', parseInt(e.target.value))}
                     className="w-full h-1 rounded-lg appearance-none cursor-pointer slider-thumb"
                     style={{ background: 'linear-gradient(to right, #16a34a, #db2777)', WebkitAppearance: 'none' }}

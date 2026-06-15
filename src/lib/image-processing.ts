@@ -416,39 +416,18 @@ export async function applyAdjustments(
         vigR = 255; vigG = 255; vigB = 255;
       }
     }
-
     for (let i = 0; i < len; i += 4) {
       let r = data[i];
       let g = data[i+1];
       let b = data[i+2];
 
-      // 0. Calibration / Étalonnage
+      // 0. Shadow Tint (Calibration)
       if (shTint !== 0) {
         const shadowVal = Math.max(0, 1 - (0.299 * r + 0.587 * g + 0.114 * b) / 110);
         const shift = shTint * shadowVal;
         g -= shift;
         r += shift * 0.5;
         b += shift * 0.5;
-      }
-
-      if (rPriHue !== 0 || rPriSat !== 1 || gPriHue !== 0 || gPriSat !== 1 || bPriHue !== 0 || bPriSat !== 1) {
-        let nr = r, ng = g, nb = b;
-        if (rPriHue !== 0 || rPriSat !== 1) {
-          const rShiftG = Math.max(0, rPriHue);
-          const rShiftB = Math.max(0, -rPriHue);
-          nr = r * rPriSat * (1 - rShiftG - rShiftB) + g * rShiftG + b * rShiftB;
-        }
-        if (gPriHue !== 0 || gPriSat !== 1) {
-          const gShiftB = Math.max(0, gPriHue);
-          const gShiftR = Math.max(0, -gPriHue);
-          ng = g * gPriSat * (1 - gShiftB - gShiftR) + b * gShiftB + r * gShiftR;
-        }
-        if (bPriHue !== 0 || bPriSat !== 1) {
-          const bShiftR = Math.max(0, bPriHue);
-          const bShiftG = Math.max(0, -bPriHue);
-          nb = b * bPriSat * (1 - bShiftR - bShiftG) + r * bShiftR + g * bShiftG;
-        }
-        r = nr; g = ng; b = nb;
       }
 
       // 1. White Balance (Temperature & Tint)
@@ -472,76 +451,57 @@ export async function applyAdjustments(
         b *= expFactor;
       }
 
-      // 3. Contrast (using a professional non-clipping sigmoidal s-curve)
+      // 3. Contrast (using standard photo-contrast formula)
       if (adjustments.contrast !== 0) {
-        const contrastFactor = adjustments.contrast / 50; // range -2.0 to 2.0
-        let normR = r / 255;
-        let normG = g / 255;
-        let normB = b / 255;
-        
-        normR = normR + contrastFactor * normR * (1 - normR) * (normR - 0.5);
-        normG = normG + contrastFactor * normG * (1 - normG) * (normG - 0.5);
-        normB = normB + contrastFactor * normB * (1 - normB) * (normB - 0.5);
-        
-        r = normR * 255;
-        g = normG * 255;
-        b = normB * 255;
+        const cFactor = Math.pow((100 + adjustments.contrast) / 100, 1.5);
+        r = (r - 128) * cFactor + 128;
+        g = (g - 128) * cFactor + 128;
+        b = (b - 128) * cFactor + 128;
       }
 
-      // Calculate luminance
+      // Calculate initial luminance
       let lum = 0.299 * r + 0.587 * g + 0.114 * b;
 
-      // 4 & 5. Highlights, Shadows, Whites, Blacks (using smooth non-linear tone curves to mimic Lightroom)
+      // 4 & 5. Highlights, Shadows, Whites, Blacks (using smooth non-linear offsets)
       if (highAmt !== 0 || shadAmt !== 0 || whiteAmt !== 0 || blackAmt !== 0) {
         const L = Math.max(0, Math.min(1, lum / 255));
         const wHigh = L * L;
         const wShadow = (1 - L) * (1 - L);
         const wWhite = L * L * L * L;
         const wBlack = (1 - L) * (1 - L) * (1 - L) * (1 - L);
-        
-        let scale = 1.0;
-        scale += highAmt * wHigh * 0.4;
-        scale += shadAmt * wShadow * 0.4;
-        scale += whiteAmt * wWhite * 0.3;
-        
-        r *= scale;
-        g *= scale;
-        b *= scale;
-        
-        if (blackAmt !== 0) {
-          const offset = blackAmt * wBlack * 30;
-          r += offset;
-          g += offset;
-          b += offset;
-        }
+
+        const highOffset = highAmt * wHigh * (highAmt > 0 ? 40 : 60);
+        const shadOffset = shadAmt * wShadow * (shadAmt > 0 ? 55 : 35);
+        const whiteOffset = whiteAmt * wWhite * 65;
+        const blackOffset = blackAmt * wBlack * 45;
+
+        const totalOffset = highOffset + shadOffset + whiteOffset + blackOffset;
+        r += totalOffset;
+        g += totalOffset;
+        b += totalOffset;
       }
 
       // Calculate luminance again for Tone Curve
       lum = 0.299 * r + 0.587 * g + 0.114 * b;
 
-      // 5.5 Parametric Tone Curve
+      // 5.5 Parametric Tone Curve (using smooth cubic Bernstein polynomials to prevent banding)
       if (cHigh !== 0 || cLight !== 0 || cDark !== 0 || cShad !== 0) {
         const L = Math.max(0, Math.min(1, lum / 255));
-        let curveShift = 0;
-        if (L > 0.75) {
-          curveShift = cHigh * (L - 0.75) * 4;
-        } else if (L > 0.5) {
-          curveShift = cLight * (L - 0.5) * 4;
-        } else if (L > 0.25) {
-          curveShift = cDark * (0.5 - L) * 4;
-        } else {
-          curveShift = cShad * (0.25 - L) * 4;
-        }
-        const scale = 1.0 + curveShift * 0.25;
-        r *= scale;
-        g *= scale;
-        b *= scale;
+        const wShad = (1 - L) * (1 - L) * (1 - L);
+        const wDark = 3 * L * (1 - L) * (1 - L);
+        const wLight = 3 * L * L * (1 - L);
+        const wHigh = L * L * L;
+
+        const totalShift = (cShad * wShad + cDark * wDark + cLight * wLight + cHigh * wHigh) * 45;
+        r += totalShift;
+        g += totalShift;
+        b += totalShift;
       }
 
       // Calculate luminance again for Clarity
       lum = 0.299 * r + 0.587 * g + 0.114 * b;
 
-      // 6. Clarity (local midtone contrast adjustment using sigmoidal s-curve to prevent clipping)
+      // 6. Clarity (local midtone contrast adjustment using sigmoidal s-curve)
       if (clarityAmt !== 0) {
         const midtoneWeight = Math.exp(-Math.pow(lum - 128, 2) / (2 * 64 * 64));
         const clarityFactor = clarityAmt * midtoneWeight * 0.7; // scale factor
@@ -591,10 +551,10 @@ export async function applyAdjustments(
         b = normB * 255;
       }
 
-      // Recalculate luminance for HSL and Saturation
+      // Recalculate luminance for HSL, Calibration, and Saturation
       lum = 0.299 * r + 0.587 * g + 0.114 * b;
 
-      // 7. HSL Color grading
+      // Extract hue and saturation
       const maxVal = Math.max(r, g, b);
       const minVal = Math.min(r, g, b);
       const diff = maxVal - minVal;
@@ -609,80 +569,121 @@ export async function applyAdjustments(
       }
 
       const pixelSat = maxVal === 0 ? 0 : diff / maxVal;
-      const satWeight = Math.min(1, Math.max(0, (pixelSat - 0.08) / 0.1));
 
-      if (satWeight > 0) {
-        let deltaR = 0;
-        let deltaG = 0;
-        let deltaB = 0;
+      // 6.8 Calibration Primary Shifts (hue-targeted shifts using SVG hueRotate matrix and saturation scaling)
+      if (rPriHue !== 0 || rPriSat !== 1 || gPriHue !== 0 || gPriSat !== 1 || bPriHue !== 0 || bPriSat !== 1) {
+        let calHueShift = 0;
+        let calSatMult = 1.0;
 
-        const applyColorAdj = (weight: number, satAmt: number, lumAmt: number) => {
-          if (weight <= 0) return;
-          let adjR = r;
-          let adjG = g;
-          let adjB = b;
-          if (satAmt !== 1) {
-            adjR = lum + (r - lum) * satAmt;
-            adjG = lum + (g - lum) * satAmt;
-            adjB = lum + (b - lum) * satAmt;
+        // Red primary weight (0 deg)
+        let hDiffRed = Math.abs(hue - 0);
+        if (hDiffRed > 180) hDiffRed = 360 - hDiffRed;
+        const wRed = Math.max(0, 1 - hDiffRed / 40);
+        if (wRed > 0) {
+          calHueShift += rPriHue * 0.35 * wRed;
+          calSatMult *= (1.0 + (rPriSat - 1) * wRed);
+        }
+
+        // Green primary weight (120 deg)
+        const hDiffGreen = Math.abs(hue - 120);
+        const wGreen = Math.max(0, 1 - hDiffGreen / 40);
+        if (wGreen > 0) {
+          calHueShift += gPriHue * 0.35 * wGreen;
+          calSatMult *= (1.0 + (gPriSat - 1) * wGreen);
+        }
+
+        // Blue primary weight (240 deg)
+        const hDiffBlue = Math.abs(hue - 240);
+        const wBlue = Math.max(0, 1 - hDiffBlue / 40);
+        if (wBlue > 0) {
+          calHueShift += bPriHue * 0.35 * wBlue;
+          calSatMult *= (1.0 + (bPriSat - 1) * wBlue);
+        }
+
+        if (calHueShift !== 0 || calSatMult !== 1.0) {
+          // Apply hue rotation matrix
+          if (calHueShift !== 0) {
+            const angle = (calHueShift * Math.PI) / 180;
+            const cosA = Math.cos(angle);
+            const sinA = Math.sin(angle);
+            
+            const rX = r * (0.213 + 0.787 * cosA - 0.213 * sinA) + g * (0.715 - 0.715 * cosA - 0.715 * sinA) + b * (0.072 - 0.072 * cosA + 0.928 * sinA);
+            const gX = r * (0.213 - 0.213 * cosA + 0.143 * sinA) + g * (0.715 + 0.285 * cosA + 0.140 * sinA) + b * (0.072 - 0.072 * cosA - 0.283 * sinA);
+            const bX = r * (0.213 - 0.213 * cosA - 0.787 * sinA) + g * (0.715 - 0.715 * cosA + 0.715 * sinA) + b * (0.072 + 0.928 * cosA + 0.072 * sinA);
+            
+            r = rX; g = gX; b = bX;
           }
-          if (lumAmt !== 0) {
-            const lFactor = 1 + lumAmt * 0.22;
-            adjR *= lFactor;
-            adjG *= lFactor;
-            adjB *= lFactor;
+          
+          // Apply saturation adjustment
+          if (calSatMult !== 1.0) {
+            r = lum + (r - lum) * calSatMult;
+            g = lum + (g - lum) * calSatMult;
+            b = lum + (b - lum) * calSatMult;
           }
-          deltaR += (adjR - r) * weight;
-          deltaG += (adjG - g) * weight;
-          deltaB += (adjB - b) * weight;
-        };
 
-        // Red (0 deg)
-        let hDiff = Math.abs(hue - 0);
-        if (hDiff > 180) hDiff = 360 - hDiff;
-        applyColorAdj(Math.max(0, 1 - hDiff / 22) * satWeight, rSatAmt, rLumAmt);
-
-        // Orange (25 deg)
-        hDiff = Math.abs(hue - 25);
-        if (hDiff > 180) hDiff = 360 - hDiff;
-        applyColorAdj(Math.max(0, 1 - hDiff / 22) * satWeight, oSatAmt, oLumAmt);
-
-        // Yellow (55 deg)
-        hDiff = Math.abs(hue - 55);
-        if (hDiff > 180) hDiff = 360 - hDiff;
-        applyColorAdj(Math.max(0, 1 - hDiff / 22) * satWeight, ySatAmt, yLumAmt);
-
-        // Green (110 deg)
-        hDiff = Math.abs(hue - 110);
-        if (hDiff > 180) hDiff = 360 - hDiff;
-        applyColorAdj(Math.max(0, 1 - hDiff / 45) * satWeight, gSatAmt, gLumAmt);
-
-        // Aqua (175 deg)
-        hDiff = Math.abs(hue - 175);
-        if (hDiff > 180) hDiff = 360 - hDiff;
-        applyColorAdj(Math.max(0, 1 - hDiff / 25) * satWeight, aSatAmt, aLumAmt);
-
-        // Blue (220 deg)
-        hDiff = Math.abs(hue - 220);
-        if (hDiff > 180) hDiff = 360 - hDiff;
-        applyColorAdj(Math.max(0, 1 - hDiff / 35) * satWeight, bSatAmt, bLumAmt);
-
-        // Purple (275 deg)
-        hDiff = Math.abs(hue - 275);
-        if (hDiff > 180) hDiff = 360 - hDiff;
-        applyColorAdj(Math.max(0, 1 - hDiff / 25) * satWeight, pSatAmt, pLumAmt);
-
-        // Magenta (315 deg)
-        hDiff = Math.abs(hue - 315);
-        if (hDiff > 180) hDiff = 360 - hDiff;
-        applyColorAdj(Math.max(0, 1 - hDiff / 30) * satWeight, mSatAmt, mLumAmt);
-
-        r += deltaR;
-        g += deltaG;
-        b += deltaB;
+          // Re-evaluate hue and saturation after calibration shift for HSL mixer
+          lum = 0.299 * r + 0.587 * g + 0.114 * b;
+          const maxVal2 = Math.max(r, g, b);
+          const minVal2 = Math.min(r, g, b);
+          const diff2 = maxVal2 - minVal2;
+          hue = 0;
+          if (diff2 !== 0) {
+            if (maxVal2 === r) hue = ((g - b) / diff2) % 6;
+            else if (maxVal2 === g) hue = (b - r) / diff2 + 2;
+            else hue = (r - g) / diff2 + 4;
+            hue = Math.round(hue * 60);
+            if (hue < 0) hue += 360;
+          }
+        }
       }
 
-      // Recalculate luminance
+      // 7. HSL Color grading (using continuous piecewise linear interpolation to cover 100% of color wheel)
+      const satWeight = Math.min(1, Math.max(0, (pixelSat - 0.08) / 0.1));
+      if (satWeight > 0) {
+        const nodes = [
+          { hue: 0,   sat: rSatAmt, lum: rLumAmt },
+          { hue: 30,  sat: oSatAmt, lum: oLumAmt },
+          { hue: 60,  sat: ySatAmt, lum: yLumAmt },
+          { hue: 120, sat: gSatAmt, lum: gLumAmt },
+          { hue: 180, sat: aSatAmt, lum: aLumAmt },
+          { hue: 240, sat: bSatAmt, lum: bLumAmt },
+          { hue: 280, sat: pSatAmt, lum: pLumAmt },
+          { hue: 320, sat: mSatAmt, lum: mLumAmt },
+          { hue: 360, sat: rSatAmt, lum: rLumAmt }
+        ];
+
+        let targetSat = 1.0;
+        let targetLum = 0.0;
+
+        for (let j = 0; j < nodes.length - 1; j++) {
+          if (hue >= nodes[j].hue && hue <= nodes[j+1].hue) {
+            const h0 = nodes[j].hue;
+            const h1 = nodes[j+1].hue;
+            const t = (hue - h0) / (h1 - h0);
+            
+            targetSat = nodes[j].sat * (1 - t) + nodes[j+1].sat * t;
+            targetLum = nodes[j].lum * (1 - t) + nodes[j+1].lum * t;
+            break;
+          }
+        }
+
+        const blendSat = 1.0 + (targetSat - 1.0) * satWeight;
+        if (blendSat !== 1.0) {
+          r = lum + (r - lum) * blendSat;
+          g = lum + (g - lum) * blendSat;
+          b = lum + (b - lum) * blendSat;
+        }
+
+        const blendLum = targetLum * satWeight;
+        if (blendLum !== 0.0) {
+          const lFactor = 1.0 + blendLum * 0.28;
+          r *= lFactor;
+          g *= lFactor;
+          b *= lFactor;
+        }
+      }
+
+      // Recalculate luminance for Saturation & Vibrance
       lum = 0.299 * r + 0.587 * g + 0.114 * b;
 
       // 8. Saturation & Vibrance
