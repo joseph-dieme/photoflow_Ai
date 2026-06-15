@@ -2008,13 +2008,14 @@ export default function EditorPage() {
       return;
     }
 
-    const gallerySlug = gallery?.url_slug;
-    if (!gallerySlug) {
-      showNotification('warning', t.notifGalleryNotActiveTitle, t.notifGalleryNotActiveMsg);
+    if (!processedUrl || processedUrl.startsWith('data:')) {
+      showNotification(
+        'warning', 
+        lang === 'fr' ? 'Enregistrement requis' : 'Save required', 
+        lang === 'fr' ? 'Veuillez enregistrer la photo avant de la partager sur WhatsApp.' : 'Please save the photo before sharing it on WhatsApp.'
+      );
       return;
     }
-
-    const galleryUrl = `${window.location.origin}/gallery/${gallerySlug}`;
 
     let phone = client.phone ? client.phone.trim() : '';
     if (!phone) {
@@ -2036,7 +2037,10 @@ export default function EditorPage() {
       }
     }
 
-    const message = `Bonjour ${client.name}, voici le lien pour accéder à vos photos retouchées : ${galleryUrl}`;
+    const message = lang === 'fr' 
+      ? `Bonjour ${client.name}, voici votre photo retouchée : ${processedUrl}`
+      : `Hello ${client.name}, here is your retouched photo: ${processedUrl}`;
+      
     const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
 
     window.open(whatsappUrl, '_blank');
