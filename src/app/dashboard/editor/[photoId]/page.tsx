@@ -684,7 +684,21 @@ export default function EditorPage() {
     setHistoryStack(prev => {
       if (prev.length === 0) return prev;
       const newStack = [...prev];
-      const lastState = newStack.pop();
+      let lastState = newStack.pop();
+      
+      // Skip history states that are identical to the current active adjustments
+      while (
+        lastState && 
+        JSON.stringify(lastState.adjustments) === JSON.stringify(adjustments) && 
+        lastState.originalUrl === originalUrl
+      ) {
+        if (newStack.length === 0) {
+          lastState = undefined;
+          break;
+        }
+        lastState = newStack.pop();
+      }
+
       if (lastState) {
         setOriginalUrl(lastState.originalUrl);
         setAdjustments(lastState.adjustments);
