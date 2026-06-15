@@ -2037,10 +2037,7 @@ export default function EditorPage() {
       }
     }
 
-    const message = lang === 'fr' 
-      ? `Bonjour ${client.name}, voici votre photo retouchée : ${processedUrl}`
-      : `Hello ${client.name}, here is your retouched photo: ${processedUrl}`;
-      
+    const message = processedUrl;
     const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
 
     window.open(whatsappUrl, '_blank');
