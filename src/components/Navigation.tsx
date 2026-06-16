@@ -148,7 +148,7 @@ export default function Navigation() {
                 <img
                   alt="Profile Avatar"
                   className="w-full h-full object-cover"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuAK_xNNCG-ubyXabhyXKI7GWOzIdUJQmbpG05HTrh0bpVSma4ZHmt_um5LGsiHpKaUnNBTjxSbHgdi8YXiSGyovGS3MTlKMtFPNrV9O74xbqlm5_gQrhtbQvPFcVmbLfJfU8sJsALh9fsAGObSTbXCMQvSaa_56CcXqEmmoKUFzrDErerDo_na3ZuVnMRXSpBJq_JZ5jjSVqxlbTuf4GZWrBO8_lvwqgsdeb74OlY6rRO_C60-ZV5SDyBw9ssSMYc_ZoUK1s8GFNH1v"
+                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80"
                 />
               </button>
 

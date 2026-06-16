@@ -275,7 +275,7 @@ export default function LandingPage() {
             <div className="absolute right-[3%] top-[15%] w-40 bg-surface-container/60 p-2.5 rounded-2xl border border-outline-variant/60 backdrop-blur-md shadow-2xl animate-float-3">
               <div className="aspect-[3/4] rounded-xl overflow-hidden mb-2 relative">
                 <img
-                  src="https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=400&auto=format&fit=crop&q=80"
+                  src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=400&auto=format&fit=crop&q=80"
                   alt="Portrait Retouché 3"
                   className="w-full h-full object-cover"
                 />
@@ -424,14 +424,14 @@ export default function LandingPage() {
                 >
                   {/* After Image (Corrected & Retouched) */}
                   <img 
-                    src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=1000&auto=format&fit=crop&q=80" 
+                    src="https://images.unsplash.com/photo-1523438885200-e635ba2c371e?w=1000&auto=format&fit=crop&q=80" 
                     alt="Retouched Wedding Portrait" 
                     className="absolute inset-0 w-full h-full object-cover pointer-events-none"
                   />
                   
                   {/* Before Image Overlay */}
                   <img 
-                    src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=1000&auto=format&fit=crop&q=80" 
+                    src="https://images.unsplash.com/photo-1523438885200-e635ba2c371e?w=1000&auto=format&fit=crop&q=80" 
                     alt="Raw Wedding Portrait" 
                     className="absolute inset-0 w-full h-full object-cover pointer-events-none brightness-75 contrast-80 saturate-[0.65] sepia-[0.12] blur-[0.5px] z-10"
                     style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
@@ -665,7 +665,7 @@ export default function LandingPage() {
                 <img
                   alt="Moussa Diop Portrait"
                   className="w-full h-full object-cover rounded-full"
-                  src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80"
+                  src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=200&auto=format&fit=crop&q=80"
                 />
               </div>
               <div className="text-left">

@@ -681,8 +681,8 @@ export default function DashboardPage() {
                         (proj.pf_photos && proj.pf_photos.length > 0)
                           ? [...proj.pf_photos].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0].original_url
                           : (idx === 0 
-                              ? "https://lh3.googleusercontent.com/aida-public/AB6AXuCu_hhDWin72rzs825dX32G_XlHreihNdstnlA6lN6UpZVMj655bjRHneC6pMjwvbUUyQfgY8YhV6i4o_2rA-QExsJdBMdmK3XljOeb0dWejAYOcXcCZkqoPhDDS7EnBzzQndGlhF-NmAQNzRFMPKz2BXJstVRjlW1hSSKeEoKdcHvwe_P6iBRHpFGGcwsU4NDqgcdOMl0dBegKf2vCWjYIxTpjN0GXMO-0SrcxK-202Z-oHiafw34rxmX73rzR6WXKtGPufWYecZK8"
-                              : "https://lh3.googleusercontent.com/aida-public/AB6AXuAf6UX6teFnOUODMDnOXbvguIYSJchTLvFmDs7vNxg33gf-yW5cYkPcj08fGzpKkhyFzkausYCu-K7uMIDnIT64uyozJ-AnsP-82kXq3VNb0HK0MSQ6o7RoEd6Q6FGGr1PQ_LLK_Ez1-QCoFhBWEdFWfxe6JqBOWm7ocJ7dEhlicTLCzx1maBHKdcx92F2GzDVStz0WXs2lS3fh9IrSSzUoPyFd49hPBpTxedfRhpGKN0ycQa4ujbZGpQMkLBN63UAoUuw-VpcDKp0u")
+                              ? "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&auto=format&fit=crop&q=80"
+                              : "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80")
                       }
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent"></div>
