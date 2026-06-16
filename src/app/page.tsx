@@ -110,6 +110,29 @@ const translations = {
   }
 };
 
+const sliderPhotos = [
+  {
+    categoryFr: "Mariage",
+    categoryEn: "Wedding",
+    url: "https://images.unsplash.com/photo-1523438885200-e635ba2c371e?w=1000&auto=format&fit=crop&q=80"
+  },
+  {
+    categoryFr: "Portrait d'art",
+    categoryEn: "Artistic Portrait",
+    url: "https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=1000&auto=format&fit=crop&q=80"
+  },
+  {
+    categoryFr: "Anniversaire / Fête",
+    categoryEn: "Birthday & Party",
+    url: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=1000&auto=format&fit=crop&q=80"
+  },
+  {
+    categoryFr: "Photo de Famille",
+    categoryEn: "Family Shoot",
+    url: "https://images.unsplash.com/photo-1609234656388-0ff363383899?w=1000&auto=format&fit=crop&q=80"
+  }
+];
+
 export default function LandingPage() {
   const router = useRouter();
   const lang = useLanguage();
@@ -118,8 +141,26 @@ export default function LandingPage() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [user, setUser] = useState<any>(null);
+  const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
   const t = translations[lang];
+
+  // Preload all slider images
+  useEffect(() => {
+    sliderPhotos.forEach((photo) => {
+      const img = new Image();
+      img.src = photo.url;
+    });
+  }, []);
+
+  // Auto-play interval for before/after slider (pauses during manual drag interactions)
+  useEffect(() => {
+    if (isDragging) return;
+    const interval = setInterval(() => {
+      setCurrentSlideIndex((prev) => (prev + 1) % sliderPhotos.length);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, [isDragging]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -422,20 +463,32 @@ export default function LandingPage() {
                   onMouseLeave={() => setIsDragging(false)}
                   className="absolute inset-0 select-none cursor-ew-resize overflow-hidden"
                 >
+                  {/* Category Badge */}
+                  <div className="absolute top-4 left-1/2 -translate-x-1/2 z-30 font-body-sm text-[10px] font-bold text-white bg-primary/80 px-4 py-1.5 rounded-full backdrop-blur-md border border-primary/30 uppercase tracking-widest shadow-lg select-none">
+                    {lang === 'fr' ? sliderPhotos[currentSlideIndex].categoryFr : sliderPhotos[currentSlideIndex].categoryEn}
+                  </div>
+
                   {/* After Image (Corrected & Retouched) */}
                   <img 
-                    src="https://images.unsplash.com/photo-1523438885200-e635ba2c371e?w=1000&auto=format&fit=crop&q=80" 
-                    alt="Retouched Wedding Portrait" 
-                    className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                    src={sliderPhotos[currentSlideIndex].url} 
+                    alt={`Retouched ${sliderPhotos[currentSlideIndex].categoryEn}`} 
+                    className="absolute inset-0 w-full h-full object-cover pointer-events-none transition-none"
                   />
                   
                   {/* Before Image Overlay */}
                   <img 
-                    src="https://images.unsplash.com/photo-1523438885200-e635ba2c371e?w=1000&auto=format&fit=crop&q=80" 
-                    alt="Raw Wedding Portrait" 
-                    className="absolute inset-0 w-full h-full object-cover pointer-events-none brightness-75 contrast-80 saturate-[0.65] sepia-[0.12] blur-[0.5px] z-10"
+                    src={sliderPhotos[currentSlideIndex].url} 
+                    alt={`Raw ${sliderPhotos[currentSlideIndex].categoryEn}`} 
+                    className="absolute inset-0 w-full h-full object-cover pointer-events-none brightness-75 contrast-80 saturate-[0.65] sepia-[0.12] blur-[0.5px] z-10 transition-none"
                     style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
                   />
+
+                  {/* Hidden preloaded images rendered to DOM for instant cache switching */}
+                  {sliderPhotos.map((photo, index) => (
+                    <div key={index} className="hidden">
+                      <img src={photo.url} alt="" />
+                    </div>
+                  ))}
 
                   {/* Slider Divider Line */}
                   <div 
