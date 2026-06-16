@@ -176,7 +176,7 @@ export default function Navigation() {
                   </Link>
                   {profile?.plan !== 'pro' && (
                     <Link
-                      href="/#pricing"
+                      href="/checkout/select-plan"
                       onClick={() => setShowDropdown(false)}
                       className="block px-4 py-2.5 text-xs text-primary font-bold hover:bg-surface-container-highest transition-colors"
                     >

@@ -339,21 +339,13 @@ export default function SettingsPage() {
               </div>
 
               <div className="pt-2 flex flex-col gap-2">
-                {profile?.plan === 'pro' ? (
-                  <button
-                    onClick={triggerDowngradeConfirm}
-                    className="w-full py-2.5 border border-outline-variant text-on-surface hover:bg-surface-container-highest rounded-xl text-xs font-semibold transition-all cursor-pointer"
-                  >
-                    {t.downgradeButton}
-                  </button>
-                ) : (
-                  <button
-                    onClick={triggerUpgradeConfirm}
-                    className="w-full py-2.5 bg-primary-container text-on-primary-container hover:brightness-110 rounded-xl text-xs font-bold transition-all shadow cursor-pointer"
-                  >
-                    {t.upgradeButton}
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => router.push('/checkout/select-plan')}
+                  className="w-full py-2.5 bg-primary-container text-on-primary-container hover:brightness-110 rounded-xl text-xs font-bold transition-all shadow cursor-pointer text-center"
+                >
+                  {lang === 'fr' ? 'Gérer mon forfait' : 'Manage my plan'}
+                </button>
               </div>
             </section>
           </div>

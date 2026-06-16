@@ -129,7 +129,12 @@ function SignupForm() {
       if (authError) throw authError;
 
       if (data.user) {
-        setSuccess(true);
+        localStorage.setItem('pf_signup_pending_plan', 'true');
+        if (data.session) {
+          router.push('/checkout/select-plan');
+        } else {
+          setSuccess(true);
+        }
       }
     } catch (err: any) {
       setError(err.message || t.errorFallback);

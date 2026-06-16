@@ -56,7 +56,13 @@ export default function LoginPage() {
       if (authError) throw authError;
 
       // Successful login
-      router.push('/dashboard');
+      const pendingPlan = localStorage.getItem('pf_signup_pending_plan');
+      if (pendingPlan === 'true') {
+        localStorage.removeItem('pf_signup_pending_plan');
+        router.push('/checkout/select-plan');
+      } else {
+        router.push('/dashboard');
+      }
       router.refresh();
     } catch (err: any) {
       const msg = err.message || '';
