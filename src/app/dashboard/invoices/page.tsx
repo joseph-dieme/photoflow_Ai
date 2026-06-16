@@ -49,6 +49,8 @@ const translations = {
     errorCreate: 'Erreur lors de la création du document.',
     pdfTitle: 'Exporter en PDF',
     waveTitle: 'Payer via Wave Mobile Money',
+    copyLinkTitle: 'Lien Copié',
+    copyLinkMsg: 'Le lien de paiement Wave a été copié dans le presse-papier.',
   },
   en: {
     title: 'Invoices & Estimates',
@@ -89,6 +91,8 @@ const translations = {
     errorCreate: 'Error creating document.',
     pdfTitle: 'Export to PDF',
     waveTitle: 'Pay via Wave Mobile Money',
+    copyLinkTitle: 'Link Copied',
+    copyLinkMsg: 'The Wave payment link has been copied to your clipboard.',
   }
 };
 
@@ -107,6 +111,7 @@ export default function InvoicesPage() {
   const [showModal, setShowModal] = useState(false);
   const [creating, setCreating] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState<'success' | 'error' | null>(null);
+  const [copySuccessToast, setCopySuccessToast] = useState(false);
 
   // Form States
   const [clientName, setClientName] = useState('');
@@ -263,6 +268,19 @@ export default function InvoicesPage() {
     }
   };
 
+  const handleCopyPaymentLink = (inv: any) => {
+    if (typeof window === 'undefined') return;
+    const origin = window.location.origin;
+    const paymentUrl = `${origin}/checkout/wave?amount=${inv.amount_fcfa}&invoiceId=${inv.id}&email=${encodeURIComponent(inv.pf_clients?.email || '')}`;
+    
+    navigator.clipboard.writeText(paymentUrl).then(() => {
+      setCopySuccessToast(true);
+      setTimeout(() => setCopySuccessToast(false), 4000);
+    }).catch(err => {
+      console.error('Failed to copy text:', err);
+    });
+  };
+
   const simulatePdfExport = (inv: any) => {
     window.open(`/dashboard/invoices/${inv.id}/print`, '_blank');
   };
@@ -366,6 +384,17 @@ export default function InvoicesPage() {
                           >
                             <span className="material-symbols-outlined text-[16px]">picture_as_pdf</span>
                           </button>
+
+                          {/* Copy payment link for unpaid invoices */}
+                          {inv.status !== 'paid' && (
+                            <button
+                              onClick={() => handleCopyPaymentLink(inv)}
+                              className="p-1.5 bg-surface-container-highest rounded border border-outline-variant/30 hover:border-primary text-on-surface-variant hover:text-white cursor-pointer"
+                              title={t.copyLinkTitle || "Copier le lien de paiement"}
+                            >
+                              <span className="material-symbols-outlined text-[16px]">link</span>
+                            </button>
+                          )}
 
                           {/* Trigger Wave Payment for unpaid invoices */}
                           {inv.status !== 'paid' && (
@@ -525,6 +554,17 @@ export default function InvoicesPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Notification for Link Copy Success */}
+      {copySuccessToast && (
+        <div className="fixed bottom-6 right-6 z-[200] bg-green-600 border border-green-500/30 text-white px-5 py-3 rounded-xl shadow-2xl flex items-center gap-2.5 animate-in slide-in-from-bottom-5 duration-300">
+          <span className="material-symbols-outlined text-lg">check_circle</span>
+          <div className="text-left">
+            <p className="text-xs font-bold">{t.copyLinkTitle}</p>
+            <p className="text-[10px] opacity-90 mt-0.5">{t.copyLinkMsg}</p>
           </div>
         </div>
       )}

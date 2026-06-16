@@ -18,6 +18,7 @@ const translations = {
     logout: 'Déconnexion',
     login: 'Connexion',
     signup: 'Inscription',
+    admin: 'Espace Admin',
   },
   en: {
     dashboard: 'Dashboard',
@@ -30,6 +31,7 @@ const translations = {
     logout: 'Logout',
     login: 'Login',
     signup: 'Sign Up',
+    admin: 'Admin Space',
   }
 };
 
@@ -164,6 +166,13 @@ export default function Navigation() {
                     className="block px-4 py-2.5 text-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors"
                   >
                     {t.dashboard}
+                  </Link>
+                  <Link
+                    href="/admin"
+                    onClick={() => setShowDropdown(false)}
+                    className="block px-4 py-2.5 text-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors border-t border-outline-variant/30"
+                  >
+                    {t.admin}
                   </Link>
                   {profile?.plan !== 'pro' && (
                     <Link

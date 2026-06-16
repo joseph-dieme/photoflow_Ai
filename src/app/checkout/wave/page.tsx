@@ -22,7 +22,14 @@ const translations = {
     confirmPaymentBtn: "Confirmer le paiement",
     securedBy: "Sécurisé par Wave Mobile Money",
     notifClose: "Fermer",
-    loadingText: "Chargement..."
+    loadingText: "Chargement...",
+    alreadyPaidTitle: "Facture Déjà Payée",
+    alreadyPaidDesc: "Cette facture a déjà été réglée avec succès.",
+    invoiceDetails: "Prestation Photographiques",
+    clientLabel: "Client",
+    projectLabel: "Projet",
+    studioLabel: "Studio / Photographe",
+    proSubscription: "Abonnement PhotoFlow Pro"
   },
   en: {
     paymentFailed: "Payment processing failed.",
@@ -41,7 +48,14 @@ const translations = {
     confirmPaymentBtn: "Confirm Payment",
     securedBy: "Secured by Wave Mobile Money",
     notifClose: "Close",
-    loadingText: "Loading..."
+    loadingText: "Loading...",
+    alreadyPaidTitle: "Invoice Already Paid",
+    alreadyPaidDesc: "This invoice has already been successfully paid.",
+    invoiceDetails: "Photographic Services",
+    clientLabel: "Client",
+    projectLabel: "Project",
+    studioLabel: "Studio / Photographer",
+    proSubscription: "PhotoFlow Pro Subscription"
   }
 };
 
@@ -104,6 +118,49 @@ function WaveCheckoutForm() {
     message: ''
   });
 
+  // Invoice details states
+  const [invoiceDetails, setInvoiceDetails] = useState<{
+    invoice_number: string;
+    amount_fcfa: number;
+    type: string;
+    status: string;
+    client_name: string;
+    project_name: string;
+    photographer_name: string;
+  } | null>(null);
+  const [fetchingInvoice, setFetchingInvoice] = useState(false);
+  const [invoiceAlreadyPaid, setInvoiceAlreadyPaid] = useState(false);
+
+  // Load invoice details if present
+  useEffect(() => {
+    if (!invoiceId) return;
+
+    async function loadInvoice() {
+      setFetchingInvoice(true);
+      try {
+        const { data, error } = await supabase.rpc('get_invoice_details', {
+          invoice_uuid: invoiceId
+        });
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+          const details = data[0];
+          setInvoiceDetails(details);
+          if (details.status === 'paid') {
+            setInvoiceAlreadyPaid(true);
+            showNotification('info', lang === 'fr' ? 'Facture Déjà Payée' : 'Invoice Already Paid', lang === 'fr' ? 'Cette facture a déjà été réglée.' : 'This invoice has already been paid.');
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching invoice details:', err);
+      } finally {
+        setFetchingInvoice(false);
+      }
+    }
+
+    loadInvoice();
+  }, [invoiceId, lang]);
+
   const showNotification = (type: 'success' | 'error' | 'warning' | 'info', title: string, message: string) => {
     setNotification({
       isOpen: true,
@@ -131,12 +188,12 @@ function WaveCheckoutForm() {
     try {
       // Perform database updates
       if (invoiceId) {
-        // Update Invoice status to Paid
-        const { error } = await supabase
-          .from('pf_invoices')
-          .update({ status: 'paid' })
-          .eq('id', invoiceId);
+        // Update Invoice status to Paid via SECURITY DEFINER function to bypass RLS
+        const { data: success, error } = await supabase.rpc('pay_invoice', {
+          invoice_uuid: invoiceId
+        });
         if (error) throw error;
+        if (!success) throw new Error('Invoice not found or could not be updated');
       } else {
         // If subscribing to Pro, update the current user's profile
         const { data: { user } } = await supabase.auth.getUser();
@@ -157,7 +214,7 @@ function WaveCheckoutForm() {
         if (invoiceId) {
           router.push('/dashboard/invoices?status=success');
         } else {
-          router.push('/dashboard?status=subscribed');
+          router.push('/dashboard/settings?status=subscribed');
         }
       }, 3000);
     } catch (err) {
@@ -198,7 +255,7 @@ function WaveCheckoutForm() {
 
       <div className="w-full max-w-sm bg-[#1e1e22]/95 border border-zinc-800/80 backdrop-blur-md rounded-3xl p-8 shadow-2xl">
         {/* Wave Header branding */}
-        <div className="flex items-center justify-between mb-8 pb-4 border-b border-zinc-800/60">
+        <div className="flex items-center justify-between mb-6 pb-4 border-b border-zinc-800/60">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center text-white font-bold text-lg">
               W
@@ -211,7 +268,74 @@ function WaveCheckoutForm() {
           </div>
         </div>
 
-        {step === 'phone' ? (
+        {/* Dynamic details card (Photographer Studio / Client Info / Product) */}
+        <div className="mb-6 p-4 bg-zinc-900/40 rounded-2xl border border-zinc-800/50 text-xs space-y-2.5">
+          {invoiceId ? (
+            fetchingInvoice ? (
+              <div className="text-zinc-500 text-[10px] text-center py-2 animate-pulse">{t.loadingText}</div>
+            ) : invoiceDetails ? (
+              <>
+                <div className="flex justify-between">
+                  <span className="text-zinc-500 font-medium">{t.studioLabel}</span>
+                  <span className="text-zinc-200 font-bold">{invoiceDetails.photographer_name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-zinc-500 font-medium">{t.clientLabel}</span>
+                  <span className="text-zinc-200 font-semibold">{invoiceDetails.client_name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-zinc-500 font-medium">{t.projectLabel}</span>
+                  <span className="text-zinc-200 font-semibold">{invoiceDetails.project_name}</span>
+                </div>
+                <div className="flex justify-between pt-1.5 border-t border-zinc-800/50 text-[10px]">
+                  <span className="text-zinc-500 font-medium">N° Document</span>
+                  <span className="text-zinc-400 font-mono">{invoiceDetails.invoice_number}</span>
+                </div>
+              </>
+            ) : (
+              <div className="text-zinc-500 text-[10px] text-center py-2">FAC-{invoiceId.substring(0, 8).toUpperCase()}</div>
+            )
+          ) : (
+            <>
+              <div className="flex justify-between">
+                <span className="text-zinc-500 font-medium">Bénéficiaire</span>
+                <span className="text-zinc-200 font-bold">PhotoFlow AI Platform</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-500 font-medium">{t.clientLabel}</span>
+                <span className="text-zinc-200 font-semibold truncate max-w-[160px]" title={email}>{email || 'Photographe'}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-zinc-500 font-medium">Service</span>
+                <span className="text-primary font-bold">{t.proSubscription}</span>
+              </div>
+            </>
+          )}
+        </div>
+
+        {invoiceAlreadyPaid ? (
+          <div className="text-center py-4 space-y-4">
+            <div className="w-12 h-12 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mx-auto text-amber-400">
+              <span className="material-symbols-outlined text-2xl">warning</span>
+            </div>
+            <div>
+              <h4 className="text-zinc-200 font-bold text-sm">{t.alreadyPaidTitle}</h4>
+              <p className="text-[10px] text-zinc-500 mt-1">{t.alreadyPaidDesc}</p>
+            </div>
+            <button
+              onClick={() => {
+                if (invoiceId) {
+                  router.push('/dashboard/invoices?status=success');
+                } else {
+                  router.push('/dashboard/settings');
+                }
+              }}
+              className="w-full py-3 bg-zinc-800 hover:bg-zinc-750 active:scale-98 text-zinc-300 font-bold text-xs uppercase tracking-wider rounded-2xl border border-zinc-800 transition-all cursor-pointer"
+            >
+              Retour
+            </button>
+          </div>
+        ) : step === 'phone' ? (
           <form onSubmit={handleSendOtp} className="space-y-6">
             <div className="text-center mb-4">
               <h3 className="text-sm font-bold text-zinc-200">{t.phoneStepTitle}</h3>

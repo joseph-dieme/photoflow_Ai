@@ -126,6 +126,11 @@ export default function SettingsPage() {
           const params = new URLSearchParams(window.location.search);
           if (params.get('upgrade') === 'true') {
             setPlanActionType('upgrade_confirm');
+          } else if (params.get('status') === 'subscribed') {
+            setPlanActionType('upgrade_success');
+            // Remove query parameter from URL so it doesn't reappear on reload
+            router.replace('/dashboard/settings');
+            fetchSettingsData(session.user.id);
           }
         }
       }
@@ -183,24 +188,10 @@ export default function SettingsPage() {
     setPlanActionType('upgrade_confirm');
   };
 
-  const handleUpgradeExecute = async () => {
+  const handleUpgradeExecute = () => {
     if (!user) return;
     setPlanActionType('none');
-    setSaving(true);
-    try {
-      const { error } = await supabase
-        .from('pf_profiles')
-        .update({ plan: 'pro', storage_limit: 53687091200 }) // 50GB
-        .eq('id', user.id);
-
-      if (error) throw error;
-      setPlanActionType('upgrade_success');
-      fetchSettingsData(user.id);
-    } catch (err) {
-      console.error('Error upgrading plan:', err);
-    } finally {
-      setSaving(false);
-    }
+    router.push(`/checkout/wave?amount=12500&email=${encodeURIComponent(user.email || '')}`);
   };
 
   const triggerDowngradeConfirm = () => {
