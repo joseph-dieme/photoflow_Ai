@@ -249,7 +249,7 @@ export default function LandingPage() {
             <div className="absolute left-[3%] top-[12%] w-44 bg-surface-container/60 p-2.5 rounded-2xl border border-outline-variant/60 backdrop-blur-md shadow-2xl animate-float-1">
               <div className="aspect-[3/4] rounded-xl overflow-hidden mb-2 relative">
                 <img
-                  src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=400&auto=format&fit=crop&q=80"
+                  src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&auto=format&fit=crop&q=80"
                   alt="Portrait Retouché 1"
                   className="w-full h-full object-cover"
                 />
@@ -262,7 +262,7 @@ export default function LandingPage() {
             <div className="absolute left-[6%] bottom-[15%] w-40 bg-surface-container/60 p-2.5 rounded-2xl border border-outline-variant/60 backdrop-blur-md shadow-2xl animate-float-2">
               <div className="aspect-[3/4] rounded-xl overflow-hidden mb-2 relative">
                 <img
-                  src="https://images.unsplash.com/photo-1607990283143-e81e7a2c93ab?w=400&auto=format&fit=crop&q=80"
+                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80"
                   alt="Portrait Retouché 2"
                   className="w-full h-full object-cover"
                 />
@@ -288,7 +288,7 @@ export default function LandingPage() {
             <div className="absolute right-[6%] bottom-[20%] w-44 bg-surface-container/60 p-2.5 rounded-2xl border border-outline-variant/60 backdrop-blur-md shadow-2xl animate-float-4">
               <div className="aspect-[3/4] rounded-xl overflow-hidden mb-2 relative">
                 <img
-                  src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400&auto=format&fit=crop&q=80"
+                  src="https://images.unsplash.com/photo-1519741497674-611481863552?w=400&auto=format&fit=crop&q=80"
                   alt="Portrait Retouché 4"
                   className="w-full h-full object-cover"
                 />
