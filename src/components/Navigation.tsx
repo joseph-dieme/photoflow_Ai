@@ -167,16 +167,18 @@ export default function Navigation() {
                   >
                     {t.dashboard}
                   </Link>
-                  <Link
-                    href="/admin"
-                    onClick={() => setShowDropdown(false)}
-                    className="block px-4 py-2.5 text-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors border-t border-outline-variant/30"
-                  >
-                    {t.admin}
-                  </Link>
+                  {profile?.is_admin && (
+                    <Link
+                      href="/admin"
+                      onClick={() => setShowDropdown(false)}
+                      className="block px-4 py-2.5 text-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors border-t border-outline-variant/30"
+                    >
+                      {t.admin}
+                    </Link>
+                  )}
                   {profile?.plan !== 'pro' && (
                     <Link
-                      href="/checkout/select-plan"
+                      href="/checkout/select-plan?plan=pro"
                       onClick={() => setShowDropdown(false)}
                       className="block px-4 py-2.5 text-xs text-primary font-bold hover:bg-surface-container-highest transition-colors"
                     >

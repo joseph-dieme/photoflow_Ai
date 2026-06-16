@@ -161,15 +161,30 @@ export default function AdminPage() {
   const [toast, setToast] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (!session) {
         router.push('/login');
       } else {
-        // Simple admin check: in a real application, you'd verify a user role flag.
-        // For sandbox convenience, we allow the main user to review the admin panel.
-        setIsAdmin(true);
-        fetchPlatformMetrics();
-        fetchPromoCodes();
+        try {
+          const { data: profile, error } = await supabase
+            .from('pf_profiles')
+            .select('is_admin')
+            .eq('id', session.user.id)
+            .single();
+
+          if (error || !profile?.is_admin) {
+            setIsAdmin(false);
+            setLoading(false);
+          } else {
+            setIsAdmin(true);
+            fetchPlatformMetrics();
+            fetchPromoCodes();
+          }
+        } catch (err) {
+          console.error('Error verifying admin status:', err);
+          setIsAdmin(false);
+          setLoading(false);
+        }
       }
     });
   }, [router]);

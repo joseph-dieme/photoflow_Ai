@@ -263,7 +263,16 @@ function CardCheckoutForm() {
   }
 
   return (
-    <div className="w-full max-w-sm bg-[#1e1e22]/95 border border-zinc-800/80 backdrop-blur-md rounded-3xl p-8 shadow-2xl">
+    <div className="relative flex flex-col items-center">
+      <button
+        onClick={() => router.push('/checkout/select-plan')}
+        className="absolute -top-12 left-0 text-zinc-400 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer text-xs font-semibold"
+      >
+        <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+        <span>{lang === 'fr' ? 'Retour aux forfaits' : 'Back to plans'}</span>
+      </button>
+
+      <div className="w-full max-w-sm bg-[#1e1e22]/95 border border-zinc-800/80 backdrop-blur-md rounded-3xl p-8 shadow-2xl">
       {/* Card Header branding */}
       <div className="flex items-center justify-between mb-6 pb-4 border-b border-zinc-800/60">
         <div className="flex items-center gap-2">
@@ -501,6 +510,7 @@ function CardCheckoutForm() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

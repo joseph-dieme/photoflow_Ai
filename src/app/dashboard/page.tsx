@@ -204,6 +204,14 @@ export default function DashboardPage() {
       if (!session) {
         router.push('/login');
       } else {
+        if (typeof window !== 'undefined') {
+          const pendingPlan = localStorage.getItem('pf_signup_pending_plan');
+          if (pendingPlan === 'true') {
+            localStorage.removeItem('pf_signup_pending_plan');
+            router.push('/checkout/select-plan');
+            return;
+          }
+        }
         setUser(session.user);
         fetchDashboardData(session.user.id);
       }

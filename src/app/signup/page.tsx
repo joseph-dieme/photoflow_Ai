@@ -87,6 +87,14 @@ function SignupForm() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        router.push('/checkout/select-plan');
+      }
+    });
+  }, [router]);
+
   // Password Strength Logic
   const hasMinLength = password.length >= 8;
   const hasUppercase = /[A-Z]/.test(password);
@@ -130,8 +138,11 @@ function SignupForm() {
 
       if (data.user) {
         localStorage.setItem('pf_signup_pending_plan', 'true');
+        if (planParam === 'pro') {
+          localStorage.setItem('pf_signup_chosen_plan', 'pro');
+        }
         if (data.session) {
-          router.push('/checkout/select-plan');
+          router.push(`/checkout/select-plan${planParam === 'pro' ? '?plan=pro' : ''}`);
         } else {
           setSuccess(true);
         }

@@ -114,6 +114,7 @@ function WaveCheckoutForm() {
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
+  const [provider, setProvider] = useState<'wave' | 'orange' | 'free'>('wave');
 
   // Custom notification modal state
   const [notification, setNotification] = useState<{
@@ -299,23 +300,44 @@ function WaveCheckoutForm() {
         }
       }, 3000);
     } catch (err) {
-      console.error('Wave processing failed:', err);
+      console.error('Mobile money processing failed:', err);
       setLoading(false);
       showNotification('error', t.paymentFailedTitle, t.paymentFailed);
     }
   };
 
+  // Dynamic branding computations
+  const providerLabel = provider === 'wave' ? 'Wave Mobile Money' : provider === 'orange' ? 'Orange Money' : 'Free Money';
+  const logoLetter = provider === 'wave' ? 'W' : provider === 'orange' ? 'O' : 'F';
+  const logoBg = provider === 'wave' ? 'bg-blue-500' : provider === 'orange' ? 'bg-orange-500' : 'bg-red-600';
+  const headerTitle = provider === 'wave' ? 'WAVE PAY' : provider === 'orange' ? 'ORANGE MONEY' : 'FREE MONEY';
+  const inputFocus = provider === 'wave' ? 'focus:border-blue-500' : provider === 'orange' ? 'focus:border-orange-500' : 'focus:border-red-500';
+  const phonePlaceholder = provider === 'wave' ? '77 000 00 00' : provider === 'orange' ? '77 000 00 00' : '76 000 00 00';
+  const btnBg = provider === 'wave'
+    ? 'bg-blue-500 hover:bg-blue-600 shadow-blue-500/20'
+    : provider === 'orange'
+      ? 'bg-orange-500 hover:bg-orange-600 shadow-orange-500/20'
+      : 'bg-red-600 hover:bg-red-750 shadow-red-600/20';
+
+  const securedByText = lang === 'fr'
+    ? (provider === 'wave' ? 'Sécurisé par Wave Mobile Money' : provider === 'orange' ? 'Sécurisé par Orange Money' : 'Sécurisé par Free Money')
+    : (provider === 'wave' ? 'Secured by Wave Mobile Money' : provider === 'orange' ? 'Secured by Orange Money' : 'Secured by Free Money');
+
+  const successDesc = (lang === 'fr' ? 'Votre paiement de {amount} FCFA a été validé par {provider}.' : 'Your payment of {amount} FCFA has been verified by {provider}.')
+    .replace('{amount}', finalAmount.toLocaleString(lang === 'fr' ? 'fr-FR' : 'en-US'))
+    .replace('{provider}', providerLabel);
+
   if (step === 'success') {
     return (
       <div className="w-full max-w-sm bg-[#1e1e22]/95 border border-zinc-800/80 backdrop-blur-md rounded-3xl p-8 shadow-2xl text-center flex flex-col items-center animate-in fade-in zoom-in-95 duration-200">
-        <div className="w-16 h-16 rounded-full bg-blue-500 text-white flex items-center justify-center mb-6">
+        <div className={`w-16 h-16 rounded-full ${logoBg} text-white flex items-center justify-center mb-6 transition-colors duration-300`}>
           <span className="material-symbols-outlined text-4xl font-bold">check</span>
         </div>
         <h2 className="text-xl font-bold text-white mb-2">{t.paymentSuccess}</h2>
         <p className="text-zinc-400 text-xs mb-6">
-          {t.paymentSuccessDesc.replace('{amount}', finalAmount.toLocaleString(lang === 'fr' ? 'fr-FR' : 'en-US'))}
+          {successDesc}
         </p>
-        <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        <div className={`w-6 h-6 border-2 ${provider === 'wave' ? 'border-blue-500' : provider === 'orange' ? 'border-orange-500' : 'border-red-500'} border-t-transparent rounded-full animate-spin transition-colors duration-300`}></div>
         <p className="text-[10px] text-zinc-500 mt-4">{t.redirecting}</p>
       </div>
     );
@@ -323,11 +345,20 @@ function WaveCheckoutForm() {
 
   return (
     <div className="relative flex flex-col items-center">
+      {/* Back Button */}
+      <button
+        onClick={() => router.push('/checkout/select-plan')}
+        className="absolute -top-12 left-0 text-zinc-400 hover:text-white flex items-center gap-1.5 transition-colors cursor-pointer text-xs font-semibold"
+      >
+        <span className="material-symbols-outlined text-[16px]">arrow_back</span>
+        <span>{lang === 'fr' ? 'Retour aux forfaits' : 'Back to plans'}</span>
+      </button>
+
       {/* Language Switcher Button */}
       <div className="absolute -top-12 right-0">
         <button
           onClick={toggleLanguage}
-          className="px-2.5 py-1 text-[11px] font-bold border border-zinc-800 hover:border-blue-500 rounded bg-[#1e1e22] text-zinc-400 hover:text-white transition-all uppercase cursor-pointer"
+          className="px-2.5 py-1 text-[11px] font-bold border border-zinc-800 hover:border-zinc-500 rounded bg-[#1e1e22] text-zinc-400 hover:text-white transition-all uppercase cursor-pointer"
           title="Changer de langue / Switch Language"
         >
           {lang === 'fr' ? 'EN' : 'FR'}
@@ -335,13 +366,13 @@ function WaveCheckoutForm() {
       </div>
 
       <div className="w-full max-w-sm bg-[#1e1e22]/95 border border-zinc-800/80 backdrop-blur-md rounded-3xl p-8 shadow-2xl">
-        {/* Wave Header branding */}
+        {/* Mobile Money Header branding */}
         <div className="flex items-center justify-between mb-6 pb-4 border-b border-zinc-800/60">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-blue-500 flex items-center justify-center text-white font-bold text-lg">
-              W
+            <div className={`w-8 h-8 rounded-lg ${logoBg} flex items-center justify-center text-white font-bold text-lg transition-colors duration-300`}>
+              {logoLetter}
             </div>
-            <span className="font-bold text-zinc-200 text-sm tracking-wider">WAVE PAY</span>
+            <span className="font-bold text-zinc-200 text-sm tracking-wider transition-colors duration-300">{headerTitle}</span>
           </div>
           <div className="text-right">
             <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">{t.amountLabel}</p>
@@ -387,8 +418,8 @@ function WaveCheckoutForm() {
                 <span className="text-zinc-200 font-semibold truncate max-w-[160px]" title={email}>{email || 'Photographe'}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-zinc-500 font-medium">Service</span>
-                <span className="text-primary font-bold">{t.proSubscription}</span>
+                <span className="text-zinc-500 font-medium">Mode</span>
+                <span className="text-primary font-bold">{providerLabel}</span>
               </div>
             </>
           )}
@@ -433,7 +464,7 @@ function WaveCheckoutForm() {
                     setPromoCode(e.target.value);
                     if (promoError) setPromoError(null);
                   }}
-                  className="flex-grow bg-zinc-950/40 border border-zinc-800/80 focus:border-blue-500 rounded-xl px-3 py-2 text-xs outline-none text-white transition-colors uppercase font-mono"
+                  className={`flex-grow bg-zinc-950/40 border border-zinc-800/80 focus:border-zinc-500 rounded-xl px-3 py-2 text-xs outline-none text-white transition-colors uppercase font-mono`}
                 />
                 <button
                   type="submit"
@@ -490,8 +521,49 @@ function WaveCheckoutForm() {
         ) : step === 'phone' ? (
           <form onSubmit={handleSendOtp} className="space-y-6">
             <div className="text-center mb-4">
-              <h3 className="text-sm font-bold text-zinc-200">{t.phoneStepTitle}</h3>
-              <p className="text-[10px] text-zinc-500 mt-1">{t.phoneStepDesc}</p>
+              <h3 className="text-sm font-bold text-zinc-200">{lang === 'fr' ? 'Choisissez votre opérateur' : 'Choose your provider'}</h3>
+            </div>
+
+            {/* Operator Selector Tabs */}
+            <div className="grid grid-cols-3 gap-2 p-1 bg-zinc-950/40 rounded-xl border border-zinc-800/50">
+              <button
+                type="button"
+                onClick={() => setProvider('wave')}
+                className={`py-2.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                  provider === 'wave'
+                    ? 'bg-blue-500 text-white shadow-md shadow-blue-500/10'
+                    : 'text-zinc-500 hover:text-zinc-300'
+                }`}
+              >
+                Wave
+              </button>
+              <button
+                type="button"
+                onClick={() => setProvider('orange')}
+                className={`py-2.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                  provider === 'orange'
+                    ? 'bg-orange-500 text-white shadow-md shadow-orange-500/10'
+                    : 'text-zinc-500 hover:text-zinc-300'
+                }`}
+              >
+                Orange
+              </button>
+              <button
+                type="button"
+                onClick={() => setProvider('free')}
+                className={`py-2.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer ${
+                  provider === 'free'
+                    ? 'bg-red-600 text-white shadow-md shadow-red-600/10'
+                    : 'text-zinc-500 hover:text-zinc-300'
+                }`}
+              >
+                Free
+              </button>
+            </div>
+
+            <div className="text-center">
+              <h4 className="text-xs font-bold text-zinc-300">{t.phoneStepTitle}</h4>
+              <p className="text-[9px] text-zinc-500 mt-1">{t.phoneStepDesc}</p>
             </div>
 
             <div className="space-y-2">
@@ -503,8 +575,8 @@ function WaveCheckoutForm() {
                   required
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="77 000 00 00"
-                  className="w-full bg-zinc-900/50 border border-zinc-800 focus:border-blue-500 rounded-2xl pl-16 pr-4 py-3.5 text-sm font-bold outline-none text-white transition-colors"
+                  placeholder={phonePlaceholder}
+                  className={`w-full bg-zinc-900/50 border border-zinc-800 ${inputFocus} rounded-2xl pl-16 pr-4 py-3.5 text-sm font-bold outline-none text-white transition-colors`}
                 />
               </div>
             </div>
@@ -512,7 +584,7 @@ function WaveCheckoutForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-blue-500 hover:bg-blue-600 active:scale-98 text-white font-bold text-xs uppercase tracking-wider rounded-2xl transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+              className={`w-full py-4 ${btnBg} active:scale-98 text-white font-bold text-xs uppercase tracking-wider rounded-2xl transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:pointer-events-none`}
             >
               {loading ? (
                 <span className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin"></span>
@@ -537,14 +609,14 @@ function WaveCheckoutForm() {
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
                 placeholder="0 0 0 0"
-                className="w-full bg-zinc-900/50 border border-zinc-800 focus:border-blue-500 rounded-2xl px-4 py-3.5 text-center text-lg font-black tracking-widest outline-none text-white transition-colors"
+                className={`w-full bg-zinc-900/50 border border-zinc-800 ${inputFocus} rounded-2xl px-4 py-3.5 text-center text-lg font-black tracking-widest outline-none text-white transition-colors`}
               />
             </div>
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-4 bg-blue-500 hover:bg-blue-600 active:scale-98 text-white font-bold text-xs uppercase tracking-wider rounded-2xl transition-all shadow-lg shadow-blue-500/20 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+              className={`w-full py-4 ${btnBg} active:scale-98 text-white font-bold text-xs uppercase tracking-wider rounded-2xl transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:pointer-events-none`}
             >
               {loading ? (
                 <span className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin"></span>
@@ -558,7 +630,7 @@ function WaveCheckoutForm() {
         {/* Safety notice */}
         <div className="mt-8 text-center border-t border-zinc-800/60 pt-4 flex items-center justify-center gap-1.5 text-[9px] text-zinc-500 font-bold uppercase tracking-wider">
           <span className="material-symbols-outlined text-xs">verified_user</span>
-          {t.securedBy}
+          {securedByText}
         </div>
       </div>
 

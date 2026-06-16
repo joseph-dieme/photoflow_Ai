@@ -2,6 +2,8 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 import Navigation from '@/components/Navigation';
 import { useLanguage } from '@/hooks/useLanguage';
 
@@ -109,13 +111,37 @@ const translations = {
 };
 
 export default function LandingPage() {
+  const router = useRouter();
   const lang = useLanguage();
   const [sliderPosition, setSliderPosition] = useState(50);
   const [isDragging, setIsDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
+  const [user, setUser] = useState<any>(null);
 
   const t = translations[lang];
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setUser(session.user);
+        if (typeof window !== 'undefined') {
+          const pendingPlan = localStorage.getItem('pf_signup_pending_plan');
+          if (pendingPlan === 'true') {
+            router.push('/checkout/select-plan');
+          }
+        }
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [router]);
 
   // Handle before/after slider dragging
   const handleMove = (clientX: number) => {
@@ -214,10 +240,10 @@ export default function LandingPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
-                href="/signup"
+                href={user ? "/dashboard" : "/signup"}
                 className="bg-primary-container text-on-primary-container px-8 py-4 rounded-xl font-semibold hover:scale-105 transition-transform active:scale-95 text-center flex items-center justify-center gap-2 shadow-lg hover:shadow-primary-container/20"
               >
-                {t.heroStartFree}
+                {user ? (lang === 'fr' ? 'Accéder au tableau de bord' : 'Go to Dashboard') : t.heroStartFree}
               </Link>
               <a
                 href="#features"
@@ -396,7 +422,7 @@ export default function LandingPage() {
                   </li>
                 </ul>
                 <Link
-                  href="/signup"
+                  href={user ? "/checkout/select-plan" : "/signup"}
                   className="w-full text-center border border-outline-variant py-3 rounded-xl hover:bg-surface-container-highest transition-colors font-semibold"
                 >
                   {t.pricingFreeCTA}
@@ -436,7 +462,7 @@ export default function LandingPage() {
                   </li>
                 </ul>
                 <Link
-                  href="/signup?plan=pro"
+                  href={user ? "/checkout/select-plan?plan=pro" : "/signup?plan=pro"}
                   className="w-full text-center bg-primary-container text-on-primary-container py-3 rounded-xl font-bold hover:brightness-110 transition-all shadow-lg"
                 >
                   {t.pricingProCTA}

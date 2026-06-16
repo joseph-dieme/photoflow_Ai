@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import Navigation from '@/components/Navigation';
 import { useLanguage } from '@/hooks/useLanguage';
@@ -30,7 +30,7 @@ const translations = {
     proCTASelect: 'Choisir le Plan Pro',
     paymentModalTitle: 'Mode de paiement',
     paymentModalDesc: 'Sélectionnez votre moyen de paiement pour activer PhotoFlow Pro.',
-    payWave: 'Payer via Wave Mobile Money',
+    payWave: 'Payer par Mobile Money (Wave, Orange, Free)',
     payCard: 'Payer par Carte Bancaire',
     modalCancel: 'Annuler',
     downgradeConfirmTitle: 'Repasser au forfait gratuit ?',
@@ -62,7 +62,7 @@ const translations = {
     proCTASelect: 'Choose Pro Plan',
     paymentModalTitle: 'Payment Method',
     paymentModalDesc: 'Select your preferred payment method to activate PhotoFlow Pro.',
-    payWave: 'Pay via Wave Mobile Money',
+    payWave: 'Pay with Mobile Money (Wave, Orange, Free)',
     payCard: 'Pay with Credit Card',
     modalCancel: 'Cancel',
     downgradeConfirmTitle: 'Downgrade to Free Plan?',
@@ -73,8 +73,10 @@ const translations = {
   }
 };
 
-export default function SelectPlanPage() {
+function SelectPlanContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const planParam = searchParams.get('plan');
   const lang = useLanguage();
   const t = translations[lang] || translations.fr;
   
@@ -92,9 +94,17 @@ export default function SelectPlanPage() {
       } else {
         setUser(session.user);
         fetchProfile(session.user.id);
+
+        if (typeof window !== 'undefined') {
+          const storedPlan = localStorage.getItem('pf_signup_chosen_plan');
+          if (planParam === 'pro' || storedPlan === 'pro') {
+            localStorage.removeItem('pf_signup_chosen_plan');
+            setShowPaymentModal(true);
+          }
+        }
       }
     });
-  }, [router]);
+  }, [router, planParam]);
 
   async function fetchProfile(userId: string) {
     try {
@@ -346,5 +356,20 @@ export default function SelectPlanPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function SelectPlanPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background text-on-surface flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="w-8 h-8 rounded-full border-2 border-primary border-t-transparent animate-spin mx-auto"></div>
+          <p className="text-xs text-on-surface-variant">Chargement...</p>
+        </div>
+      </div>
+    }>
+      <SelectPlanContent />
+    </Suspense>
   );
 }
