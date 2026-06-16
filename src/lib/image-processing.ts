@@ -374,11 +374,11 @@ export async function applyAdjustments(
     
     // Calibration parameters
     const shTint = (adjustments.shadowTint || 0) / 100 * 20;
-    const rPriHue = (adjustments.redPrimaryHue || 0) / 100 * 0.35;
+    const rPriHue = (adjustments.redPrimaryHue || 0) / 100 * 30;
     const rPriSat = (100 + (adjustments.redPrimarySaturation || 0)) / 100;
-    const gPriHue = (adjustments.greenPrimaryHue || 0) / 100 * 0.35;
+    const gPriHue = (adjustments.greenPrimaryHue || 0) / 100 * 30;
     const gPriSat = (100 + (adjustments.greenPrimarySaturation || 0)) / 100;
-    const bPriHue = (adjustments.bluePrimaryHue || 0) / 100 * 0.35;
+    const bPriHue = (adjustments.bluePrimaryHue || 0) / 100 * 30;
     const bPriSat = (100 + (adjustments.bluePrimarySaturation || 0)) / 100;
 
     // HSL parameters
@@ -406,7 +406,8 @@ export async function applyAdjustments(
     let vigR = 0;
     let vigG = 0;
     let vigB = 0;
-    if (adjustments.vignetteColor) {
+    // If vignette is positive and color is black, default to white
+    if (adjustments.vignetteColor && (adjustments.vignetteColor !== '#000000' || adjustments.vignette < 0)) {
       const hex = adjustments.vignetteColor.replace('#', '');
       vigR = parseInt(hex.substring(0, 2), 16) || 0;
       vigG = parseInt(hex.substring(2, 4), 16) || 0;
@@ -484,6 +485,16 @@ export async function applyAdjustments(
       // Calculate luminance again for Tone Curve
       lum = 0.299 * r + 0.587 * g + 0.114 * b;
 
+      // 4.5. HDR Rendering
+      if (adjustments.hdrEnabled) {
+        const L = Math.max(0, Math.min(1, lum / 255));
+        // Soft local tone mapping curve: lift shadows, lower highlights
+        const hdrOffset = (Math.sin(L * Math.PI) * 0.18 + (1 - L) * 0.12 - L * L * 0.08) * 255;
+        r += hdrOffset;
+        g += hdrOffset;
+        b += hdrOffset;
+      }
+
       // 5.5 Parametric Tone Curve (using smooth cubic Bernstein polynomials to prevent banding)
       if (cHigh !== 0 || cLight !== 0 || cDark !== 0 || cShad !== 0) {
         const L = Math.max(0, Math.min(1, lum / 255));
@@ -492,7 +503,7 @@ export async function applyAdjustments(
         const wLight = 3 * L * L * (1 - L);
         const wHigh = L * L * L;
 
-        const totalShift = (cShad * wShad + cDark * wDark + cLight * wLight + cHigh * wHigh) * 45;
+        const totalShift = (cShad * wShad + cDark * wDark + cLight * wLight + cHigh * wHigh) * 95;
         r += totalShift;
         g += totalShift;
         b += totalShift;
@@ -580,7 +591,7 @@ export async function applyAdjustments(
         if (hDiffRed > 180) hDiffRed = 360 - hDiffRed;
         const wRed = Math.max(0, 1 - hDiffRed / 40);
         if (wRed > 0) {
-          calHueShift += rPriHue * 0.35 * wRed;
+          calHueShift += rPriHue * wRed;
           calSatMult *= (1.0 + (rPriSat - 1) * wRed);
         }
 
@@ -588,7 +599,7 @@ export async function applyAdjustments(
         const hDiffGreen = Math.abs(hue - 120);
         const wGreen = Math.max(0, 1 - hDiffGreen / 40);
         if (wGreen > 0) {
-          calHueShift += gPriHue * 0.35 * wGreen;
+          calHueShift += gPriHue * wGreen;
           calSatMult *= (1.0 + (gPriSat - 1) * wGreen);
         }
 
@@ -596,7 +607,7 @@ export async function applyAdjustments(
         const hDiffBlue = Math.abs(hue - 240);
         const wBlue = Math.max(0, 1 - hDiffBlue / 40);
         if (wBlue > 0) {
-          calHueShift += bPriHue * 0.35 * wBlue;
+          calHueShift += bPriHue * wBlue;
           calSatMult *= (1.0 + (bPriSat - 1) * wBlue);
         }
 
@@ -638,7 +649,8 @@ export async function applyAdjustments(
       }
 
       // 7. HSL Color grading (using continuous piecewise linear interpolation to cover 100% of color wheel)
-      const satWeight = Math.min(1, Math.max(0, (pixelSat - 0.08) / 0.1));
+      // Filter out neutral pixels below 2% saturation to avoid colored noise, but keep full grading elsewhere
+      const satWeight = Math.min(1, Math.max(0, pixelSat / 0.02));
       if (satWeight > 0) {
         const nodes = [
           { hue: 0,   sat: rSatAmt, lum: rLumAmt },
@@ -1086,7 +1098,7 @@ export async function compressAndConvert(
   } = options;
 
   // If file is RAW format (not standard browser formats), we extract its embedded JPEG
-  const isRaw = /\.(raw|cr2|nef|arw|dng|pef)$/i.test(file.name);
+  const isRaw = /\.(raw|cr2|cr3|nef|arw|dng|pef|orf|rw2|raf|srw|mrw|crw|kdc|dcr)$/i.test(file.name);
 
   if (isRaw) {
     return new Promise((resolve, reject) => {

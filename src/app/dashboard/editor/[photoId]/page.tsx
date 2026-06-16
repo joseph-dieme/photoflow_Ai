@@ -331,9 +331,55 @@ export default function EditorPage() {
   const [isComparing, setIsComparing] = useState(true);
   const [isDraggingSlider, setIsDraggingSlider] = useState(false);
   const compareContainerRef = useRef<HTMLDivElement>(null);
+  const notificationTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Clear timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (notificationTimeoutRef.current) {
+        clearTimeout(notificationTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Panning states for zoomed view
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const [isSpacePressed, setIsSpacePressed] = useState(false);
+
+  // Keyboard listeners for Spacebar panning
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space' && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA' && document.activeElement?.tagName !== 'SELECT') {
+        e.preventDefault();
+        setIsSpacePressed(true);
+      }
+    };
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        setIsSpacePressed(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+    };
+  }, []);
 
   // Zoom state
   const [zoomLevel, setZoomLevel] = useState<'fit' | '100' | '200'>('fit');
+
+  // Reset pan offset when zoom level changes back to 'fit'
+  useEffect(() => {
+    if (zoomLevel === 'fit') {
+      setPanOffset({ x: 0, y: 0 });
+    }
+  }, [zoomLevel]);
 
   // Active Tool selection
   const [activeTool, setActiveTool] = useState<string>('select');
@@ -482,6 +528,29 @@ export default function EditorPage() {
       title,
       message
     });
+
+    if (notificationTimeoutRef.current) {
+      clearTimeout(notificationTimeoutRef.current);
+      notificationTimeoutRef.current = null;
+    }
+
+    // Auto-close success, warning, and info notifications (except RAW development progress)
+    if (type === 'success' || type === 'info' || type === 'warning') {
+      const isRawDev = title.includes('RAW') || message.includes('RAW') || title.includes('Développement');
+      if (!isRawDev) {
+        notificationTimeoutRef.current = setTimeout(() => {
+          setNotification(prev => ({ ...prev, isOpen: false }));
+        }, 2500);
+      }
+    }
+  };
+
+  const closeNotification = () => {
+    setNotification(prev => ({ ...prev, isOpen: false }));
+    if (notificationTimeoutRef.current) {
+      clearTimeout(notificationTimeoutRef.current);
+      notificationTimeoutRef.current = null;
+    }
   };
 
   const base64ToBlob = (base64: string) => {
@@ -1484,8 +1553,8 @@ export default function EditorPage() {
         return;
       }
 
-      // Determine preview dimension limit based on zoom level: 1200 for fit, 3200 for 100%/200% zoom
-      const previewLimit = zoomLevel === 'fit' ? 1200 : 3200;
+      // Determine preview dimension limit based on zoom level: 1200 for fit, 1600 for 100%/200% zoom (optimized for JS performance)
+      const previewLimit = zoomLevel === 'fit' ? 1200 : 1600;
       
       // Temporarily hide text from the background preview adjustments if the text tool is currently active
       const adjustedSettings = activeTool === 'text'
@@ -2271,67 +2340,122 @@ export default function EditorPage() {
               </div>
             )}
 
-            <div 
-              ref={compareContainerRef}
-              onMouseMove={handleCompareMouseMove}
-              onTouchMove={handleCompareTouchMove}
-              onMouseDown={(e) => {
-                if (activeTool === 'select') setIsDraggingSlider(true);
-              }}
-              onMouseUp={() => setIsDraggingSlider(false)}
-              onMouseLeave={() => setIsDraggingSlider(false)}
-              className={`relative overflow-hidden ${
-                activeTool === 'select' ? 'cursor-ew-resize' :
-                activeTool === 'heal' ? 'cursor-none' :
-                activeTool === 'color' ? 'cursor-cell' :
-                activeTool === 'text' ? 'cursor-text' : 'cursor-crosshair'
-              }`}
-            >
-              {/* After image container (Adjusted) */}
-              <img
-                ref={imageRef}
-                src={processedUrl}
-                alt="Edited Portrait Preview"
-                className={`block select-none max-h-[80vh] w-auto transition-transform ${
-                  zoomLevel === '100' ? 'scale-150' : zoomLevel === '200' ? 'scale-[2.5]' : 'scale-100'
-                }`}
-              />
-
-              {/* Interactive Overlay Canvas */}
-              {activeTool !== 'select' && imgNaturalSize.width > 0 && (
-                <canvas
-                  ref={overlayCanvasRef}
-                  width={imgNaturalSize.width}
-                  height={imgNaturalSize.height}
-                  className={`absolute top-0 left-0 w-full h-full z-30 block select-none transition-transform origin-center ${
-                    zoomLevel === '100' ? 'scale-150' : zoomLevel === '200' ? 'scale-[2.5]' : 'scale-100'
-                  }`}
-                  onMouseDown={handleOverlayMouseDown}
-                  onMouseMove={handleOverlayMouseMove}
-                  onMouseUp={handleOverlayMouseUp}
-                  onMouseLeave={handleOverlayMouseLeave}
-                  style={{
-                    cursor: activeTool === 'color' ? 'cell' : activeTool === 'heal' ? 'none' : 'crosshair',
-                  }}
-                />
-              )}
-
-              {/* Before image overlay (Grayscale/Unedited) */}
-              {isComparing && activeTool === 'select' && (
+            {(() => {
+              const scaleVal = zoomLevel === '100' ? 1.5 : zoomLevel === '200' ? 2.5 : 1.0;
+              const canPan = zoomLevel !== 'fit' && (activeTool === 'select' || isSpacePressed);
+              
+              return (
                 <div 
-                  style={{ width: `${sliderPosition}%` }}
-                  className="absolute inset-y-0 left-0 overflow-hidden border-r-2 border-white/50 z-10"
+                  ref={compareContainerRef}
+                  onMouseDown={(e) => {
+                    if (canPan) {
+                      setIsPanning(true);
+                      setPanStart({ x: e.clientX - panOffset.x, y: e.clientY - panOffset.y });
+                    } else if (activeTool === 'select') {
+                      setIsDraggingSlider(true);
+                    }
+                  }}
+                  onMouseMove={(e) => {
+                    if (isPanning) {
+                      setPanOffset({
+                        x: e.clientX - panStart.x,
+                        y: e.clientY - panStart.y
+                      });
+                    } else {
+                      handleCompareMouseMove(e);
+                    }
+                  }}
+                  onMouseUp={() => {
+                    setIsPanning(false);
+                    setIsDraggingSlider(false);
+                  }}
+                  onMouseLeave={() => {
+                    setIsPanning(false);
+                    setIsDraggingSlider(false);
+                  }}
+                  onTouchStart={(e) => {
+                    if (canPan && e.touches.length === 1) {
+                      setIsPanning(true);
+                      setPanStart({
+                        x: e.touches[0].clientX - panOffset.x,
+                        y: e.touches[0].clientY - panOffset.y
+                      });
+                    }
+                  }}
+                  onTouchMove={(e) => {
+                    if (isPanning && e.touches.length === 1) {
+                      setPanOffset({
+                        x: e.touches[0].clientX - panStart.x,
+                        y: e.touches[0].clientY - panStart.y
+                      });
+                    } else {
+                      handleCompareTouchMove(e);
+                    }
+                  }}
+                  onTouchEnd={() => {
+                    setIsPanning(false);
+                  }}
+                  className={`relative overflow-hidden ${
+                    canPan ? (isPanning ? 'cursor-grabbing' : 'cursor-grab') :
+                    activeTool === 'select' ? 'cursor-ew-resize' :
+                    activeTool === 'heal' ? 'cursor-none' :
+                    activeTool === 'color' ? 'cursor-cell' :
+                    activeTool === 'text' ? 'cursor-text' : 'cursor-crosshair'
+                  }`}
                 >
+                  {/* After image container (Adjusted) */}
                   <img
-                    src={originalUrl}
-                    alt="Original Raw Before"
-                    className={`max-h-[80vh] w-auto max-w-none transition-transform ${
-                      zoomLevel === '100' ? 'scale-150' : zoomLevel === '200' ? 'scale-[2.5]' : 'scale-100'
-                    }`}
-                    style={{ width: compareContainerRef.current?.getBoundingClientRect().width }}
+                    ref={imageRef}
+                    src={processedUrl}
+                    alt="Edited Portrait Preview"
+                    className="block select-none max-h-[80vh] w-auto origin-center"
+                    style={{
+                      transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${scaleVal})`,
+                      transition: isPanning ? 'none' : 'transform 150ms ease-out',
+                    }}
                   />
+
+                  {/* Interactive Overlay Canvas */}
+                  {activeTool !== 'select' && imgNaturalSize.width > 0 && (
+                    <canvas
+                      ref={overlayCanvasRef}
+                      width={imgNaturalSize.width}
+                      height={imgNaturalSize.height}
+                      className="absolute top-0 left-0 w-full h-full z-30 block select-none origin-center"
+                      onMouseDown={handleOverlayMouseDown}
+                      onMouseMove={handleOverlayMouseMove}
+                      onMouseUp={handleOverlayMouseUp}
+                      onMouseLeave={handleOverlayMouseLeave}
+                      style={{
+                        cursor: activeTool === 'color' ? 'cell' : activeTool === 'heal' ? 'none' : 'crosshair',
+                        pointerEvents: isSpacePressed ? 'none' : 'auto',
+                        transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${scaleVal})`,
+                        transition: isPanning ? 'none' : 'transform 150ms ease-out',
+                      }}
+                    />
+                  )}
+
+                  {/* Before image overlay (Grayscale/Unedited) */}
+                  {isComparing && activeTool === 'select' && (
+                    <div 
+                      style={{ width: `${sliderPosition}%` }}
+                      className="absolute inset-y-0 left-0 overflow-hidden border-r-2 border-white/50 z-10 animate-fade-in"
+                    >
+                      <img
+                        src={originalUrl}
+                        alt="Original Raw Before"
+                        className="max-h-[80vh] w-auto max-w-none origin-center"
+                        style={{ 
+                          width: compareContainerRef.current?.getBoundingClientRect().width,
+                          transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${scaleVal})`,
+                          transition: isPanning ? 'none' : 'transform 150ms ease-out',
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
-              )}
+              );
+            })()}
 
               {/* Before/After Labels */}
               {activeTool === 'select' && (
@@ -2344,7 +2468,6 @@ export default function EditorPage() {
                   </div>
                 </>
               )}
-            </div>
             
             {/* Camera Exif metadata glass badge */}
             <div className="absolute top-4 right-4 glass-panel px-4 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex gap-4 pointer-events-none z-20">
@@ -3159,6 +3282,25 @@ export default function EditorPage() {
                 {renderSlider(lang === 'fr' ? 'Correction du voile' : 'Dehaze', 'dehaze', -100, 100)}
                 {renderSlider(t.adjustVibrance, 'vibrance', -100, 100)}
                 {renderSlider(t.adjustSaturation, 'saturation', -100, 100)}
+
+                <div className="h-[1px] bg-outline-variant/20 my-3"></div>
+
+                {/* HDR Rendering */}
+                <div className="flex items-center justify-between text-[10px] font-bold text-on-surface-variant uppercase tracking-wider py-1.5 px-0.5">
+                  <span className="flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[14px] text-primary">filter_hdr</span>
+                    {lang === 'fr' ? 'Rendu HDR Intelligent' : 'Smart HDR Rendering'}
+                  </span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={adjustments.hdrEnabled || false}
+                      onChange={(e) => handleSliderChange('hdrEnabled', e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-8 h-4 bg-outline-variant rounded-full peer peer-focus:ring-1 peer-focus:ring-primary peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary"></div>
+                  </label>
+                </div>
               </div>
             </details>
 
@@ -3198,7 +3340,8 @@ export default function EditorPage() {
                       const pLightY = Math.max(0, Math.min(100, 35 - ltVal));
                       const pHighY = Math.max(0, Math.min(100, 15 - hiVal));
 
-                      const pathStr = `M 0 100 C 15 ${pShadY}, 35 ${pDarkY}, 65 ${pLightY}, 100 ${pHighY}`;
+                      // Mathematically valid, smooth cubic spline chain passing through all points
+                      const pathStr = `M 0 100 C 12.5 100, 12.5 ${pShadY}, 25 ${pShadY} C 37.5 ${pShadY}, 37.5 ${pDarkY}, 50 ${pDarkY} C 62.5 ${pDarkY}, 62.5 ${pLightY}, 75 ${pLightY} C 87.5 ${pLightY}, 87.5 ${pHighY}, 100 ${pHighY}`;
                       return (
                         <path 
                           d={pathStr} 
@@ -3294,6 +3437,25 @@ export default function EditorPage() {
                 {renderSlider(t.adjustSharpening, 'sharpening', 0, 100)}
                 {renderSlider(lang === 'fr' ? 'Réduction bruit (Luminance)' : 'Noise Reduction (Luminance)', 'noiseReductionLuminance', 0, 100)}
                 {renderSlider(lang === 'fr' ? 'Réduction bruit (Couleur)' : 'Noise Reduction (Color)', 'noiseReductionColor', 0, 100)}
+
+                <div className="h-[1px] bg-outline-variant/20 my-3"></div>
+
+                {/* Skin Smoothing */}
+                <div className="flex items-center justify-between text-[10px] font-bold text-on-surface-variant uppercase tracking-wider py-1.5 px-0.5">
+                  <span className="flex items-center gap-1.5">
+                    <span className="material-symbols-outlined text-[14px] text-primary">face</span>
+                    {lang === 'fr' ? 'Lissage de la peau' : 'Skin Smoothing'}
+                  </span>
+                  <label className="relative inline-flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={adjustments.skinSmoothing || false}
+                      onChange={(e) => handleSliderChange('skinSmoothing', e.target.checked)}
+                      className="sr-only peer"
+                    />
+                    <div className="w-8 h-4 bg-outline-variant rounded-full peer peer-focus:ring-1 peer-focus:ring-primary peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary"></div>
+                  </label>
+                </div>
               </div>
             </details>
 
@@ -3658,7 +3820,7 @@ export default function EditorPage() {
       {/* Custom Notification Modal */}
       {notification.isOpen && (
         <div 
-          onClick={() => setNotification(prev => ({ ...prev, isOpen: false }))}
+          onClick={closeNotification}
           className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4 cursor-pointer animate-in fade-in duration-200"
         >
           <div 
@@ -3689,16 +3851,29 @@ export default function EditorPage() {
             <h3 className="font-display-lg text-lg font-bold text-white mb-1">
               {notification.title}
             </h3>
-            <p className="text-on-surface-variant text-xs mb-6 px-2">
+            <p className={`text-on-surface-variant text-xs px-2 ${
+              (notification.type === 'error' || 
+               notification.title.includes('RAW') || 
+               notification.message.includes('RAW') || 
+               notification.title.includes('Développement')) 
+                ? 'mb-6' 
+                : 'mb-1'
+            }`}>
               {notification.message}
             </p>
 
-            <button
-              onClick={() => setNotification(prev => ({ ...prev, isOpen: false }))}
-              className="w-full bg-surface-container-highest hover:bg-surface-bright text-white font-semibold py-2.5 rounded-xl border border-outline-variant/30 active:scale-98 transition-all cursor-pointer text-xs"
-            >
-              {t.notifClose}
-            </button>
+            {/* Render close button only for errors or RAW development progress */}
+            {(notification.type === 'error' || 
+              notification.title.includes('RAW') || 
+              notification.message.includes('RAW') || 
+              notification.title.includes('Développement')) && (
+              <button
+                onClick={closeNotification}
+                className="w-full bg-surface-container-highest hover:bg-surface-bright text-white font-semibold py-2.5 rounded-xl border border-outline-variant/30 active:scale-98 transition-all cursor-pointer text-xs mt-4"
+              >
+                {t.notifClose}
+              </button>
+            )}
           </div>
         </div>
       )}
