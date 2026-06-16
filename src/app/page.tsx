@@ -231,6 +231,73 @@ export default function LandingPage() {
       <main className="flex-grow pt-16">
         {/* Hero Section */}
         <section className="relative min-h-[95vh] flex flex-col items-center justify-center px-6 md:px-margin-desktop text-center py-16 overflow-hidden">
+          {/* Background Video */}
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover opacity-15 pointer-events-none -z-10 mix-blend-screen"
+          >
+            <source src="https://assets.mixkit.co/videos/preview/mixkit-photographer-taking-photos-of-a-model-34446-large.mp4" type="video/mp4" />
+          </video>
+          <div className="absolute inset-0 bg-gradient-to-b from-background/30 via-background/80 to-background -z-10"></div>
+
+          {/* Floating Retouched Photo Cards (Desktop only) */}
+          <div className="absolute inset-0 pointer-events-none hidden lg:block overflow-hidden">
+            {/* Top Left Card */}
+            <div className="absolute left-[3%] top-[12%] w-44 bg-surface-container/60 p-2.5 rounded-2xl border border-outline-variant/60 backdrop-blur-md shadow-2xl animate-float-1">
+              <div className="aspect-[3/4] rounded-xl overflow-hidden mb-2 relative">
+                <img
+                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80"
+                  alt="Portrait Retouché 1"
+                  className="w-full h-full object-cover"
+                />
+                <span className="absolute bottom-1.5 right-1.5 bg-[#10b981] text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full select-none">IA ACTIVE</span>
+              </div>
+              <p className="text-[10px] font-bold text-white text-center">85mm f/1.4 Portrait</p>
+            </div>
+
+            {/* Bottom Left Card */}
+            <div className="absolute left-[6%] bottom-[15%] w-40 bg-surface-container/60 p-2.5 rounded-2xl border border-outline-variant/60 backdrop-blur-md shadow-2xl animate-float-2">
+              <div className="aspect-[3/4] rounded-xl overflow-hidden mb-2 relative">
+                <img
+                  src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&auto=format&fit=crop&q=80"
+                  alt="Portrait Retouché 2"
+                  className="w-full h-full object-cover"
+                />
+                <span className="absolute bottom-1.5 right-1.5 bg-[#10b981] text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full select-none">IA ACTIVE</span>
+              </div>
+              <p className="text-[10px] font-bold text-white text-center">Studio / Contrastes</p>
+            </div>
+
+            {/* Top Right Card */}
+            <div className="absolute right-[3%] top-[15%] w-40 bg-surface-container/60 p-2.5 rounded-2xl border border-outline-variant/60 backdrop-blur-md shadow-2xl animate-float-3">
+              <div className="aspect-[3/4] rounded-xl overflow-hidden mb-2 relative">
+                <img
+                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80"
+                  alt="Portrait Retouché 3"
+                  className="w-full h-full object-cover"
+                />
+                <span className="absolute bottom-1.5 right-1.5 bg-[#10b981] text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full select-none">IA ACTIVE</span>
+              </div>
+              <p className="text-[10px] font-bold text-white text-center">Lumière Naturelle</p>
+            </div>
+
+            {/* Bottom Right Card */}
+            <div className="absolute right-[6%] bottom-[20%] w-44 bg-surface-container/60 p-2.5 rounded-2xl border border-outline-variant/60 backdrop-blur-md shadow-2xl animate-float-4">
+              <div className="aspect-[3/4] rounded-xl overflow-hidden mb-2 relative">
+                <img
+                  src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&auto=format&fit=crop&q=80"
+                  alt="Portrait Retouché 4"
+                  className="w-full h-full object-cover"
+                />
+                <span className="absolute bottom-1.5 right-1.5 bg-[#10b981] text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full select-none">IA ACTIVE</span>
+              </div>
+              <p className="text-[10px] font-bold text-white text-center">Mariage Extérieur</p>
+            </div>
+          </div>
+
           {/* Decorative Background Glows */}
           <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl -z-10 animate-pulse duration-[6s]"></div>
           <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl -z-10 animate-pulse duration-[8s] delay-1000"></div>

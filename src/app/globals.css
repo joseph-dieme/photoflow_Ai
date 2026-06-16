@@ -220,3 +220,45 @@ body {
   break-inside: avoid;
   margin-bottom: 16px;
 }
+
+/* Floating Card Animations */
+@keyframes float1 {
+  0% { transform: translateY(0px) rotate(-6deg); }
+  50% { transform: translateY(-12px) rotate(-4deg); }
+  100% { transform: translateY(0px) rotate(-6deg); }
+}
+
+@keyframes float2 {
+  0% { transform: translateY(0px) rotate(4deg); }
+  50% { transform: translateY(-15px) rotate(6deg); }
+  100% { transform: translateY(0px) rotate(4deg); }
+}
+
+@keyframes float3 {
+  0% { transform: translateY(0px) rotate(8deg); }
+  50% { transform: translateY(-10px) rotate(7deg); }
+  100% { transform: translateY(0px) rotate(8deg); }
+}
+
+@keyframes float4 {
+  0% { transform: translateY(0px) rotate(-4deg); }
+  50% { transform: translateY(-14px) rotate(-6deg); }
+  100% { transform: translateY(0px) rotate(-4deg); }
+}
+
+.animate-float-1 {
+  animation: float1 6s ease-in-out infinite;
+}
+
+.animate-float-2 {
+  animation: float2 8s ease-in-out infinite;
+}
+
+.animate-float-3 {
+  animation: float3 7s ease-in-out infinite;
+}
+
+.animate-float-4 {
+  animation: float4 9s ease-in-out infinite;
+}
+
