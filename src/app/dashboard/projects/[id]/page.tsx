@@ -1187,7 +1187,7 @@ export default function ProjectDetailPage() {
                     return (
                       <div
                         key={photo.id}
-                        onClick={() => selectionMode ? handleToggleSelectPhoto(photo.id) : null}
+                        onClick={() => selectionMode ? handleToggleSelectPhoto(photo.id) : router.push(`/dashboard/editor/${photo.id}`)}
                         className={`group relative aspect-square rounded-xl overflow-hidden bg-surface-container border transition-all cursor-pointer ${
                           selectionMode 
                             ? (isSelected ? 'border-primary ring-2 ring-primary/30 scale-98' : 'border-outline-variant/30 opacity-70 hover:opacity-100')
@@ -1248,7 +1248,7 @@ export default function ProjectDetailPage() {
                             <div className="flex justify-between items-center">
                               {/* Favorite Tag */}
                               <button
-                                onClick={() => handleToggleFavorite(photo)}
+                                onClick={(e) => { e.stopPropagation(); handleToggleFavorite(photo); }}
                                 className="w-8 h-8 rounded-full bg-black/60 border border-white/10 flex items-center justify-center text-white hover:text-primary transition-colors cursor-pointer"
                               >
                                 <span 
@@ -1261,7 +1261,7 @@ export default function ProjectDetailPage() {
 
                               {/* Delete Photo */}
                               <button
-                                onClick={() => triggerSingleDelete(photo.id)}
+                                onClick={(e) => { e.stopPropagation(); triggerSingleDelete(photo.id); }}
                                 className="w-8 h-8 rounded-full bg-black/60 border border-white/10 flex items-center justify-center text-error hover:bg-error/20 transition-all cursor-pointer"
                               >
                                 <span className="material-symbols-outlined text-sm">delete</span>
@@ -1272,6 +1272,7 @@ export default function ProjectDetailPage() {
                             <div className="flex justify-center">
                               <Link
                                 href={`/dashboard/editor/${photo.id}`}
+                                onClick={(e) => e.stopPropagation()}
                                 className="bg-primary text-on-primary font-bold px-3 py-1.5 rounded-lg text-[10px] uppercase flex items-center gap-1 shadow-lg hover:scale-105 transition-transform"
                               >
                                 <span className="material-symbols-outlined text-xs">edit_note</span>

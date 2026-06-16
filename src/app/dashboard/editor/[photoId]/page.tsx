@@ -1711,75 +1711,80 @@ export default function EditorPage() {
     }
   };
 
-  const handleSavePhoto = async () => {
-    setIsSaving(true);
-    try {
-      // Determine final output format mime type from the original file
-      let formatMime: 'image/jpeg' | 'image/webp' | 'image/png' = 'image/jpeg';
-      if (photo?.format) {
-        const fmt = photo.format.toLowerCase();
-        if (fmt === 'png') formatMime = 'image/png';
-        else if (fmt === 'webp') formatMime = 'image/webp';
-      } else if (photo?.filename) {
-        const lowerName = photo.filename.toLowerCase();
-        if (lowerName.endsWith('.png')) formatMime = 'image/png';
-        else if (lowerName.endsWith('.webp')) formatMime = 'image/webp';
+  const saveAndUploadPhoto = async (): Promise<string> => {
+    // Determine final output format mime type from the original file
+    let formatMime: 'image/jpeg' | 'image/webp' | 'image/png' = 'image/jpeg';
+    if (photo?.format) {
+      const fmt = photo.format.toLowerCase();
+      if (fmt === 'png') formatMime = 'image/png';
+      else if (fmt === 'webp') formatMime = 'image/webp';
+    } else if (photo?.filename) {
+      const lowerName = photo.filename.toLowerCase();
+      if (lowerName.endsWith('.png')) formatMime = 'image/png';
+      else if (lowerName.endsWith('.webp')) formatMime = 'image/webp';
+    }
+
+    // Convert originalUrl (which might be in-memory lossless PNG) back to original format at high quality
+    let finalOriginalBase64 = originalUrl;
+    if (originalUrl.startsWith('data:')) {
+      const img = await loadImage(originalUrl);
+      const canvas = document.createElement('canvas');
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext('2d', { colorSpace: 'display-p3' }) || canvas.getContext('2d');
+      if (ctx) {
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(img, 0, 0);
+        finalOriginalBase64 = canvas.toDataURL(formatMime, formatMime === 'image/png' ? undefined : 1.0);
       }
+    }
 
-      // Convert originalUrl (which might be in-memory lossless PNG) back to original format at high quality
-      let finalOriginalBase64 = originalUrl;
-      if (originalUrl.startsWith('data:')) {
-        const img = await loadImage(originalUrl);
-        const canvas = document.createElement('canvas');
-        canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;
-        const ctx = canvas.getContext('2d', { colorSpace: 'display-p3' }) || canvas.getContext('2d');
-        if (ctx) {
-          ctx.imageSmoothingEnabled = true;
-          ctx.imageSmoothingQuality = 'high';
-          ctx.drawImage(img, 0, 0);
-          finalOriginalBase64 = canvas.toDataURL(formatMime, formatMime === 'image/png' ? undefined : 1.0);
-        }
-      }
+    // Apply adjustments on original image (generating high quality base64 in the target format)
+    const processedBase64 = await applyAdjustments(originalUrl, adjustments, undefined, false, formatMime);
+    
+    // Generate and upload processed thumbnail
+    const processedThumbBase64 = await applyAdjustments(originalUrl, adjustments, undefined, 600, formatMime);
 
-      // Apply adjustments on original image (generating high quality base64 in the target format)
-      const processedBase64 = await applyAdjustments(originalUrl, adjustments, undefined, false, formatMime);
-      
-      // Generate and upload processed thumbnail
-      const processedThumbBase64 = await applyAdjustments(originalUrl, adjustments, undefined, 600, formatMime);
+    // Upload to storage if they are base64 strings
+    const uploadedOriginalUrl = await uploadImageToStorage(finalOriginalBase64, true);
+    const uploadedProcessedUrl = await uploadImageToStorage(processedBase64, false);
+    const uploadedProcessedThumbUrl = await uploadImageToStorage(processedThumbBase64, false);
 
-      // Upload to storage if they are base64 strings
-      const uploadedOriginalUrl = await uploadImageToStorage(finalOriginalBase64, true);
-      const uploadedProcessedUrl = await uploadImageToStorage(processedBase64, false);
-      const uploadedProcessedThumbUrl = await uploadImageToStorage(processedThumbBase64, false);
+    const newMetadata = {
+      ...photo.metadata,
+      adjustments,
+      processed_thumbnail_url: uploadedProcessedThumbUrl,
+    };
 
-      const newMetadata = {
-        ...photo.metadata,
-        adjustments,
-        processed_thumbnail_url: uploadedProcessedThumbUrl,
-      };
-
-      const { error } = await supabase
-        .from('pf_photos')
-        .update({
-          original_url: uploadedOriginalUrl,
-          processed_url: uploadedProcessedUrl,
-          metadata: newMetadata
-        })
-        .eq('id', photoId);
-
-      if (error) throw error;
-      
-      // Update local state URLs and photo details
-      setOriginalUrl(uploadedOriginalUrl);
-      setProcessedUrl(uploadedProcessedUrl);
-      setPhoto((prev: any) => ({
-        ...prev,
+    const { error } = await supabase
+      .from('pf_photos')
+      .update({
         original_url: uploadedOriginalUrl,
         processed_url: uploadedProcessedUrl,
         metadata: newMetadata
-      }));
-      
+      })
+      .eq('id', photoId);
+
+    if (error) throw error;
+    
+    // Update local state URLs and photo details
+    setOriginalUrl(uploadedOriginalUrl);
+    setProcessedUrl(uploadedProcessedUrl);
+    setPhoto((prev: any) => ({
+      ...prev,
+      original_url: uploadedOriginalUrl,
+      processed_url: uploadedProcessedUrl,
+      metadata: newMetadata
+    }));
+
+    return uploadedProcessedUrl;
+  };
+
+  const handleSavePhoto = async () => {
+    setIsSaving(true);
+    try {
+      await saveAndUploadPhoto();
       showNotification('success', t.notifSavedTitle, t.notifSavedMsg);
     } catch (err) {
       console.error('Save failed:', err);
@@ -2002,19 +2007,31 @@ export default function EditorPage() {
     }
   };
 
-  const handleShareWhatsApp = () => {
+  const handleShareWhatsApp = async () => {
     if (!client) {
       showNotification('warning', t.notifClientNotFoundTitle, t.notifClientNotFoundMsg);
       return;
     }
 
-    if (!processedUrl || processedUrl.startsWith('data:')) {
+    let urlToShare = processedUrl;
+
+    // Automatically save and upload the retouched image if there are unsaved edits (starts with data:)
+    if (!urlToShare || urlToShare.startsWith('data:')) {
+      setIsSaving(true);
       showNotification(
-        'warning', 
-        lang === 'fr' ? 'Enregistrement requis' : 'Save required', 
-        lang === 'fr' ? 'Veuillez enregistrer la photo avant de la partager sur WhatsApp.' : 'Please save the photo before sharing it on WhatsApp.'
+        'info', 
+        lang === 'fr' ? 'Préparation de l\'image...' : 'Preparing image...', 
+        lang === 'fr' ? 'Sauvegarde et envoi en cours...' : 'Saving and sending...'
       );
-      return;
+      try {
+        urlToShare = await saveAndUploadPhoto();
+      } catch (err) {
+        console.error('Auto-save for WhatsApp failed:', err);
+        showNotification('error', t.notifSaveErrTitle, t.notifSaveErrMsg);
+        setIsSaving(false);
+        return;
+      }
+      setIsSaving(false);
     }
 
     let phone = client.phone ? client.phone.trim() : '';
@@ -2037,7 +2054,7 @@ export default function EditorPage() {
       }
     }
 
-    const message = processedUrl;
+    const message = urlToShare;
     const whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
 
     window.open(whatsappUrl, '_blank');
