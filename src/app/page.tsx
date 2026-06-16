@@ -249,7 +249,7 @@ export default function LandingPage() {
             <div className="absolute left-[3%] top-[12%] w-44 bg-surface-container/60 p-2.5 rounded-2xl border border-outline-variant/60 backdrop-blur-md shadow-2xl animate-float-1">
               <div className="aspect-[3/4] rounded-xl overflow-hidden mb-2 relative">
                 <img
-                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80"
+                  src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=400&auto=format&fit=crop&q=80"
                   alt="Portrait Retouché 1"
                   className="w-full h-full object-cover"
                 />
@@ -262,7 +262,7 @@ export default function LandingPage() {
             <div className="absolute left-[6%] bottom-[15%] w-40 bg-surface-container/60 p-2.5 rounded-2xl border border-outline-variant/60 backdrop-blur-md shadow-2xl animate-float-2">
               <div className="aspect-[3/4] rounded-xl overflow-hidden mb-2 relative">
                 <img
-                  src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=400&auto=format&fit=crop&q=80"
+                  src="https://images.unsplash.com/photo-1607990283143-e81e7a2c93ab?w=400&auto=format&fit=crop&q=80"
                   alt="Portrait Retouché 2"
                   className="w-full h-full object-cover"
                 />
@@ -275,7 +275,7 @@ export default function LandingPage() {
             <div className="absolute right-[3%] top-[15%] w-40 bg-surface-container/60 p-2.5 rounded-2xl border border-outline-variant/60 backdrop-blur-md shadow-2xl animate-float-3">
               <div className="aspect-[3/4] rounded-xl overflow-hidden mb-2 relative">
                 <img
-                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80"
+                  src="https://images.unsplash.com/photo-1567532939604-b6b5b0db2604?w=400&auto=format&fit=crop&q=80"
                   alt="Portrait Retouché 3"
                   className="w-full h-full object-cover"
                 />
@@ -288,7 +288,7 @@ export default function LandingPage() {
             <div className="absolute right-[6%] bottom-[20%] w-44 bg-surface-container/60 p-2.5 rounded-2xl border border-outline-variant/60 backdrop-blur-md shadow-2xl animate-float-4">
               <div className="aspect-[3/4] rounded-xl overflow-hidden mb-2 relative">
                 <img
-                  src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&auto=format&fit=crop&q=80"
+                  src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400&auto=format&fit=crop&q=80"
                   alt="Portrait Retouché 4"
                   className="w-full h-full object-cover"
                 />
@@ -424,14 +424,14 @@ export default function LandingPage() {
                 >
                   {/* After Image (Corrected & Retouched) */}
                   <img 
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQgbqCA-pgs1GDYtUXOcRKiVWfmbZzJ-Mnd4k_AmW8xxx8dEBqBxIAsVHUF_tEq4JIIm_FuUi5qPziDHDcQF1kus_1Q3_WQ2kvPh3oT4vypGUwukStcakMWzsP4SoCbxQ7j0SoZo6ta1Nenm-DzbA3fuZNJ_Vu_5thipCwzVbML_ijRa6jZR0gGRioukSRNFsGtxnd_X9BjQm1GH2fekBBVS1UgLeKlZe4xfWOlVGn6emDPBt_u8a6dH_7pvqWqAZePOjS0a-jFGOy" 
+                    src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=1000&auto=format&fit=crop&q=80" 
                     alt="Retouched Wedding Portrait" 
                     className="absolute inset-0 w-full h-full object-cover pointer-events-none"
                   />
                   
                   {/* Before Image Overlay */}
                   <img 
-                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQgbqCA-pgs1GDYtUXOcRKiVWfmbZzJ-Mnd4k_AmW8xxx8dEBqBxIAsVHUF_tEq4JIIm_FuUi5qPziDHDcQF1kus_1Q3_WQ2kvPh3oT4vypGUwukStcakMWzsP4SoCbxQ7j0SoZo6ta1Nenm-DzbA3fuZNJ_Vu_5thipCwzVbML_ijRa6jZR0gGRioukSRNFsGtxnd_X9BjQm1GH2fekBBVS1UgLeKlZe4xfWOlVGn6emDPBt_u8a6dH_7pvqWqAZePOjS0a-jFGOy" 
+                    src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=1000&auto=format&fit=crop&q=80" 
                     alt="Raw Wedding Portrait" 
                     className="absolute inset-0 w-full h-full object-cover pointer-events-none brightness-75 contrast-80 saturate-[0.65] sepia-[0.12] blur-[0.5px] z-10"
                     style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
@@ -665,7 +665,7 @@ export default function LandingPage() {
                 <img
                   alt="Moussa Diop Portrait"
                   className="w-full h-full object-cover rounded-full"
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuAenCRyxln8rzfQGG04fB4wPKObvsC8CItN7ThNmg0gHN-aSHdngfdhG6uGghmirDIHpACRkKTKm-UdE7AJaCj9wmmYZXjSnph9gVQZHJPeVtammAyi-ByCQBriDj8Xjrz4UGwQdpxYW9EGLE3afV-F163J44GkUNYze7hG-S00uvtIAK8ft0FUHatu-D2ok73i_He37cnhPHedCCy4A4WVARfYt6iJ0nUiDiswleLPynSKuarsb0w3e06erJvbMJV7vGLXPnZJxmYQ"
+                  src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=200&auto=format&fit=crop&q=80"
                 />
               </div>
               <div className="text-left">
