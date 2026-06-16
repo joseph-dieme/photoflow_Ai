@@ -17,7 +17,7 @@ const translations = {
     phoneInputLabel: "Numéro de téléphone",
     sendOtpBtn: "Envoyer le code SMS",
     otpStepTitle: "Saisissez le code SMS",
-    otpStepDesc: "Un code à 4 chiffres a été envoyé au +221 {phone}.",
+    otpStepDesc: "Un code à 4 chiffres a été envoyé au {phone}.",
     otpInputLabel: "Code de vérification",
     confirmPaymentBtn: "Confirmer le paiement",
     securedBy: "Sécurisé par Wave Mobile Money",
@@ -48,7 +48,7 @@ const translations = {
     phoneInputLabel: "Phone number",
     sendOtpBtn: "Send SMS Code",
     otpStepTitle: "Enter the SMS code",
-    otpStepDesc: "A 4-digit code has been sent to +221 {phone}.",
+    otpStepDesc: "A 4-digit code has been sent to {phone}.",
     otpInputLabel: "Verification Code",
     confirmPaymentBtn: "Confirm Payment",
     securedBy: "Secured by Wave Mobile Money",
@@ -112,6 +112,7 @@ function WaveCheckoutForm() {
   // Checkout steps states
   const [step, setStep] = useState<'phone' | 'otp' | 'success'>('phone');
   const [phone, setPhone] = useState('');
+  const [countryCode, setCountryCode] = useState('+221');
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [provider, setProvider] = useState<'wave' | 'orange' | 'free'>('wave');
@@ -568,15 +569,33 @@ function WaveCheckoutForm() {
 
             <div className="space-y-2">
               <label className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider block">{t.phoneInputLabel}</label>
-              <div className="relative">
-                <span className="absolute left-4 top-3.5 text-sm font-bold text-zinc-400">+221</span>
+              <div className="relative flex items-center">
+                <select
+                  value={countryCode}
+                  onChange={(e) => setCountryCode(e.target.value)}
+                  className="absolute left-4 z-10 text-sm font-bold text-zinc-400 bg-transparent border-none outline-none cursor-pointer appearance-none"
+                >
+                  <option value="+221" className="bg-zinc-950 text-white">+221</option>
+                  <option value="+225" className="bg-zinc-950 text-white">+225</option>
+                  <option value="+223" className="bg-zinc-950 text-white">+223</option>
+                  <option value="+224" className="bg-zinc-950 text-white">+224</option>
+                  <option value="+226" className="bg-zinc-950 text-white">+226</option>
+                  <option value="+227" className="bg-zinc-950 text-white">+227</option>
+                  <option value="+228" className="bg-zinc-950 text-white">+228</option>
+                  <option value="+229" className="bg-zinc-950 text-white">+229</option>
+                  <option value="+237" className="bg-zinc-950 text-white">+237</option>
+                  <option value="+241" className="bg-zinc-950 text-white">+241</option>
+                  <option value="+243" className="bg-zinc-950 text-white">+243</option>
+                  <option value="+33" className="bg-zinc-950 text-white">+33</option>
+                  <option value="+1" className="bg-zinc-950 text-white">+1</option>
+                </select>
                 <input
                   type="tel"
                   required
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder={phonePlaceholder}
-                  className={`w-full bg-zinc-900/50 border border-zinc-800 ${inputFocus} rounded-2xl pl-16 pr-4 py-3.5 text-sm font-bold outline-none text-white transition-colors`}
+                  className={`w-full bg-zinc-900/50 border border-zinc-800 ${inputFocus} rounded-2xl pl-20 pr-4 py-3.5 text-sm font-bold outline-none text-white transition-colors`}
                 />
               </div>
             </div>
@@ -597,7 +616,7 @@ function WaveCheckoutForm() {
           <form onSubmit={handleVerifyOtp} className="space-y-6">
             <div className="text-center mb-4">
               <h3 className="text-sm font-bold text-zinc-200">{t.otpStepTitle}</h3>
-              <p className="text-[10px] text-zinc-500 mt-1">{t.otpStepDesc.replace('{phone}', phone)}</p>
+              <p className="text-[10px] text-zinc-500 mt-1">{t.otpStepDesc.replace('{phone}', `${countryCode} ${phone}`)}</p>
             </div>
 
             <div className="space-y-2">

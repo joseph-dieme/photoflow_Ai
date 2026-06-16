@@ -10,7 +10,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 const translations = {
   fr: {
     heroTitle: "Retouchez, organisez et livrez vos photos en quelques minutes.",
-    heroSubtitle: "La plateforme pensée pour les photographes africains. Gagnez du temps sur l'editing et offrez une expérience premium à vos clients.",
+    heroSubtitle: "La plateforme pensée pour les photographes du monde entier. Gagnez du temps sur l'editing et offrez une expérience premium à vos clients.",
     heroStartFree: "Commencer gratuitement",
     heroSeeFeatures: "Voir les fonctionnalités",
     beforeLabel: "Avant (Raw)",
@@ -18,7 +18,7 @@ const translations = {
     featuresTitle: "Pensé pour le workflow des photographes",
     featuresSubtitle: "Une suite d'outils professionnels pour accélérer votre productivité de la capture à la livraison.",
     bento1Title: "Retouche IA Intelligente",
-    bento1Desc: "Équilibrage automatique des tons de peau et correction d'exposition optimisée pour la lumière naturelle d'Afrique. Rendu professionnel instantané.",
+    bento1Desc: "Équilibrage automatique des tons de peau et correction d'exposition optimisée pour toutes les carnations et lumières naturelles. Rendu professionnel instantané.",
     bento2Title: "Livraison Sécurisée",
     bento2Desc: "Galeries clients privées protégées par mot de passe avec téléchargement haute résolution instantané (HD/Web).",
     bento2Status: "CHIFFREMENT ACTIF",
@@ -34,7 +34,7 @@ const translations = {
     pricingSubtitle: "Commencez gratuitement, passez Pro au fur et à mesure que votre activité grandit.",
     pricingFreeTitle: "Formule Gratuite",
     pricingFreePrice: "0",
-    pricingPeriod: "FCFA / mois",
+    pricingPeriod: "FCFA / mois (ou env. 19€)",
     pricingFreeFeature1: "7 photos retouchées / mois",
     pricingFreeFeature2: "1 galerie client active",
     pricingFreeFeature3: "Maximum 7 photos par galerie",
@@ -50,7 +50,7 @@ const translations = {
     pricingProFeature5: "IA avancée & Export ZIP automatique",
     pricingProCTA: "S'abonner maintenant Pro",
     faqTitle: "Questions Fréquentes",
-    footerText: "© 2026 PhotoFlow AI. Conçu pour les créateurs africains.",
+    footerText: "© 2026 PhotoFlow AI. Conçu pour les créateurs du monde entier.",
     footerLegal: "Mentions Légales",
     footerPrivacy: "Confidentialité",
     footerSupport: "Support client WhatsApp",
@@ -60,7 +60,7 @@ const translations = {
   },
   en: {
     heroTitle: "Retouch, organize, and deliver your photos in minutes.",
-    heroSubtitle: "The platform built for African photographers. Save time on editing and deliver a premium experience to your clients.",
+    heroSubtitle: "The platform built for photographers worldwide. Save time on editing and deliver a premium experience to your clients.",
     heroStartFree: "Start for Free",
     heroSeeFeatures: "See Features",
     beforeLabel: "Before (Raw)",
@@ -68,7 +68,7 @@ const translations = {
     featuresTitle: "Designed for photographer workflows",
     featuresSubtitle: "A suite of professional tools to speed up your productivity from capture to delivery.",
     bento1Title: "Intelligent AI Retouching",
-    bento1Desc: "Automatic skin tone balancing and exposure correction optimized for natural African light. Instant professional rendering.",
+    bento1Desc: "Automatic skin tone balancing and exposure correction optimized for all skin tones and natural lighting. Instant professional rendering.",
     bento2Title: "Secure Delivery",
     bento2Desc: "Private, password-protected client galleries with instant high-resolution downloads (HD/Web).",
     bento2Status: "ENCRYPTION ACTIVE",
@@ -84,7 +84,7 @@ const translations = {
     pricingSubtitle: "Start for free, upgrade to Pro as your business grows.",
     pricingFreeTitle: "Free Plan",
     pricingFreePrice: "0",
-    pricingPeriod: "FCFA / month",
+    pricingPeriod: "FCFA / month (or approx. $20)",
     pricingFreeFeature1: "7 retouched photos / month",
     pricingFreeFeature2: "1 active client gallery",
     pricingFreeFeature3: "Maximum 7 photos per gallery",
@@ -100,7 +100,7 @@ const translations = {
     pricingProFeature5: "Advanced AI & automatic ZIP export",
     pricingProCTA: "Subscribe to Pro Now",
     faqTitle: "Frequently Asked Questions",
-    footerText: "© 2026 PhotoFlow AI. Designed for African creators.",
+    footerText: "© 2026 PhotoFlow AI. Designed for creators worldwide.",
     footerLegal: "Legal Notice",
     footerPrivacy: "Privacy Policy",
     footerSupport: "WhatsApp Customer Support",
@@ -191,7 +191,7 @@ export default function LandingPage() {
   const faqs = lang === 'fr' ? [
     {
       q: "Comment fonctionne la retouche photo avec l'IA ?",
-      a: "Notre IA analyse intelligemment l'exposition, le contraste et les teintes de peau spécifiques aux lumières et carnations d'Afrique. D'un simple clic, vous pouvez supprimer le bruit numérique, adoucir la peau, et ajuster la balance des blancs."
+      a: "Notre IA analyse intelligemment l'exposition, le contraste et les teintes de peau spécifiques à toutes les lumières et carnations. D'un simple clic, vous pouvez supprimer le bruit numérique, adoucir la peau, et ajuster la balance des blancs."
     },
     {
       q: "Quelles sont les limites de la formule gratuite ?",
@@ -199,7 +199,7 @@ export default function LandingPage() {
     },
     {
       q: "Quels sont les moyens de paiement acceptés pour la formule Pro ?",
-      a: "Nous prenons en charge les paiements locaux les plus populaires en Afrique de l'Ouest : Wave, Orange Money, Free Money, ainsi que les cartes bancaires internationales (Visa, Mastercard)."
+      a: "Nous prenons en charge les cartes bancaires internationales (Visa, Mastercard) pour les créateurs du monde entier, ainsi que les paiements mobiles locaux les plus populaires (Wave, Orange Money, Free Money)."
     },
     {
       q: "Puis-je lier mon propre nom de domaine pour les galeries clients ?",
@@ -208,7 +208,7 @@ export default function LandingPage() {
   ] : [
     {
       q: "How does AI photo retouching work?",
-      a: "Our AI intelligently analyzes exposure, contrast, and skin tones specific to African lighting and complexions. With a single click, you can remove digital noise, soften skin, and adjust white balance."
+      a: "Our AI intelligently analyzes exposure, contrast, and skin tones specific to all lighting and complexions. With a single click, you can remove digital noise, soften skin, and adjust white balance."
     },
     {
       q: "What are the limitations of the free plan?",
@@ -216,7 +216,7 @@ export default function LandingPage() {
     },
     {
       q: "What payment methods are accepted for the Pro plan?",
-      a: "We support the most popular local payment methods in West Africa: Wave, Orange Money, Free Money, as well as international bank cards (Visa, Mastercard)."
+      a: "We support international bank cards (Visa, Mastercard) for creators worldwide, as well as the most popular local mobile payment methods (Wave, Orange Money, Free Money)."
     },
     {
       q: "Can I link my own custom domain for client galleries?",
@@ -307,7 +307,7 @@ export default function LandingPage() {
             {/* Top Badge */}
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container-high/60 border border-outline-variant/60 text-xs font-semibold text-primary mb-8">
               <span className="flex h-2 w-2 rounded-full bg-primary animate-ping"></span>
-              <span>⚡ {lang === 'fr' ? "L'éditeur d'images IA conçu pour les photographes africains" : "The AI image editor built for African photographers"}</span>
+              <span>⚡ {lang === 'fr' ? "L'éditeur d'images IA conçu pour les photographes du monde entier" : "The AI image editor built for photographers worldwide"}</span>
             </div>
 
             <h1 className="font-display-lg text-4xl md:text-[68px] font-extrabold mb-6 leading-[1.12] tracking-tight bg-gradient-to-r from-white via-indigo-100 to-indigo-300 bg-clip-text text-transparent">
