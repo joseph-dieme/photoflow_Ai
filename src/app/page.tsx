@@ -10,7 +10,7 @@ import { useLanguage } from '@/hooks/useLanguage';
 const translations = {
   fr: {
     heroTitle: "Retouchez, organisez et livrez vos photos en quelques minutes.",
-    heroSubtitle: "La plateforme pensée pour les photographes du monde entier. Gagnez du temps sur l'editing et offrez une expérience premium à vos clients.",
+    heroSubtitle: "La plateforme pensée pour les photographes. Gagnez du temps sur l'editing et offrez une expérience premium à vos clients.",
     heroStartFree: "Commencer gratuitement",
     heroSeeFeatures: "Voir les fonctionnalités",
     beforeLabel: "Avant (Raw)",
@@ -60,7 +60,7 @@ const translations = {
   },
   en: {
     heroTitle: "Retouch, organize, and deliver your photos in minutes.",
-    heroSubtitle: "The platform built for photographers worldwide. Save time on editing and deliver a premium experience to your clients.",
+    heroSubtitle: "The platform built for photographers. Save time on editing and deliver a premium experience to your clients.",
     heroStartFree: "Start for Free",
     heroSeeFeatures: "See Features",
     beforeLabel: "Before (Raw)",
@@ -114,7 +114,7 @@ const sliderPhotos = [
   {
     categoryFr: "Mariage",
     categoryEn: "Wedding",
-    url: "https://images.unsplash.com/photo-1523438885200-e635ba2c371e?w=1000&auto=format&fit=crop&q=80"
+    url: "https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=1000&auto=format&fit=crop&q=80"
   },
   {
     categoryFr: "Portrait d'art",
@@ -129,7 +129,7 @@ const sliderPhotos = [
   {
     categoryFr: "Photo de Famille",
     categoryEn: "Family Shoot",
-    url: "https://images.unsplash.com/photo-1609234656388-0ff363383899?w=1000&auto=format&fit=crop&q=80"
+    url: "https://images.unsplash.com/photo-1772723246543-213f2a4fc526?w=1000&auto=format&fit=crop&q=80"
   }
 ];
 
@@ -329,7 +329,7 @@ export default function LandingPage() {
             <div className="absolute right-[6%] bottom-[20%] w-44 bg-surface-container/60 p-2.5 rounded-2xl border border-outline-variant/60 backdrop-blur-md shadow-2xl animate-float-4">
               <div className="aspect-[3/4] rounded-xl overflow-hidden mb-2 relative">
                 <img
-                  src="https://images.unsplash.com/photo-1519741497674-611481863552?w=400&auto=format&fit=crop&q=80"
+                  src="https://images.unsplash.com/photo-1583939003579-730e3918a45a?w=400&auto=format&fit=crop&q=80"
                   alt="Portrait Retouché 4"
                   className="w-full h-full object-cover"
                 />
@@ -348,7 +348,7 @@ export default function LandingPage() {
             {/* Top Badge */}
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container-high/60 border border-outline-variant/60 text-xs font-semibold text-primary mb-8">
               <span className="flex h-2 w-2 rounded-full bg-primary animate-ping"></span>
-              <span>⚡ {lang === 'fr' ? "L'éditeur d'images IA conçu pour les photographes du monde entier" : "The AI image editor built for photographers worldwide"}</span>
+              <span>⚡ {lang === 'fr' ? "L'éditeur d'images IA conçu pour les photographes" : "The AI image editor built for photographers"}</span>
             </div>
 
             <h1 className="font-display-lg text-4xl md:text-[68px] font-extrabold mb-6 leading-[1.12] tracking-tight bg-gradient-to-r from-white via-indigo-100 to-indigo-300 bg-clip-text text-transparent">

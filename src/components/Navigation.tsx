@@ -140,20 +140,35 @@ export default function Navigation() {
             </span>
 
             {/* Profile Avatar & Dropdown */}
-            <div className="relative">
+            <div className="relative flex items-center gap-1">
+              <Link
+                href="/dashboard/settings"
+                className="w-8 h-8 rounded-full overflow-hidden bg-surface-container-highest border border-outline-variant hover:border-primary transition-all flex items-center justify-center cursor-pointer"
+                title="Paramètres"
+              >
+                {profile?.avatar_url ? (
+                  <img
+                    alt="Profile Avatar"
+                    className="w-full h-full object-cover"
+                    src={profile.avatar_url}
+                  />
+                ) : (
+                  <span className="material-symbols-outlined text-[18px] text-on-surface-variant">person</span>
+                )}
+              </Link>
+
               <button
                 onClick={() => setShowDropdown(!showDropdown)}
-                className="w-8 h-8 rounded-full overflow-hidden bg-surface-container-highest border border-outline-variant hover:border-primary transition-all flex items-center justify-center cursor-pointer"
+                className="p-1 rounded hover:bg-surface-container-highest text-on-surface-variant hover:text-white transition-all cursor-pointer flex items-center justify-center"
+                title="Menu"
               >
-                <img
-                  alt="Profile Avatar"
-                  className="w-full h-full object-cover"
-                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80"
-                />
+                <span className="material-symbols-outlined text-[16px] select-none">
+                  {showDropdown ? 'keyboard_arrow_up' : 'keyboard_arrow_down'}
+                </span>
               </button>
 
               {showDropdown && (
-                <div className="absolute right-0 mt-2 w-48 glass-panel rounded-xl shadow-2xl overflow-hidden py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="absolute right-0 top-10 w-48 glass-panel rounded-xl shadow-2xl overflow-hidden py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
                   <div className="px-4 py-3 border-b border-outline-variant">
                     <p className="text-xs text-on-surface-variant">Connecté en tant que</p>
                     <p className="text-sm font-semibold truncate text-on-surface">

@@ -49,6 +49,17 @@ const translations = {
     downgradeConfirmMsg: 'Êtes-vous sûr de vouloir repasser à la formule gratuite ? Votre limite de stockage sera ramenée à 1 Go.',
     downgradeSuccessTitle: 'Retour au Gratuit',
     downgradeSuccessMsg: 'Votre abonnement a été réinitialisé au forfait gratuit.',
+    // Profile Picture
+    profilePictureLabel: 'Photo de profil',
+    uploadPhotoBtn: 'Choisir une photo',
+    uploadingPhoto: 'Importation en cours...',
+    profilePictureDesc: 'Cette photo sera affichée dans la barre de navigation et sur vos documents.',
+    // Mobile Money
+    mobileMoneyLabel: 'Réseaux Mobile Money acceptés',
+    mobileMoneyDesc: 'Sélectionnez un ou plusieurs moyens de paiement mobile que vous acceptez.',
+    waveMoney: 'Wave',
+    orangeMoney: 'Orange Money',
+    freeMoney: 'Free Money',
   },
   en: {
     title: 'Studio Settings',
@@ -90,6 +101,17 @@ const translations = {
     downgradeConfirmMsg: 'Are you sure you want to downgrade to the Free plan? Your storage limit will be reduced to 1 GB.',
     downgradeSuccessTitle: 'Downgraded to Free',
     downgradeSuccessMsg: 'Your subscription has been reset to the free plan.',
+    // Profile Picture
+    profilePictureLabel: 'Profile Picture',
+    uploadPhotoBtn: 'Choose a Photo',
+    uploadingPhoto: 'Uploading...',
+    profilePictureDesc: 'This photo will be displayed in the navigation bar and on your documents.',
+    // Mobile Money
+    mobileMoneyLabel: 'Accepted Mobile Money Networks',
+    mobileMoneyDesc: 'Select one or more mobile payment methods that you accept.',
+    waveMoney: 'Wave',
+    orangeMoney: 'Orange Money',
+    freeMoney: 'Free Money',
   }
 };
 
@@ -104,6 +126,9 @@ export default function SettingsPage() {
   const [fullName, setFullName] = useState('');
   const [waveMerchantId, setWaveMerchantId] = useState('');
   const [customWatermarkUrl, setCustomWatermarkUrl] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [mobileMoney, setMobileMoney] = useState<string[]>([]);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // Modal / Alert States
@@ -151,6 +176,8 @@ export default function SettingsPage() {
       setFullName(data.full_name || '');
       setWaveMerchantId(data.wave_merchant_id || '');
       setCustomWatermarkUrl(data.custom_watermark_url || '');
+      setAvatarUrl(data.avatar_url || '');
+      setMobileMoney(data.mobile_money || []);
     } catch (err) {
       console.error('Error fetching settings details:', err);
     } finally {
@@ -170,6 +197,8 @@ export default function SettingsPage() {
           full_name: fullName,
           wave_merchant_id: waveMerchantId,
           custom_watermark_url: customWatermarkUrl,
+          avatar_url: avatarUrl,
+          mobile_money: mobileMoney,
         })
         .eq('id', user.id);
 
@@ -182,6 +211,48 @@ export default function SettingsPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    setUploadingAvatar(true);
+    try {
+      const fileExt = file.name.split('.').pop() || 'jpg';
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('photos')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true,
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('photos')
+        .getPublicUrl(filePath);
+
+      if (urlData?.publicUrl) {
+        setAvatarUrl(urlData.publicUrl);
+      }
+    } catch (err) {
+      console.error('Error uploading avatar:', err);
+      alert(lang === 'fr' ? "Erreur lors de l'importation de la photo." : "Error uploading profile photo.");
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleMobileMoneyChange = (provider: string) => {
+    setMobileMoney((prev) =>
+      prev.includes(provider)
+        ? prev.filter((p) => p !== provider)
+        : [...prev, provider]
+    );
   };
 
   const triggerUpgradeConfirm = () => {
@@ -243,6 +314,49 @@ export default function SettingsPage() {
           {/* Main settings form */}
           <div className="lg:col-span-2">
             <form onSubmit={handleSaveSettings} className="glass-panel p-8 rounded-2xl border border-outline-variant/30 space-y-6">
+              {/* Profile Photo Uploader */}
+              <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-outline-variant/30">
+                <div className="relative w-20 h-20 rounded-full overflow-hidden bg-surface-container-highest border border-outline-variant/50 flex items-center justify-center shrink-0">
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="Avatar Preview" className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="material-symbols-outlined text-on-surface-variant text-4xl">person</span>
+                  )}
+                  {uploadingAvatar && (
+                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center">
+                      <span className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin"></span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex-grow text-center sm:text-left space-y-2">
+                  <h3 className="text-xs font-bold text-white uppercase tracking-wider">{t.profilePictureLabel}</h3>
+                  <p className="text-[11px] text-on-surface-variant max-w-sm leading-relaxed">{t.profilePictureDesc}</p>
+                  <div className="flex justify-center sm:justify-start gap-2">
+                    <label className="px-4 py-2 bg-surface-container-highest border border-outline-variant hover:border-primary text-xs font-semibold text-white rounded-xl cursor-pointer transition-all flex items-center gap-1.5">
+                      <span className="material-symbols-outlined text-[16px]">photo_camera</span>
+                      {uploadingAvatar ? t.uploadingPhoto : t.uploadPhotoBtn}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleAvatarUpload}
+                        className="hidden"
+                        disabled={uploadingAvatar}
+                      />
+                    </label>
+                    {avatarUrl && (
+                      <button
+                        type="button"
+                        onClick={() => setAvatarUrl('')}
+                        className="px-3 py-2 bg-transparent hover:bg-error/10 border border-outline-variant hover:border-error text-xs font-semibold text-on-surface-variant hover:text-error rounded-xl transition-all flex items-center justify-center cursor-pointer"
+                        title="Remove Photo"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">delete</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
               <div className="space-y-1">
                 <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">{t.studioNameLabel}</label>
                 <input
@@ -299,6 +413,44 @@ export default function SettingsPage() {
                     ? t.watermarkDescPro
                     : t.watermarkDescFree}
                 </p>
+              </div>
+
+              {/* Mobile Money Selection */}
+              <div className="space-y-3 pt-2">
+                <div className="flex flex-col">
+                  <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">{t.mobileMoneyLabel}</label>
+                  <span className="text-[10px] text-on-surface-variant mt-0.5">{t.mobileMoneyDesc}</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {[
+                    { id: 'wave', label: t.waveMoney, icon: 'tsunami', color: 'text-sky-400 bg-sky-400/10' },
+                    { id: 'orange_money', label: t.orangeMoney, icon: 'payments', color: 'text-orange-500 bg-orange-500/10' },
+                    { id: 'free_money', label: t.freeMoney, icon: 'wallet', color: 'text-red-500 bg-red-500/10' }
+                  ].map((provider) => {
+                    const isSelected = mobileMoney.includes(provider.id);
+                    return (
+                      <div
+                        key={provider.id}
+                        onClick={() => handleMobileMoneyChange(provider.id)}
+                        className={`flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all ${
+                          isSelected
+                            ? 'bg-primary/10 border-primary text-white font-semibold'
+                            : 'bg-surface-container border-outline-variant/50 text-on-surface-variant hover:text-on-surface hover:border-outline-variant'
+                        }`}
+                      >
+                        <span className={`material-symbols-outlined rounded-lg p-1.5 text-[20px] ${provider.color}`}>
+                          {provider.icon}
+                        </span>
+                        <div className="flex-grow text-xs select-none">{provider.label}</div>
+                        <div className={`w-5 h-5 rounded-md border flex items-center justify-center transition-all ${
+                          isSelected ? 'bg-primary border-primary text-on-primary' : 'border-outline-variant'
+                        }`}>
+                          {isSelected && <span className="material-symbols-outlined text-[14px] font-bold">check</span>}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
 
               <button

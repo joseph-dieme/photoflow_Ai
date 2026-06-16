@@ -146,7 +146,17 @@ const translations = {
     passcodeIncorrect: "Code d'accès incorrect. Veuillez vérifier auprès de votre photographe.",
     passcodePlaceholder: "Entrez le code",
     passcodeSubmit: "Accéder à la galerie",
-    passcodeLabel: "Mot de passe de la galerie"
+    passcodeLabel: "Mot de passe de la galerie",
+    select: "Sélectionner",
+    deselect: "Désélectionner",
+    selectedPhotos: "sélectionnées",
+    whatsappSelection: "WhatsApp Sélection",
+    downloadSelection: "Télécharger la sélection",
+    clearSelection: "Tout désélectionner",
+    zoomIn: "Zoom +",
+    zoomOut: "Zoom -",
+    resetZoom: "Reset",
+    doubleTapZoom: "Double-cliquez pour zoomer"
   },
   en: {
     title: "Client Gallery",
@@ -181,9 +191,19 @@ const translations = {
     passcodeIncorrect: "Incorrect passcode. Please check with your photographer.",
     passcodePlaceholder: "Enter passcode",
     passcodeSubmit: "Access Gallery",
-    passcodeLabel: "Gallery Password"
+    passcodeLabel: "Gallery Password",
+    select: "Select",
+    deselect: "Deselect",
+    selectedPhotos: "selected",
+    whatsappSelection: "WhatsApp Selection",
+    downloadSelection: "Download selection",
+    clearSelection: "Deselect all",
+    zoomIn: "Zoom +",
+    zoomOut: "Zoom -",
+    resetZoom: "Reset",
+    doubleTapZoom: "Double-tap to zoom"
   }
-};
+}
 
 export default function ClientGalleryPage() {
   const routeParams = useParams();
@@ -236,6 +256,39 @@ export default function ClientGalleryPage() {
   // Sharing states
   const [copiedLink, setCopiedLink] = useState(false);
   const [selectedPhoto, setSelectedPhoto] = useState<any>(null); // For lightbox
+
+  // Photo Selection States
+  const [selectedPhotoIds, setSelectedPhotoIds] = useState<Set<string>>(new Set());
+
+  // Lightbox Zoom & Pan States
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+
+  // Load photo selections from local storage on mount
+  useEffect(() => {
+    if (slug) {
+      const saved = localStorage.getItem(`selected_photos_${slug}`);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed)) {
+            setSelectedPhotoIds(new Set(parsed));
+          }
+        } catch (e) {
+          console.error("Failed to parse selected photos from localStorage", e);
+        }
+      }
+    }
+  }, [slug]);
+
+  // Reset zoom & pan when active preview photo changes
+  useEffect(() => {
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  }, [selectedPhoto]);
 
   // Custom notification modal state
   const [notification, setNotification] = useState<{
@@ -430,6 +483,143 @@ export default function ClientGalleryPage() {
     }
   };
 
+  const handleToggleSelect = (photoId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedPhotoIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(photoId)) {
+        next.delete(photoId);
+      } else {
+        next.add(photoId);
+      }
+      localStorage.setItem(`selected_photos_${slug}`, JSON.stringify(Array.from(next)));
+      return next;
+    });
+  };
+
+  const handleClearSelection = () => {
+    setSelectedPhotoIds(new Set());
+    localStorage.removeItem(`selected_photos_${slug}`);
+  };
+
+  const getWhatsAppSelectionMessage = () => {
+    const selectedPhotos = photos.filter(p => selectedPhotoIds.has(p.id));
+    const filenames = selectedPhotos.map(p => p.filename).join(', ');
+    const photogName = project?.pf_profiles?.full_name || '';
+    const text = `Bonjour ${photogName}, j'ai sélectionné ${selectedPhotos.length} photo(s) du projet "${project?.name}" :\n\n${filenames}`;
+    return encodeURIComponent(text);
+  };
+
+  const handleDownloadSelected = async () => {
+    if (selectedPhotoIds.size === 0) return;
+    const watermarkText = getWatermarkText();
+    
+    showNotification('info', t.notifDownloadStartedTitle, t.notifDownloadStartedMsg);
+    
+    const selectedPhotos = photos.filter(p => selectedPhotoIds.has(p.id));
+    for (const p of selectedPhotos) {
+      let url = p.processed_url || p.original_url;
+      if (watermarkText) {
+        try {
+          let formatMime: 'image/jpeg' | 'image/webp' | 'image/png' | undefined = undefined;
+          if (p.filename) {
+            const lowerName = p.filename.toLowerCase();
+            if (lowerName.endsWith('.png')) formatMime = 'image/png';
+            else if (lowerName.endsWith('.webp')) formatMime = 'image/webp';
+            else if (lowerName.endsWith('.jpg') || lowerName.endsWith('.jpeg')) formatMime = 'image/jpeg';
+          }
+          url = await applyAdjustments(url, DEFAULT_ADJUSTMENTS, watermarkText, false, formatMime);
+        } catch (err) {
+          console.error("Watermark download error", err);
+        }
+      }
+      await triggerDownload(url, p.filename);
+      await new Promise((resolve) => setTimeout(resolve, 300));
+    }
+  };
+
+  const handleZoomIn = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setZoom(prev => Math.min(prev + 0.5, 4));
+  };
+
+  const handleZoomOut = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setZoom(prev => {
+      const next = Math.max(prev - 0.5, 1);
+      if (next === 1) {
+        setPan({ x: 0, y: 0 });
+      }
+      return next;
+    });
+  };
+
+  const handleResetZoom = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  };
+
+  const handleDoubleTap = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (zoom > 1) {
+      setZoom(1);
+      setPan({ x: 0, y: 0 });
+    } else {
+      setZoom(2.5);
+      setPan({ x: 0, y: 0 });
+    }
+  };
+
+  const handleDragStart = (e: React.MouseEvent | React.TouchEvent) => {
+    const isTouch = 'touches' in e;
+    const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+    const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+
+    if (zoom === 1) {
+      if (isTouch) {
+        setTouchStartX(clientX);
+      }
+      return;
+    }
+    
+    setIsDragging(true);
+    setDragStart({ x: clientX - pan.x, y: clientY - pan.y });
+  };
+
+  const handleDragMove = (e: React.MouseEvent | React.TouchEvent) => {
+    const isTouch = 'touches' in e;
+    const clientX = isTouch ? e.touches[0].clientX : e.clientX;
+    const clientY = isTouch ? e.touches[0].clientY : e.clientY;
+
+    if (zoom === 1) {
+      return;
+    }
+
+    if (!isDragging) return;
+    
+    setPan({
+      x: clientX - dragStart.x,
+      y: clientY - dragStart.y
+    });
+  };
+
+  const handleDragEnd = (e: React.MouseEvent | React.TouchEvent) => {
+    if (zoom === 1 && touchStartX !== null && 'changedTouches' in e) {
+      const touchEndX = e.changedTouches[0].clientX;
+      const diff = touchEndX - touchStartX;
+      if (Math.abs(diff) > 50) {
+        if (diff < 0) {
+          handleNextPhoto();
+        } else {
+          handlePrevPhoto();
+        }
+      }
+      setTouchStartX(null);
+    }
+    setIsDragging(false);
+  };
+
   const handleCopyLink = () => {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
     const shareUrl = `${origin}/gallery/${slug}`;
@@ -603,7 +793,7 @@ export default function ClientGalleryPage() {
       </header>
 
       {/* Main Container */}
-      <main className="flex-grow pt-24 pb-32 px-6 md:px-margin-desktop max-w-[1600px] mx-auto w-full">
+      <main className="flex-grow pt-24 pb-12 px-6 md:px-margin-desktop max-w-[1600px] mx-auto w-full">
         {/* Banner details */}
         <div className="mb-12 text-center md:text-left">
           <h1 className="font-display-lg text-4xl font-bold text-white mb-2">{project?.name}</h1>
@@ -615,38 +805,57 @@ export default function ClientGalleryPage() {
           </p>
         </div>
 
-        {/* Masonry Image Grid */}
+        {/* CSS Image Grid */}
         {photos.length === 0 ? (
           <div className="glass-panel p-16 rounded-2xl text-center flex flex-col items-center justify-center border border-dashed border-outline-variant/30">
             <span className="material-symbols-outlined text-outline text-5xl mb-4">image</span>
             <p className="text-on-surface-variant text-sm">{t.noPhotos}</p>
           </div>
         ) : (
-          <div className="masonry">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-6">
             {photos.map((photo) => (
               <div 
                 key={photo.id}
                 onClick={() => setSelectedPhoto(photo)}
-                className="masonry-item group relative overflow-hidden rounded-xl bg-surface-container-low transition-all duration-500 hover:scale-[1.01] cursor-pointer"
+                className="group relative overflow-hidden rounded-xl bg-surface-container-low transition-all duration-500 hover:scale-[1.01] cursor-pointer aspect-square"
               >
                 <WatermarkedImage 
                   alt={photo.filename} 
                   src={photo.metadata?.processed_thumbnail_url || photo.metadata?.thumbnail_url || photo.processed_url || photo.original_url}
                   thumbnailSrc={photo.metadata?.processed_thumbnail_url || photo.metadata?.thumbnail_url}
                   watermarkText={getWatermarkText()}
-                  className="w-full h-auto object-cover pointer-events-none"
+                  className="w-full h-full object-cover pointer-events-none"
                 />
 
+                {/* Selection Circle Checkbox overlay */}
+                <button
+                  onClick={(e) => handleToggleSelect(photo.id, e)}
+                  className={`absolute top-2.5 right-2.5 z-20 w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                    selectedPhotoIds.has(photo.id)
+                      ? 'bg-primary text-on-primary shadow-lg scale-100'
+                      : 'bg-black/40 text-white/80 border border-white/20 hover:bg-black/60 md:opacity-0 md:group-hover:opacity-100'
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[18px]">
+                    {selectedPhotoIds.has(photo.id) ? 'check_circle' : 'radio_button_unchecked'}
+                  </span>
+                </button>
+
                 {/* Hover Details Controls */}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-between p-4 z-10">
-                  <div className="flex justify-end gap-2">
+                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent p-3 pt-8 flex items-center justify-between z-10 md:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300">
+                  <span className="text-white/95 text-[11px] font-medium truncate max-w-[50%]" title={photo.filename}>
+                    {photo.filename}
+                  </span>
+                  <div className="flex gap-1.5">
                     <button 
                       onClick={(e) => handleToggleFavorite(photo, e)}
-                      className="w-9 h-9 rounded-full glass-panel flex items-center justify-center text-white hover:text-primary transition-all cursor-pointer"
+                      className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
+                        photo.is_favorite ? 'text-primary' : 'text-white/80 hover:text-primary'
+                      }`}
                       title={t.markFavorite}
                     >
                       <span 
-                        className="material-symbols-outlined text-[18px]"
+                        className="material-symbols-outlined text-[16px]"
                         style={{ fontVariationSettings: photo.is_favorite ? "'FILL' 1" : undefined }}
                       >
                         favorite
@@ -654,17 +863,11 @@ export default function ClientGalleryPage() {
                     </button>
                     <button 
                       onClick={(e) => handleDownloadSingle(photo, e)}
-                      className="w-9 h-9 rounded-full glass-panel flex items-center justify-center text-white hover:text-primary transition-all cursor-pointer"
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-white/80 hover:text-primary transition-all"
                       title={t.downloadPhoto}
                     >
-                      <span className="material-symbols-outlined text-[18px]">download</span>
+                      <span className="material-symbols-outlined text-[16px]">download</span>
                     </button>
-                  </div>
-                  
-                  {/* Photo details */}
-                  <div className="glass-panel p-2 rounded-lg text-white/90 text-[10px] font-mono flex justify-between items-center">
-                    <span>ISO {photo.metadata?.iso || 100} • {photo.metadata?.shutter || '1/250'} • {photo.metadata?.aperture || 'f/1.8'}</span>
-                    <span className="material-symbols-outlined text-[14px]">info</span>
                   </div>
                 </div>
               </div>
@@ -673,20 +876,20 @@ export default function ClientGalleryPage() {
         )}
       </main>
 
-      {/* Floating Sharing Footer dashboard */}
-      <footer className="w-full py-6 px-6 md:px-margin-desktop bg-surface-container/95 border-t border-outline-variant fixed bottom-0 z-50 backdrop-blur-md">
+      {/* Sharing Footer (natural flow) */}
+      <footer className="w-full py-6 px-6 md:px-margin-desktop bg-surface-container/30 border-t border-outline-variant/30 mt-16">
         <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-center md:text-left">
             <p className="font-body-sm text-[10px] text-on-surface-variant font-bold">{t.deliveryClient}</p>
             <p className="text-[10px] text-outline mt-0.5">{t.rightsReserved}</p>
           </div>
 
-          <div className="flex items-center gap-4 bg-background p-1.5 rounded-full border border-outline-variant/50 max-w-full overflow-x-auto scrollbar-hide">
+          <div className="flex items-center gap-4 bg-background/50 p-1.5 rounded-full border border-outline-variant/30 max-w-full overflow-x-auto scrollbar-hide">
             <span className="px-4 text-[10px] font-bold text-on-surface-variant uppercase tracking-wider shrink-0">{t.share}</span>
             <div className="flex gap-1.5 shrink-0">
               <button 
                 onClick={handleCopyLink}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-surface-container-highest rounded-full text-on-surface text-xs font-semibold hover:bg-primary-container hover:text-on-primary-container transition-all cursor-pointer"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-surface-container-highest/60 rounded-full text-on-surface text-xs font-semibold hover:bg-primary-container hover:text-on-primary-container transition-all cursor-pointer"
               >
                 <span className="material-symbols-outlined text-[16px]">
                   {copiedLink ? 'check' : 'content_copy'}
@@ -697,14 +900,14 @@ export default function ClientGalleryPage() {
                 href={`https://wa.me/?text=Découvrez%20les%20photos%20du%20projet%20${encodeURIComponent(project?.name)}%20ici%20:%20${getShareUrl()}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-surface-container-highest rounded-full text-on-surface text-xs font-semibold hover:bg-green-600 hover:text-white transition-all"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-surface-container-highest/60 rounded-full text-on-surface text-xs font-semibold hover:bg-green-600 hover:text-white transition-all"
               >
                 <span className="material-symbols-outlined text-[16px]">chat</span>
                 WhatsApp
               </a>
               <a 
                 href={`mailto:?subject=Photos%20du%20projet%20${encodeURIComponent(project?.name)}&body=Bonjour,%20vous%20pouvez%20consulter%20les%20photos%20de%20notre%20shoot%20ici%20:%20${getShareUrl()}`}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-surface-container-highest rounded-full text-on-surface text-xs font-semibold hover:bg-primary-container hover:text-on-primary-container transition-all"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-surface-container-highest/60 rounded-full text-on-surface text-xs font-semibold hover:bg-primary-container hover:text-on-primary-container transition-all"
               >
                 <span className="material-symbols-outlined text-[16px]">mail</span>
                 {t.email}
@@ -736,14 +939,42 @@ export default function ClientGalleryPage() {
             <span className="material-symbols-outlined text-2xl">chevron_left</span>
           </button>
           
-          <WatermarkedImage 
-            src={selectedPhoto.processed_url || selectedPhoto.original_url} 
-            thumbnailSrc={selectedPhoto.metadata?.processed_thumbnail_url || selectedPhoto.metadata?.thumbnail_url}
-            alt={selectedPhoto.filename}
-            watermarkText={getWatermarkText()}
+          {/* Interactive Drag/Pan Zoomable Container */}
+          <div
             onClick={(e) => e.stopPropagation()}
-            className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl cursor-default"
-          />
+            onMouseDown={handleDragStart}
+            onMouseMove={handleDragMove}
+            onMouseUp={handleDragEnd}
+            onMouseLeave={handleDragEnd}
+            onTouchStart={handleDragStart}
+            onTouchMove={handleDragMove}
+            onTouchEnd={handleDragEnd}
+            className="relative w-full max-w-4xl h-[70vh] flex items-center justify-center overflow-hidden touch-none select-none"
+          >
+            <div
+              style={{
+                transform: `scale(${zoom}) translate(${pan.x / zoom}px, ${pan.y / zoom}px)`,
+                transition: isDragging ? 'none' : 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+              }}
+              onDoubleClick={handleDoubleTap}
+              className="w-full h-full flex items-center justify-center"
+            >
+              <WatermarkedImage 
+                src={selectedPhoto.processed_url || selectedPhoto.original_url} 
+                thumbnailSrc={selectedPhoto.metadata?.processed_thumbnail_url || selectedPhoto.metadata?.thumbnail_url}
+                alt={selectedPhoto.filename}
+                watermarkText={getWatermarkText()}
+                className="max-w-full max-h-full object-contain rounded-lg shadow-2xl pointer-events-none select-none"
+              />
+            </div>
+
+            {/* Double Tap Instruction Helper (Visible when zoom is 1x) */}
+            {zoom === 1 && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/60 px-4 py-1.5 rounded-full text-white/70 text-[10px] pointer-events-none transition-opacity">
+                {t.doubleTapZoom}
+              </div>
+            )}
+          </div>
 
           {/* Right Arrow Button */}
           <button 
@@ -754,24 +985,131 @@ export default function ClientGalleryPage() {
             <span className="material-symbols-outlined text-2xl">chevron_right</span>
           </button>
 
-          <div className="mt-4 glass-panel px-6 py-2.5 rounded-full text-white/90 text-xs font-semibold flex gap-6 cursor-default z-[110]" onClick={(e) => e.stopPropagation()}>
-            <span className="truncate max-w-[150px] font-bold">{selectedPhoto.filename}</span>
-            <span>ISO {selectedPhoto.metadata?.iso || 100} • {selectedPhoto.metadata?.shutter || '1/250'} • {selectedPhoto.metadata?.aperture || 'f/1.8'}</span>
+          {/* Floating Zoom Controls vertical bar */}
+          <div className="absolute right-4 md:right-8 bottom-32 flex flex-col gap-2.5 z-[120]" onClick={(e) => e.stopPropagation()}>
             <button 
-              onClick={(e) => handleToggleFavorite(selectedPhoto, e)}
-              className="text-primary hover:scale-105 transition-transform flex items-center cursor-pointer"
+              onClick={() => setZoom(prev => Math.min(prev + 0.5, 4))}
+              className="w-10 h-10 rounded-full glass-panel flex items-center justify-center text-white hover:text-primary hover:border-primary/50 active:scale-90 transition-all cursor-pointer"
+              title={t.zoomIn}
             >
-              <span className="material-symbols-outlined text-sm mr-1" style={{ fontVariationSettings: selectedPhoto.is_favorite ? "'FILL' 1" : undefined }}>
-                favorite
-              </span>
-              {t.favorite}
+              <span className="material-symbols-outlined text-lg">zoom_in</span>
             </button>
             <button 
-              onClick={(e) => handleDownloadSingle(selectedPhoto, e)}
-              className="text-white hover:text-primary transition-colors flex items-center cursor-pointer"
+              onClick={() => setZoom(prev => {
+                const next = Math.max(prev - 0.5, 1);
+                if (next === 1) setPan({ x: 0, y: 0 });
+                return next;
+              })}
+              className="w-10 h-10 rounded-full glass-panel flex items-center justify-center text-white hover:text-primary hover:border-primary/50 active:scale-90 transition-all cursor-pointer"
+              title={t.zoomOut}
             >
-              <span className="material-symbols-outlined text-sm mr-1">download</span>
-              {t.download}
+              <span className="material-symbols-outlined text-lg">zoom_out</span>
+            </button>
+            {zoom > 1 && (
+              <button 
+                onClick={() => {
+                  setZoom(1);
+                  setPan({ x: 0, y: 0 });
+                }}
+                className="w-10 h-10 rounded-full glass-panel flex items-center justify-center text-white hover:text-primary hover:border-primary/50 active:scale-90 transition-all cursor-pointer animate-in fade-in zoom-in-75"
+                title={t.resetZoom}
+              >
+                <span className="material-symbols-outlined text-lg">restart_alt</span>
+              </button>
+            )}
+          </div>
+
+          {/* Lightbox Details & Action Toolbar */}
+          <div className="mt-4 w-full max-w-2xl glass-panel px-4 py-3 rounded-2xl text-white/90 text-xs font-semibold flex flex-col sm:flex-row items-center justify-between gap-3 cursor-default z-[110]" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
+              <span className="truncate max-w-[150px] font-bold">{selectedPhoto.filename}</span>
+              <span className="text-[10px] text-white/60 hidden sm:inline">
+                ISO {selectedPhoto.metadata?.iso || 100} • {selectedPhoto.metadata?.shutter || '1/250'} • {selectedPhoto.metadata?.aperture || 'f/1.8'}
+              </span>
+            </div>
+            
+            <div className="flex items-center gap-4 w-full sm:w-auto justify-around sm:justify-end border-t border-white/10 sm:border-0 pt-2.5 sm:pt-0">
+              {/* Selection Checkbox */}
+              <button
+                onClick={(e) => handleToggleSelect(selectedPhoto.id, e)}
+                className={`flex items-center gap-1.5 px-3 py-1 rounded-full border transition-all cursor-pointer ${
+                  selectedPhotoIds.has(selectedPhoto.id)
+                    ? 'bg-primary/20 border-primary text-primary font-bold'
+                    : 'border-white/20 text-white/80 hover:border-white hover:text-white'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[15px]">
+                  {selectedPhotoIds.has(selectedPhoto.id) ? 'check_circle' : 'radio_button_unchecked'}
+                </span>
+                <span>{selectedPhotoIds.has(selectedPhoto.id) ? t.deselect : t.select}</span>
+              </button>
+
+              {/* Favorite */}
+              <button 
+                onClick={(e) => handleToggleFavorite(selectedPhoto, e)}
+                className={`flex items-center gap-1 transition-transform hover:scale-105 cursor-pointer ${
+                  selectedPhoto.is_favorite ? 'text-primary font-bold' : 'text-white/80 hover:text-white'
+                }`}
+              >
+                <span className="material-symbols-outlined text-[16px]" style={{ fontVariationSettings: selectedPhoto.is_favorite ? "'FILL' 1" : undefined }}>
+                  favorite
+                </span>
+                <span>{t.favorite}</span>
+              </button>
+
+              {/* Download */}
+              <button 
+                onClick={(e) => handleDownloadSingle(selectedPhoto, e)}
+                className="text-white/80 hover:text-white transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <span className="material-symbols-outlined text-[16px]">download</span>
+                <span>{t.download}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Selection Action Bar */}
+      {selectedPhotoIds.size > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-lg glass-panel px-4 py-3 rounded-2xl border border-primary/20 shadow-2xl flex items-center justify-between gap-3 animate-in slide-in-from-bottom duration-300">
+          <div className="flex items-center gap-2">
+            <span className="w-6 h-6 rounded-full bg-primary text-on-primary text-xs font-bold flex items-center justify-center">
+              {selectedPhotoIds.size}
+            </span>
+            <span className="text-white text-xs font-bold">
+              {selectedPhotoIds.size === 1 ? (lang === 'fr' ? '1 photo' : '1 photo') : `${selectedPhotoIds.size} photos`}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            {/* WhatsApp Selection */}
+            <a 
+              href={`https://wa.me/?text=${getWhatsAppSelectionMessage()}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1 px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-xs font-bold transition-all shadow-md"
+            >
+              <span className="material-symbols-outlined text-[16px]">chat</span>
+              <span className="hidden sm:inline">WhatsApp</span>
+            </a>
+
+            {/* Download Selection */}
+            <button 
+              onClick={handleDownloadSelected}
+              className="flex items-center gap-1 px-3 py-1.5 bg-primary text-on-primary rounded-xl text-xs font-bold hover:brightness-110 active:scale-95 transition-all shadow-md cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-[16px]">download</span>
+              <span className="hidden sm:inline">HD</span>
+            </button>
+
+            {/* Clear Selection */}
+            <button 
+              onClick={handleClearSelection}
+              className="w-8 h-8 rounded-xl bg-surface-container-highest hover:bg-surface-bright text-white/80 hover:text-white flex items-center justify-center transition-all cursor-pointer border border-outline-variant/30"
+              title={t.clearSelection}
+            >
+              <span className="material-symbols-outlined text-[16px]">close</span>
             </button>
           </div>
         </div>

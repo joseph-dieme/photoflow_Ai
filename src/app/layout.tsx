@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "PhotoFlow AI - Retouchez, organisez et livrez vos photos",
-  description: "La plateforme professionnelle pensée pour les photographes du monde entier. Retouchez avec l'IA, organisez vos projets, et livrez des galeries sécurisées à vos clients avec paiements intégrés (cartes bancaires, Wave, Orange).",
+  description: "La plateforme professionnelle pensée pour les photographes. Retouchez avec l'IA, organisez vos projets, et livrez des galeries sécurisées à vos clients avec paiements intégrés (cartes bancaires, Wave, Orange).",
   keywords: ["photographie", "gestion", "retouche photo", "IA", "global", "galerie client", "Wave", "Orange Money", "FCFA", "credit card"],
 };
 
