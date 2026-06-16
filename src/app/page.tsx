@@ -230,100 +230,193 @@ export default function LandingPage() {
 
       <main className="flex-grow pt-16">
         {/* Hero Section */}
-        <section className="relative min-h-[90vh] flex flex-col items-center justify-center px-6 md:px-margin-desktop text-center hero-glow py-12">
-          <div className="max-w-4xl mx-auto z-10">
-            <h1 className="font-display-lg text-4xl md:text-[64px] font-bold mb-6 leading-tight tracking-tight gradient-text">
+        <section className="relative min-h-[95vh] flex flex-col items-center justify-center px-6 md:px-margin-desktop text-center py-16 overflow-hidden">
+          {/* Decorative Background Glows */}
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 rounded-full blur-3xl -z-10 animate-pulse duration-[6s]"></div>
+          <div className="absolute top-1/3 right-1/4 w-80 h-80 bg-indigo-500/10 rounded-full blur-3xl -z-10 animate-pulse duration-[8s] delay-1000"></div>
+          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-primary-container/5 rounded-full blur-3xl -z-10"></div>
+
+          <div className="max-w-4xl mx-auto z-10 flex flex-col items-center">
+            {/* Top Badge */}
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container-high/60 border border-outline-variant/60 text-xs font-semibold text-primary mb-8">
+              <span className="flex h-2 w-2 rounded-full bg-primary animate-ping"></span>
+              <span>⚡ {lang === 'fr' ? "L'éditeur d'images IA conçu pour les photographes africains" : "The AI image editor built for African photographers"}</span>
+            </div>
+
+            <h1 className="font-display-lg text-4xl md:text-[68px] font-extrabold mb-6 leading-[1.12] tracking-tight bg-gradient-to-r from-white via-indigo-100 to-indigo-300 bg-clip-text text-transparent">
               {t.heroTitle}
             </h1>
-            <p className="font-body-lg text-lg md:text-xl text-on-surface-variant mb-10 max-w-2xl mx-auto">
+            <p className="font-body-lg text-lg md:text-xl text-on-surface-variant mb-10 max-w-2xl mx-auto leading-relaxed">
               {t.heroSubtitle}
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center w-full sm:w-auto">
               <Link
                 href={user ? "/dashboard" : "/signup"}
-                className="bg-primary-container text-on-primary-container px-8 py-4 rounded-xl font-semibold hover:scale-105 transition-transform active:scale-95 text-center flex items-center justify-center gap-2 shadow-lg hover:shadow-primary-container/20"
+                className="bg-primary text-on-secondary px-8 py-4 rounded-xl font-bold hover:scale-[1.03] transition-all active:scale-95 text-center flex items-center justify-center gap-2 shadow-lg shadow-primary/25 cursor-pointer"
               >
                 {user ? (lang === 'fr' ? 'Accéder au tableau de bord' : 'Go to Dashboard') : t.heroStartFree}
+                <span className="material-symbols-outlined text-sm font-bold">arrow_forward</span>
               </Link>
               <a
                 href="#features"
-                className="border border-outline-variant text-on-surface px-8 py-4 rounded-xl font-semibold hover:bg-surface-container-highest transition-colors text-center"
+                className="border border-outline-variant/80 text-on-surface px-8 py-4 rounded-xl font-semibold hover:bg-surface-container-high transition-all text-center cursor-pointer"
               >
                 {t.heroSeeFeatures}
               </a>
             </div>
           </div>
 
-          {/* AI Before/After Interactive Demo */}
-          <div className="mt-20 w-full max-w-5xl mx-auto glass-card rounded-2xl overflow-hidden relative shadow-2xl border border-outline-variant/50">
-            <div className="ai-processing-line absolute top-0 left-0 w-full z-20"></div>
-            
-            <div 
-              ref={containerRef}
-              onMouseMove={handleMouseMove}
-              onTouchMove={handleTouchMove}
-              onMouseDown={() => setIsDragging(true)}
-              onMouseUp={() => setIsDragging(false)}
-              onMouseLeave={() => setIsDragging(false)}
-              className="aspect-video relative select-none cursor-ew-resize overflow-hidden"
-            >
-              {/* After Image (Corrected & Retouched) */}
-              <img 
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQgbqCA-pgs1GDYtUXOcRKiVWfmbZzJ-Mnd4k_AmW8xxx8dEBqBxIAsVHUF_tEq4JIIm_FuUi5qPziDHDcQF1kus_1Q3_WQ2kvPh3oT4vypGUwukStcakMWzsP4SoCbxQ7j0SoZo6ta1Nenm-DzbA3fuZNJ_Vu_5thipCwzVbML_ijRa6jZR0gGRioukSRNFsGtxnd_X9BjQm1GH2fekBBVS1UgLeKlZe4xfWOlVGn6emDPBt_u8a6dH_7pvqWqAZePOjS0a-jFGOy" 
-                alt="Retouched Wedding Portrait" 
-                className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-              />
-              
-              {/* Before Image Overlay (Raw Unedited, controlled by CSS clip-path) */}
-              <img 
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQgbqCA-pgs1GDYtUXOcRKiVWfmbZzJ-Mnd4k_AmW8xxx8dEBqBxIAsVHUF_tEq4JIIm_FuUi5qPziDHDcQF1kus_1Q3_WQ2kvPh3oT4vypGUwukStcakMWzsP4SoCbxQ7j0SoZo6ta1Nenm-DzbA3fuZNJ_Vu_5thipCwzVbML_ijRa6jZR0gGRioukSRNFsGtxnd_X9BjQm1GH2fekBBVS1UgLeKlZe4xfWOlVGn6emDPBt_u8a6dH_7pvqWqAZePOjS0a-jFGOy" 
-                alt="Raw Wedding Portrait" 
-                className="absolute inset-0 w-full h-full object-cover pointer-events-none brightness-75 contrast-80 saturate-[0.65] sepia-[0.12] blur-[0.5px] z-10"
-                style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
-              />
+          {/* AI Before/After Interactive Demo Mockup */}
+          <div className="mt-20 w-full max-w-5xl mx-auto glass-card rounded-2xl overflow-hidden relative shadow-2xl border border-outline-variant/60 flex flex-col bg-surface-container-lowest/80 backdrop-blur-xl">
+            {/* Window Header */}
+            <div className="h-12 border-b border-outline-variant/40 px-4 flex justify-between items-center bg-surface-container/60">
+              <div className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-[#ef4444]/80"></span>
+                <span className="w-3 h-3 rounded-full bg-[#f59e0b]/80"></span>
+                <span className="w-3 h-3 rounded-full bg-[#10b981]/80"></span>
+                <span className="text-[11px] text-on-surface-variant font-mono ml-4 font-semibold select-none">PhotoFlow_IA_Editor_v2.0.exe</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-[10px] bg-primary/10 text-primary px-2.5 py-1 rounded-full font-bold uppercase tracking-wider select-none">
+                  {lang === 'fr' ? 'Algorithme IA V2' : 'AI Engine V2'}
+                </span>
+              </div>
+            </div>
 
-              {/* Slider Divider Line */}
-              <div 
-                style={{ left: `${sliderPosition}%` }}
-                className="absolute inset-y-0 border-r-2 border-white/60 z-15 pointer-events-none"
-              />
+            <div className="flex flex-col lg:flex-row min-h-[500px]">
+              {/* Left sidebar: Mock adjustments */}
+              <div className="w-full lg:w-64 border-b lg:border-b-0 lg:border-r border-outline-variant/30 p-5 flex flex-col gap-6 bg-surface-container-low/40 justify-center">
+                <div className="space-y-1">
+                  <h4 className="text-xs font-bold text-white uppercase tracking-wider mb-4 select-none">{lang === 'fr' ? 'Réglages IA' : 'AI Settings'}</h4>
+                  <div className="space-y-4">
+                    {/* Mock Sliders */}
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-[10px] font-semibold text-on-surface-variant select-none">
+                        <span>{lang === 'fr' ? 'Ton de peau' : 'Skin Tone'}</span>
+                        <span className="text-primary font-mono">+85%</span>
+                      </div>
+                      <div className="h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+                        <div className="h-full bg-primary w-[85%] rounded-full"></div>
+                      </div>
+                    </div>
 
-              {/* Slider Handle button overlay */}
-              <div 
-                style={{ left: `${sliderPosition}%` }}
-                className="absolute inset-y-0 -ml-4 z-20 flex items-center pointer-events-none"
-              >
-                <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center shadow-2xl border border-primary pointer-events-auto cursor-ew-resize">
-                  <span className="material-symbols-outlined text-sm font-bold">swap_horiz</span>
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-[10px] font-semibold text-on-surface-variant select-none">
+                        <span>{lang === 'fr' ? 'Exposition' : 'Exposure'}</span>
+                        <span className="text-primary font-mono">+12%</span>
+                      </div>
+                      <div className="h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+                        <div className="h-full bg-primary w-[62%] rounded-full"></div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-[10px] font-semibold text-on-surface-variant select-none">
+                        <span>{lang === 'fr' ? 'Balance des blancs' : 'White Balance'}</span>
+                        <span className="text-primary font-mono">Auto</span>
+                      </div>
+                      <div className="h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+                        <div className="h-full bg-primary w-[75%] rounded-full"></div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <div className="flex justify-between text-[10px] font-semibold text-on-surface-variant select-none">
+                        <span>{lang === 'fr' ? 'Douceur de peau' : 'Skin Softening'}</span>
+                        <span className="text-primary font-mono">92%</span>
+                      </div>
+                      <div className="h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+                        <div className="h-full bg-primary w-[92%] rounded-full"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-outline-variant/30 space-y-3 select-none">
+                  <div className="flex items-center gap-2 text-[10px] text-on-surface-variant">
+                    <span className="material-symbols-outlined text-sm text-[#10b981]">check_circle</span>
+                    <span>{lang === 'fr' ? 'Correction visage active' : 'Face correction active'}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-[10px] text-on-surface-variant">
+                    <span className="material-symbols-outlined text-sm text-[#10b981]">check_circle</span>
+                    <span>{lang === 'fr' ? 'Optimisation WebP active' : 'WebP optimization active'}</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Badges */}
-              <div className="absolute bottom-4 left-4 z-30 font-body-sm text-body-sm text-white/70 bg-black/50 px-3 py-1 rounded-full backdrop-blur-sm">
-                {t.beforeLabel}
-              </div>
-              <div className="absolute bottom-4 right-4 z-30 font-body-sm text-body-sm text-white/70 bg-black/50 px-3 py-1 rounded-full backdrop-blur-sm">
-                {t.afterLabel}
+              {/* Slider Area */}
+              <div className="flex-1 relative min-h-[350px] lg:min-h-auto overflow-hidden">
+                <div 
+                  ref={containerRef}
+                  onMouseMove={handleMouseMove}
+                  onTouchMove={handleTouchMove}
+                  onMouseDown={() => setIsDragging(true)}
+                  onMouseUp={() => setIsDragging(false)}
+                  onMouseLeave={() => setIsDragging(false)}
+                  className="absolute inset-0 select-none cursor-ew-resize overflow-hidden"
+                >
+                  {/* After Image (Corrected & Retouched) */}
+                  <img 
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQgbqCA-pgs1GDYtUXOcRKiVWfmbZzJ-Mnd4k_AmW8xxx8dEBqBxIAsVHUF_tEq4JIIm_FuUi5qPziDHDcQF1kus_1Q3_WQ2kvPh3oT4vypGUwukStcakMWzsP4SoCbxQ7j0SoZo6ta1Nenm-DzbA3fuZNJ_Vu_5thipCwzVbML_ijRa6jZR0gGRioukSRNFsGtxnd_X9BjQm1GH2fekBBVS1UgLeKlZe4xfWOlVGn6emDPBt_u8a6dH_7pvqWqAZePOjS0a-jFGOy" 
+                    alt="Retouched Wedding Portrait" 
+                    className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                  />
+                  
+                  {/* Before Image Overlay */}
+                  <img 
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuCQgbqCA-pgs1GDYtUXOcRKiVWfmbZzJ-Mnd4k_AmW8xxx8dEBqBxIAsVHUF_tEq4JIIm_FuUi5qPziDHDcQF1kus_1Q3_WQ2kvPh3oT4vypGUwukStcakMWzsP4SoCbxQ7j0SoZo6ta1Nenm-DzbA3fuZNJ_Vu_5thipCwzVbML_ijRa6jZR0gGRioukSRNFsGtxnd_X9BjQm1GH2fekBBVS1UgLeKlZe4xfWOlVGn6emDPBt_u8a6dH_7pvqWqAZePOjS0a-jFGOy" 
+                    alt="Raw Wedding Portrait" 
+                    className="absolute inset-0 w-full h-full object-cover pointer-events-none brightness-75 contrast-80 saturate-[0.65] sepia-[0.12] blur-[0.5px] z-10"
+                    style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
+                  />
+
+                  {/* Slider Divider Line */}
+                  <div 
+                    style={{ left: `${sliderPosition}%` }}
+                    className="absolute inset-y-0 border-r-2 border-white/60 z-15 pointer-events-none"
+                  />
+
+                  {/* Slider Handle button overlay */}
+                  <div 
+                    style={{ left: `${sliderPosition}%` }}
+                    className="absolute inset-y-0 -ml-4 z-20 flex items-center pointer-events-none"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-white text-black flex items-center justify-center shadow-2xl border border-primary pointer-events-auto cursor-ew-resize">
+                      <span className="material-symbols-outlined text-sm font-bold">swap_horiz</span>
+                    </div>
+                  </div>
+
+                  {/* Badges */}
+                  <div className="absolute bottom-4 left-4 z-30 font-body-sm text-[10px] font-bold text-white bg-black/60 px-3 py-1 rounded-full backdrop-blur-sm border border-white/10 uppercase tracking-widest">
+                    {t.beforeLabel}
+                  </div>
+                  <div className="absolute bottom-4 right-4 z-30 font-body-sm text-[10px] font-bold text-primary bg-black/60 px-3 py-1 rounded-full backdrop-blur-sm border border-primary/20 uppercase tracking-widest">
+                    {t.afterLabel}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
         {/* Bento Grid Features Section */}
-        <section id="features" className="py-24 px-6 md:px-margin-desktop bg-surface-container-lowest">
+        <section id="features" className="py-28 px-6 md:px-margin-desktop bg-surface-container-lowest relative">
+          <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-background to-transparent -z-10"></div>
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="font-headline-lg text-3xl md:text-4xl mb-4 font-bold">{t.featuresTitle}</h2>
-              <p className="font-body-lg text-on-surface-variant max-w-2xl mx-auto">{t.featuresSubtitle}</p>
+            <div className="text-center mb-20">
+              <h2 className="font-headline-lg text-4xl md:text-5xl mb-4 font-extrabold tracking-tight text-white">{t.featuresTitle}</h2>
+              <p className="font-body-lg text-on-surface-variant max-w-2xl mx-auto text-base">{t.featuresSubtitle}</p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {/* Bento Card 1: AI Retouching */}
-              <div className="md:col-span-2 glass-card p-10 rounded-2xl flex flex-col justify-between group hover:border-primary/50 transition-all duration-300">
+              <div className="md:col-span-2 glass-card p-10 md:p-12 rounded-3xl flex flex-col justify-between group border border-outline-variant/40 hover:border-primary/40 transition-all duration-500 min-h-[340px]">
                 <div>
-                  <span className="material-symbols-outlined text-primary text-4xl mb-4">auto_awesome</span>
-                  <h3 className="font-headline-lg text-2xl font-bold mb-4">{t.bento1Title}</h3>
-                  <p className="font-body-lg text-on-surface-variant max-w-md">
+                  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 mb-8">
+                    <span className="material-symbols-outlined text-primary text-3xl">auto_awesome</span>
+                  </div>
+                  <h3 className="font-headline-lg text-2xl md:text-3xl font-bold mb-4 text-white">{t.bento1Title}</h3>
+                  <p className="font-body-lg text-on-surface-variant max-w-xl leading-relaxed text-sm md:text-base">
                     {t.bento1Desc}
                   </p>
                 </div>
@@ -334,52 +427,62 @@ export default function LandingPage() {
               </div>
 
               {/* Bento Card 2: Secure Delivery */}
-              <div className="glass-card p-10 rounded-2xl group hover:border-primary/50 transition-all duration-300 flex flex-col justify-between">
+              <div className="glass-card p-10 rounded-3xl border border-outline-variant/40 hover:border-primary/40 transition-all duration-500 flex flex-col justify-between min-h-[340px]">
                 <div>
-                  <span className="material-symbols-outlined text-primary text-4xl mb-4">cloud_upload</span>
-                  <h3 className="font-headline-md text-xl font-bold mb-4">{t.bento2Title}</h3>
-                  <p className="font-body-md text-on-surface-variant">
+                  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 mb-8">
+                    <span className="material-symbols-outlined text-primary text-3xl">cloud_upload</span>
+                  </div>
+                  <h3 className="font-headline-md text-xl md:text-2xl font-bold mb-4 text-white">{t.bento2Title}</h3>
+                  <p className="font-body-md text-on-surface-variant leading-relaxed text-sm">
                     {t.bento2Desc}
                   </p>
                 </div>
-                <div className="mt-8 bg-background p-4 rounded-xl flex items-center gap-3 border border-outline-variant/30">
-                  <span className="material-symbols-outlined text-primary">lock</span>
-                  <span className="text-[10px] font-mono tracking-widest text-on-surface-variant">{t.bento2Status}</span>
+                <div className="mt-8 bg-background/50 p-4 rounded-2xl flex items-center gap-3 border border-outline-variant/30">
+                  <span className="material-symbols-outlined text-primary text-lg">lock</span>
+                  <span className="text-[10px] font-mono tracking-widest text-primary font-bold uppercase">{t.bento2Status}</span>
                 </div>
               </div>
 
               {/* Bento Card 3: Smart Organization */}
-              <div className="glass-card p-10 rounded-2xl group hover:border-primary/50 transition-all duration-300 flex flex-col justify-between">
+              <div className="glass-card p-10 rounded-3xl border border-outline-variant/40 hover:border-primary/40 transition-all duration-500 flex flex-col justify-between min-h-[340px]">
                 <div>
-                  <span className="material-symbols-outlined text-primary text-4xl mb-4">folder_special</span>
-                  <h3 className="font-headline-md text-xl font-bold mb-4">{t.bento3Title}</h3>
-                  <p className="font-body-md text-on-surface-variant">
+                  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 mb-8">
+                    <span className="material-symbols-outlined text-primary text-3xl">folder_special</span>
+                  </div>
+                  <h3 className="font-headline-md text-xl md:text-2xl font-bold mb-4 text-white">{t.bento3Title}</h3>
+                  <p className="font-body-md text-on-surface-variant leading-relaxed text-sm">
                     {t.bento3Desc}
                   </p>
                 </div>
                 <div className="mt-8 flex gap-2">
-                  <span className="px-2.5 py-1 text-[10px] bg-surface-container-highest rounded border border-outline-variant/30">{t.bento3Tag1}</span>
-                  <span className="px-2.5 py-1 text-[10px] bg-surface-container-highest rounded border border-outline-variant/30">{t.bento3Tag2}</span>
+                  <span className="px-3 py-1.5 text-[10px] font-bold text-white bg-surface-container-highest rounded-lg border border-outline-variant/30">{t.bento3Tag1}</span>
+                  <span className="px-3 py-1.5 text-[10px] font-bold text-white bg-surface-container-highest rounded-lg border border-outline-variant/30">{t.bento3Tag2}</span>
                 </div>
               </div>
 
               {/* Bento Card 4: Local Payments */}
-              <div className="md:col-span-2 glass-card p-10 rounded-2xl flex flex-col md:flex-row items-center gap-8 group hover:border-primary/50 transition-all duration-300">
+              <div className="md:col-span-2 glass-card p-10 md:p-12 rounded-3xl flex flex-col md:flex-row items-start md:items-center gap-8 border border-outline-variant/40 hover:border-primary/40 transition-all duration-500 min-h-[340px]">
                 <div className="flex-1">
-                  <span className="material-symbols-outlined text-primary text-4xl mb-4">payments</span>
-                  <h3 className="font-headline-lg text-2xl font-bold mb-4">{t.bento4Title}</h3>
-                  <p className="font-body-lg text-on-surface-variant">
+                  <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 mb-8">
+                    <span className="material-symbols-outlined text-primary text-3xl">payments</span>
+                  </div>
+                  <h3 className="font-headline-lg text-2xl md:text-3xl font-bold mb-4 text-white">{t.bento4Title}</h3>
+                  <p className="font-body-lg text-on-surface-variant leading-relaxed text-sm md:text-base">
                     {t.bento4Desc}
                   </p>
                 </div>
-                <div className="flex gap-4 shrink-0">
-                  <div className="w-20 h-20 bg-white/5 rounded-2xl flex flex-col items-center justify-center p-3 border border-outline-variant/20 hover:border-primary/30 transition-colors">
-                    <span className="text-[11px] font-bold text-primary mb-1">WAVE</span>
-                    <span className="text-[9px] text-on-surface-variant">{t.bento4Tag1}</span>
+                <div className="flex gap-4 shrink-0 w-full md:w-auto mt-4 md:mt-0">
+                  <div className="flex-1 md:flex-none w-24 h-24 bg-white/5 rounded-2xl flex flex-col items-center justify-center p-3 border border-outline-variant/20 hover:border-primary/30 transition-colors">
+                    <span className="text-[12px] font-bold text-[#4f46e5] mb-1">WAVE</span>
+                    <span className="text-[9px] text-on-surface-variant font-medium">{t.bento4Tag1}</span>
                   </div>
-                  <div className="w-20 h-20 bg-white/5 rounded-2xl flex flex-col items-center justify-center p-3 border border-outline-variant/20 hover:border-primary/30 transition-colors">
-                    <span className="text-[11px] font-bold text-orange-400 mb-1">ORANGE</span>
-                    <span className="text-[9px] text-on-surface-variant">{t.bento4Tag2}</span>
+                  <div className="flex-1 md:flex-none w-24 h-24 bg-white/5 rounded-2xl flex flex-col items-center justify-center p-3 border border-outline-variant/20 hover:border-orange-500/30 transition-colors">
+                    <span className="text-[12px] font-bold text-orange-400 mb-1">ORANGE</span>
+                    <span className="text-[9px] text-on-surface-variant font-medium">{t.bento4Tag2}</span>
+                  </div>
+                  <div className="flex-1 md:flex-none w-24 h-24 bg-white/5 rounded-2xl flex flex-col items-center justify-center p-3 border border-outline-variant/20 hover:border-red-500/30 transition-colors">
+                    <span className="text-[12px] font-bold text-red-500 mb-1">FREE</span>
+                    <span className="text-[9px] text-on-surface-variant font-medium">{t.bento4Tag2}</span>
                   </div>
                 </div>
               </div>
@@ -388,82 +491,83 @@ export default function LandingPage() {
         </section>
 
         {/* Pricing Section */}
-        <section id="pricing" className="py-24 px-6 md:px-margin-desktop">
+        <section id="pricing" className="py-28 px-6 md:px-margin-desktop relative">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary/5 rounded-full blur-3xl -z-10"></div>
           <div className="max-w-5xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="font-headline-lg text-3xl md:text-4xl font-bold mb-4">{t.pricingTitle}</h2>
-              <p className="font-body-lg text-on-surface-variant">{t.pricingSubtitle}</p>
+            <div className="text-center mb-20">
+              <h2 className="font-headline-lg text-4xl md:text-5xl font-extrabold mb-4 text-white tracking-tight">{t.pricingTitle}</h2>
+              <p className="font-body-lg text-on-surface-variant text-base">{t.pricingSubtitle}</p>
             </div>
 
             <div className="flex flex-col md:flex-row gap-8 items-stretch justify-center max-w-4xl mx-auto">
               {/* Free Plan */}
-              <div className="flex-1 glass-panel p-10 rounded-2xl flex flex-col border border-outline-variant/40">
-                <h3 className="font-headline-md text-xl font-bold mb-2">{t.pricingFreeTitle}</h3>
-                <div className="flex items-baseline gap-1 mb-6">
-                  <span className="font-price-lg text-3xl font-bold">{t.pricingFreePrice}</span>
+              <div className="flex-1 glass-panel p-10 md:p-12 rounded-3xl flex flex-col border border-outline-variant/40 bg-surface-container-low/40 backdrop-blur-xl">
+                <h3 className="font-headline-md text-2xl font-bold mb-2 text-white">{t.pricingFreeTitle}</h3>
+                <div className="flex items-baseline gap-1 mb-8">
+                  <span className="font-price-lg text-4xl font-extrabold text-white">{t.pricingFreePrice}</span>
                   <span className="font-label-md text-xs font-semibold text-on-surface-variant">{t.pricingPeriod}</span>
                 </div>
-                <ul className="space-y-4 mb-10 flex-grow">
+                <ul className="space-y-4 mb-10 flex-grow text-on-surface-variant">
                   <li className="flex items-center gap-3 text-sm">
                     <span className="material-symbols-outlined text-primary text-lg">check_circle</span>
-                    {t.pricingFreeFeature1}
+                    <span>{t.pricingFreeFeature1}</span>
                   </li>
                   <li className="flex items-center gap-3 text-sm">
                     <span className="material-symbols-outlined text-primary text-lg">check_circle</span>
-                    {t.pricingFreeFeature2}
+                    <span>{t.pricingFreeFeature2}</span>
                   </li>
                   <li className="flex items-center gap-3 text-sm">
                     <span className="material-symbols-outlined text-primary text-lg">check_circle</span>
-                    {t.pricingFreeFeature3}
+                    <span>{t.pricingFreeFeature3}</span>
                   </li>
-                  <li className="flex items-center gap-3 text-sm text-on-surface-variant/70">
+                  <li className="flex items-center gap-3 text-sm text-on-surface-variant/50">
                     <span className="material-symbols-outlined text-outline text-lg">water_lux</span>
-                    {t.pricingFreeFeature4}
+                    <span>{t.pricingFreeFeature4}</span>
                   </li>
                 </ul>
                 <Link
                   href={user ? "/checkout/select-plan" : "/signup"}
-                  className="w-full text-center border border-outline-variant py-3 rounded-xl hover:bg-surface-container-highest transition-colors font-semibold"
+                  className="w-full text-center border border-outline-variant/80 py-3.5 rounded-xl hover:bg-surface-container-high hover:text-white transition-all font-semibold text-sm cursor-pointer"
                 >
                   {t.pricingFreeCTA}
                 </Link>
               </div>
 
               {/* Pro Plan */}
-              <div className="flex-1 glass-panel p-10 rounded-2xl border-2 border-primary bg-primary-container/5 flex flex-col relative scale-105 shadow-2xl">
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-on-primary px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
+              <div className="flex-1 glass-panel p-10 md:p-12 rounded-3xl border-2 border-primary/80 bg-gradient-to-b from-primary/10 to-indigo-500/5 flex flex-col relative scale-[1.03] shadow-2xl backdrop-blur-xl">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-on-secondary px-5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-lg">
                   {t.pricingRecommended}
                 </div>
-                <h3 className="font-headline-md text-xl font-bold mb-2">{t.pricingProTitle}</h3>
-                <div className="flex items-baseline gap-1 mb-6">
-                  <span className="font-price-lg text-3xl font-bold text-primary">{t.pricingProPrice}</span>
+                <h3 className="font-headline-md text-2xl font-bold mb-2 text-white">{t.pricingProTitle}</h3>
+                <div className="flex items-baseline gap-1 mb-8">
+                  <span className="font-price-lg text-4xl font-extrabold text-primary">{t.pricingProPrice}</span>
                   <span className="font-label-md text-xs font-semibold text-on-surface-variant">{t.pricingPeriod}</span>
                 </div>
-                <ul className="space-y-4 mb-10 flex-grow">
+                <ul className="space-y-4 mb-10 flex-grow text-zinc-200">
                   <li className="flex items-center gap-3 text-sm font-semibold">
                     <span className="material-symbols-outlined text-primary text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                    {t.pricingProFeature1}
+                    <span>{t.pricingProFeature1}</span>
                   </li>
-                  <li className="flex items-center gap-3 text-sm">
+                  <li className="flex items-center gap-3 text-sm font-semibold">
                     <span className="material-symbols-outlined text-primary text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                    {t.pricingProFeature2}
+                    <span>{t.pricingProFeature2}</span>
                   </li>
-                  <li className="flex items-center gap-3 text-sm">
+                  <li className="flex items-center gap-3 text-sm font-semibold">
                     <span className="material-symbols-outlined text-primary text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                    {t.pricingProFeature3}
+                    <span>{t.pricingProFeature3}</span>
                   </li>
-                  <li className="flex items-center gap-3 text-sm">
+                  <li className="flex items-center gap-3 text-sm font-semibold">
                     <span className="material-symbols-outlined text-primary text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                    {t.pricingProFeature4}
+                    <span>{t.pricingProFeature4}</span>
                   </li>
-                  <li className="flex items-center gap-3 text-sm">
+                  <li className="flex items-center gap-3 text-sm font-semibold">
                     <span className="material-symbols-outlined text-primary text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                    {t.pricingProFeature5}
+                    <span>{t.pricingProFeature5}</span>
                   </li>
                 </ul>
                 <Link
                   href={user ? "/checkout/select-plan?plan=pro" : "/signup?plan=pro"}
-                  className="w-full text-center bg-primary-container text-on-primary-container py-3 rounded-xl font-bold hover:brightness-110 transition-all shadow-lg"
+                  className="w-full text-center bg-primary text-on-secondary py-3.5 rounded-xl font-extrabold hover:brightness-110 active:scale-[0.98] transition-all shadow-lg shadow-primary/20 cursor-pointer text-sm"
                 >
                   {t.pricingProCTA}
                 </Link>
@@ -473,22 +577,35 @@ export default function LandingPage() {
         </section>
 
         {/* Testimonial Section */}
-        <section className="py-24 px-6 md:px-margin-desktop text-center bg-surface-container-lowest">
-          <div className="max-w-3xl mx-auto">
-            <div className="flex justify-center mb-8">
-              <div className="w-20 h-20 rounded-full border-2 border-primary p-1">
+        <section className="py-28 px-6 md:px-margin-desktop text-center bg-surface-container-lowest/40 border-y border-outline-variant/30 relative overflow-hidden">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[200px] bg-primary/5 rounded-full blur-3xl -z-10"></div>
+          <div className="max-w-3xl mx-auto flex flex-col items-center">
+            {/* Stars rating */}
+            <div className="flex gap-1 mb-8 text-[#f59e0b] animate-pulse">
+              <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+              <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+              <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+              <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+              <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+            </div>
+            
+            <p className="font-headline-md text-xl md:text-3xl italic mb-10 text-white leading-relaxed font-semibold">
+              {t.testimonialQuote}
+            </p>
+            
+            <div className="flex items-center gap-4 mt-2">
+              <div className="w-14 h-14 rounded-full border-2 border-primary/60 p-0.5">
                 <img
                   alt="Moussa Diop Portrait"
                   className="w-full h-full object-cover rounded-full"
                   src="https://lh3.googleusercontent.com/aida-public/AB6AXuAenCRyxln8rzfQGG04fB4wPKObvsC8CItN7ThNmg0gHN-aSHdngfdhG6uGghmirDIHpACRkKTKm-UdE7AJaCj9wmmYZXjSnph9gVQZHJPeVtammAyi-ByCQBriDj8Xjrz4UGwQdpxYW9EGLE3afV-F163J44GkUNYze7hG-S00uvtIAK8ft0FUHatu-D2ok73i_He37cnhPHedCCy4A4WVARfYt6iJ0nUiDiswleLPynSKuarsb0w3e06erJvbMJV7vGLXPnZJxmYQ"
                 />
               </div>
+              <div className="text-left">
+                <div className="font-headline-md text-lg font-bold text-white">{t.testimonialAuthor}</div>
+                <div className="text-on-surface-variant font-body-sm text-xs mt-0.5">{t.testimonialRole}</div>
+              </div>
             </div>
-            <p className="font-headline-md text-xl md:text-2xl italic mb-8 text-on-surface">
-              {t.testimonialQuote}
-            </p>
-            <div className="font-headline-md text-lg font-bold">{t.testimonialAuthor}</div>
-            <div className="text-on-surface-variant font-body-sm text-xs">{t.testimonialRole}</div>
           </div>
         </section>
 

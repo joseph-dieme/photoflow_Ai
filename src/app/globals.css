@@ -95,10 +95,10 @@
   --spacing-panel-padding: var(--panel-padding);
   --spacing-unit: var(--unit);
 
-  --font-display-lg: "Plus Jakarta Sans", sans-serif;
-  --font-headline-lg: "Plus Jakarta Sans", sans-serif;
-  --font-headline-md: "Plus Jakarta Sans", sans-serif;
-  --font-price-lg: "Plus Jakarta Sans", sans-serif;
+  --font-display-lg: "Syne", "Plus Jakarta Sans", sans-serif;
+  --font-headline-lg: "Syne", "Plus Jakarta Sans", sans-serif;
+  --font-headline-md: "Syne", "Plus Jakarta Sans", sans-serif;
+  --font-price-lg: "Syne", "Plus Jakarta Sans", sans-serif;
   --font-body-lg: "Inter", sans-serif;
   --font-body-md: "Inter", sans-serif;
   --font-body-sm: "Inter", sans-serif;
