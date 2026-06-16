@@ -29,7 +29,12 @@ const translations = {
     clientLabel: "Client",
     projectLabel: "Projet",
     studioLabel: "Studio / Photographe",
-    proSubscription: "Abonnement PhotoFlow Pro"
+    proSubscription: "Abonnement PhotoFlow Pro",
+    promoCodeLabel: "Code Promo",
+    promoPlaceholder: "Ex: PHOTOFEST",
+    promoBtnApply: "Appliquer",
+    promoDiscountLabel: "Remise",
+    promoCodeApplied: "Code appliqué !"
   },
   en: {
     paymentFailed: "Payment processing failed.",
@@ -55,7 +60,12 @@ const translations = {
     clientLabel: "Client",
     projectLabel: "Project",
     studioLabel: "Studio / Photographer",
-    proSubscription: "PhotoFlow Pro Subscription"
+    proSubscription: "PhotoFlow Pro Subscription",
+    promoCodeLabel: "Promo Code",
+    promoPlaceholder: "e.g., PHOTOFEST",
+    promoBtnApply: "Apply",
+    promoDiscountLabel: "Discount",
+    promoCodeApplied: "Code applied!"
   }
 };
 
@@ -131,6 +141,62 @@ function WaveCheckoutForm() {
   const [fetchingInvoice, setFetchingInvoice] = useState(false);
   const [invoiceAlreadyPaid, setInvoiceAlreadyPaid] = useState(false);
 
+  // Promo Code States
+  const [promoCode, setPromoCode] = useState('');
+  const [promoApplied, setPromoApplied] = useState(false);
+  const [appliedCodeText, setAppliedCodeText] = useState('');
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [promoSuccess, setPromoSuccess] = useState<string | null>(null);
+  const [promoDiscountType, setPromoDiscountType] = useState<'percent' | 'fixed' | null>(null);
+  const [promoDiscountValue, setPromoDiscountValue] = useState(0);
+  const [promoLoading, setPromoLoading] = useState(false);
+
+  const handleApplyPromo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!promoCode) return;
+    setPromoLoading(true);
+    setPromoError(null);
+    setPromoSuccess(null);
+
+    try {
+      const { data, error } = await supabase.rpc('check_promo_code', {
+        code_text: promoCode.trim()
+      });
+
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        const result = data[0];
+        if (result.valid) {
+          setPromoApplied(true);
+          setAppliedCodeText(promoCode.trim().toUpperCase());
+          setPromoDiscountType(result.discount_type);
+          setPromoDiscountValue(result.discount_value);
+          setPromoSuccess(lang === 'fr' ? 'Code promo appliqué avec succès !' : 'Promo code applied successfully!');
+        } else {
+          setPromoError(result.message || (lang === 'fr' ? 'Code invalide.' : 'Invalid code.'));
+        }
+      } else {
+        setPromoError(lang === 'fr' ? 'Erreur de validation.' : 'Validation error.');
+      }
+    } catch (err) {
+      console.error('Promo code error:', err);
+      setPromoError(lang === 'fr' ? 'Impossible de valider le code.' : 'Unable to validate code.');
+    } finally {
+      setPromoLoading(false);
+    }
+  };
+
+  const handleRemovePromo = () => {
+    setPromoApplied(false);
+    setAppliedCodeText('');
+    setPromoCode('');
+    setPromoDiscountType(null);
+    setPromoDiscountValue(0);
+    setPromoSuccess(null);
+    setPromoError(null);
+  };
+
   // Load invoice details if present
   useEffect(() => {
     if (!invoiceId) return;
@@ -180,6 +246,14 @@ function WaveCheckoutForm() {
     }, 1000);
   };
 
+  const baseAmount = parseInt(amount) || 12500;
+  const discountAmount = promoApplied
+    ? promoDiscountType === 'percent'
+      ? Math.round((baseAmount * promoDiscountValue) / 100)
+      : promoDiscountValue
+    : 0;
+  const finalAmount = Math.max(0, baseAmount - discountAmount);
+
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!otp) return;
@@ -204,6 +278,13 @@ function WaveCheckoutForm() {
             .eq('id', user.id);
           if (error) throw error;
         }
+      }
+
+      // Record promo code usage if applied
+      if (promoApplied && appliedCodeText) {
+        await supabase.rpc('use_promo_code', {
+          code_text: appliedCodeText
+        });
       }
 
       setLoading(false);
@@ -232,7 +313,7 @@ function WaveCheckoutForm() {
         </div>
         <h2 className="text-xl font-bold text-white mb-2">{t.paymentSuccess}</h2>
         <p className="text-zinc-400 text-xs mb-6">
-          {t.paymentSuccessDesc.replace('{amount}', parseInt(amount).toLocaleString(lang === 'fr' ? 'fr-FR' : 'en-US'))}
+          {t.paymentSuccessDesc.replace('{amount}', finalAmount.toLocaleString(lang === 'fr' ? 'fr-FR' : 'en-US'))}
         </p>
         <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
         <p className="text-[10px] text-zinc-500 mt-4">{t.redirecting}</p>
@@ -264,7 +345,7 @@ function WaveCheckoutForm() {
           </div>
           <div className="text-right">
             <p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">{t.amountLabel}</p>
-            <p className="text-sm font-black text-white">{parseInt(amount).toLocaleString(lang === 'fr' ? 'fr-FR' : 'en-US')} FCFA</p>
+            <p className="text-sm font-black text-white">{finalAmount.toLocaleString(lang === 'fr' ? 'fr-FR' : 'en-US')} FCFA</p>
           </div>
         </div>
 
@@ -312,6 +393,77 @@ function WaveCheckoutForm() {
             </>
           )}
         </div>
+
+        {/* Promo Code input section */}
+        {!invoiceAlreadyPaid && (
+          <div className="mb-6 p-4 bg-zinc-900/40 rounded-2xl border border-zinc-800/50 text-xs">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-zinc-400 font-bold text-[10px] uppercase tracking-wider">{t.promoCodeLabel}</span>
+              {promoApplied && (
+                <span className="text-green-400 font-bold text-[9px] bg-green-500/10 px-1.5 py-0.5 rounded border border-green-500/20">
+                  {t.promoCodeApplied}
+                </span>
+              )}
+            </div>
+
+            {promoApplied ? (
+              <div className="flex justify-between items-center bg-zinc-950/50 border border-green-900/30 rounded-xl px-3 py-2 text-zinc-200">
+                <div className="font-semibold flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-green-400 text-xs">local_offer</span>
+                  <span className="font-mono">{appliedCodeText}</span>
+                  <span className="text-zinc-500 text-[10px]">
+                    (-{promoDiscountType === 'percent' ? `${promoDiscountValue}%` : `${promoDiscountValue.toLocaleString()} FCFA`})
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleRemovePromo}
+                  className="text-zinc-500 hover:text-red-400 font-bold text-[10px] uppercase cursor-pointer transition-colors"
+                >
+                  {lang === 'fr' ? 'Retirer' : 'Remove'}
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleApplyPromo} className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder={t.promoPlaceholder}
+                  value={promoCode}
+                  onChange={(e) => {
+                    setPromoCode(e.target.value);
+                    if (promoError) setPromoError(null);
+                  }}
+                  className="flex-grow bg-zinc-950/40 border border-zinc-800/80 focus:border-blue-500 rounded-xl px-3 py-2 text-xs outline-none text-white transition-colors uppercase font-mono"
+                />
+                <button
+                  type="submit"
+                  disabled={promoLoading || !promoCode}
+                  className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 active:scale-98 text-white rounded-xl text-xs font-bold transition-all cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
+                >
+                  {promoLoading ? (
+                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                  ) : (
+                    t.promoBtnApply
+                  )}
+                </button>
+              </form>
+            )}
+
+            {promoError && (
+              <div className="text-red-400 text-[10px] mt-1.5 flex items-center gap-1">
+                <span className="material-symbols-outlined text-[12px]">error</span>
+                <span>{promoError}</span>
+              </div>
+            )}
+            
+            {promoSuccess && (
+              <div className="text-green-400 text-[10px] mt-1.5 flex items-center gap-1">
+                <span className="material-symbols-outlined text-[12px]">check_circle</span>
+                <span>{promoSuccess}</span>
+              </div>
+            )}
+          </div>
+        )}
 
         {invoiceAlreadyPaid ? (
           <div className="text-center py-4 space-y-4">
