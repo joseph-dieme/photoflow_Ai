@@ -452,15 +452,10 @@ export default function ClientsPage() {
                         {/* Interactive contact items */}
                         <div className="space-y-1.5 mt-2">
                           {client.email ? (
-                            <a 
-                              href={`mailto:${client.email}`}
-                              onClick={(e) => e.stopPropagation()}
-                              className="flex items-center gap-2 text-xs text-on-surface-variant hover:text-primary transition-colors w-fit max-w-full"
-                              title={client.email}
-                            >
+                            <div className="flex items-center gap-2 text-xs text-on-surface-variant max-w-full" title={client.email}>
                               <span className="material-symbols-outlined text-sm text-primary/70">mail</span>
                               <span className="truncate">{client.email}</span>
-                            </a>
+                            </div>
                           ) : (
                             <div className="flex items-center gap-2 text-xs text-on-surface-variant/40">
                               <span className="material-symbols-outlined text-sm">mail</span>
@@ -469,14 +464,10 @@ export default function ClientsPage() {
                           )}
                           
                           {client.phone ? (
-                            <a 
-                              href={`tel:${client.phone}`}
-                              onClick={(e) => e.stopPropagation()}
-                              className="flex items-center gap-2 text-xs text-on-surface-variant hover:text-primary transition-colors w-fit"
-                            >
+                            <div className="flex items-center gap-2 text-xs text-on-surface-variant">
                               <span className="material-symbols-outlined text-sm text-primary/70">phone</span>
                               <span>{client.phone}</span>
-                            </a>
+                            </div>
                           ) : (
                             <div className="flex items-center gap-2 text-xs text-on-surface-variant/40">
                               <span className="material-symbols-outlined text-sm">phone</span>
@@ -762,9 +753,9 @@ export default function ClientsPage() {
                       <div className="min-w-0 flex-1">
                         <div className="text-[10px] text-on-surface-variant/80 uppercase tracking-wider font-bold">{t.phoneLabel}</div>
                         {selectedClient.phone ? (
-                          <a href={`tel:${selectedClient.phone}`} className="text-sm font-semibold text-white hover:text-primary transition-colors inline-block mt-0.5">
+                          <div className="text-sm font-semibold text-white mt-0.5 select-all">
                             {selectedClient.phone}
-                          </a>
+                          </div>
                         ) : (
                           <div className="text-sm font-semibold text-on-surface-variant/40 italic mt-0.5">{t.notProvided}</div>
                         )}
@@ -778,9 +769,9 @@ export default function ClientsPage() {
                       <div className="min-w-0 flex-1">
                         <div className="text-[10px] text-on-surface-variant/80 uppercase tracking-wider font-bold">{t.emailLabel}</div>
                         {selectedClient.email ? (
-                          <a href={`mailto:${selectedClient.email}`} className="text-sm font-semibold text-white hover:text-primary transition-colors break-all inline-block mt-0.5">
+                          <div className="text-sm font-semibold text-white break-all mt-0.5 select-all">
                             {selectedClient.email}
-                          </a>
+                          </div>
                         ) : (
                           <div className="text-sm font-semibold text-on-surface-variant/40 italic mt-0.5">{t.notProvided}</div>
                         )}
