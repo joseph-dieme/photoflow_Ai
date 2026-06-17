@@ -1246,6 +1246,103 @@ export default function EditorPage() {
     }
   };
 
+  const handleOverlayTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (activeTool === 'select') return;
+    e.stopPropagation();
+    e.preventDefault();
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      const coords = getCanvasCoords(touch.clientX, touch.clientY);
+
+      if (activeTool === 'brush') {
+        setIsBrushDrawing(true);
+        setBrushStroke([coords]);
+        drawBrushStroke([coords]);
+      } else if (activeTool === 'crop') {
+        setIsCroppingDrag(true);
+        setCropStart(coords);
+        setCropBox({
+          startX: coords.x,
+          startY: coords.y,
+          width: 0,
+          height: 0
+        });
+      } else if (activeTool === 'text') {
+        setTextPosition(coords);
+      }
+    }
+  };
+
+  const handleOverlayTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (activeTool === 'select') return;
+    e.stopPropagation();
+    e.preventDefault();
+    if (e.touches.length === 1) {
+      const touch = e.touches[0];
+      const coords = getCanvasCoords(touch.clientX, touch.clientY);
+
+      if (activeTool === 'brush' && isBrushDrawing) {
+        const newStroke = [...brushStroke, coords];
+        setBrushStroke(newStroke);
+        drawBrushStroke(newStroke);
+      } else if (activeTool === 'crop' && isCroppingDrag && cropStart) {
+        const calculatedBox = calculateCropBox(coords);
+        if (calculatedBox) {
+          setCropBox(calculatedBox);
+          drawCropOverlay(calculatedBox);
+        }
+      } else if (activeTool === 'heal') {
+        drawHealingPreview(coords.x, coords.y);
+      } else if (activeTool === 'text') {
+        setTextPosition(coords);
+      }
+    }
+  };
+
+  const handleOverlayTouchEnd = async (e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (activeTool === 'select') return;
+    e.stopPropagation();
+    e.preventDefault();
+
+    if (activeTool === 'brush' && isBrushDrawing) {
+      setIsBrushDrawing(false);
+      await handleExecuteBrush(brushStroke);
+      setBrushStroke([]);
+      const canvas = overlayCanvasRef.current;
+      const ctx = canvas?.getContext('2d');
+      ctx?.clearRect(0, 0, canvas?.width || 0, canvas?.height || 0);
+    } else if (activeTool === 'crop' && isCroppingDrag) {
+      setIsCroppingDrag(false);
+      if (cropBox && (cropBox.width < 15 || cropBox.height < 15)) {
+        setCropBox(null);
+        const canvas = overlayCanvasRef.current;
+        const ctx = canvas?.getContext('2d');
+        ctx?.clearRect(0, 0, canvas?.width || 0, canvas?.height || 0);
+      }
+    } else if (activeTool === 'heal') {
+      if (e.changedTouches.length > 0) {
+        const touch = e.changedTouches[0];
+        const coords = getCanvasCoords(touch.clientX, touch.clientY);
+        await handleExecuteHeal(coords.x, coords.y);
+      }
+      const canvas = overlayCanvasRef.current;
+      const ctx = canvas?.getContext('2d');
+      ctx?.clearRect(0, 0, canvas?.width || 0, canvas?.height || 0);
+    } else if (activeTool === 'color') {
+      if (e.changedTouches.length > 0) {
+        const touch = e.changedTouches[0];
+        const coords = getCanvasCoords(touch.clientX, touch.clientY);
+        await handleExecuteColor(coords.x, coords.y);
+      }
+    } else if (activeTool === 'text') {
+      if (e.changedTouches.length > 0) {
+        const touch = e.changedTouches[0];
+        const coords = getCanvasCoords(touch.clientX, touch.clientY);
+        setTextPosition(coords);
+      }
+    }
+  };
+
   // Execution triggers
   const handleExecuteBrush = async (stroke: { x: number; y: number }[]) => {
     if (stroke.length === 0) return;
@@ -2178,7 +2275,7 @@ export default function EditorPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-on-surface flex flex-col font-body-md overflow-hidden selection:bg-primary-container">
+    <div className="fixed inset-0 bg-background text-on-surface flex flex-col font-body-md overflow-hidden selection:bg-primary-container">
       <Navigation />
 
       {/* Left Tool Palette (Adobe style) */}
@@ -2420,11 +2517,14 @@ export default function EditorPage() {
                       ref={overlayCanvasRef}
                       width={imgNaturalSize.width}
                       height={imgNaturalSize.height}
-                      className="absolute top-0 left-0 w-full h-full z-30 block select-none origin-center"
+                      className="absolute top-0 left-0 w-full h-full z-30 block select-none origin-center touch-none"
                       onMouseDown={handleOverlayMouseDown}
                       onMouseMove={handleOverlayMouseMove}
                       onMouseUp={handleOverlayMouseUp}
                       onMouseLeave={handleOverlayMouseLeave}
+                      onTouchStart={handleOverlayTouchStart}
+                      onTouchMove={handleOverlayTouchMove}
+                      onTouchEnd={handleOverlayTouchEnd}
                       style={{
                         cursor: activeTool === 'color' ? 'cell' : activeTool === 'heal' ? 'none' : 'crosshair',
                         pointerEvents: isSpacePressed ? 'none' : 'auto',
