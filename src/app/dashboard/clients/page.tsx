@@ -49,6 +49,11 @@ const translations = {
     errorCreate: 'Erreur lors de la création du client.',
     searchPlaceholder: 'Rechercher un client...',
     noResults: 'Aucun client trouvé pour cette recherche.',
+    shootsTab: 'Dossiers Shoots',
+    photosTab: 'Photos du Client',
+    noPhotos: 'Aucune photo trouvée',
+    noPhotosDesc: 'Les photos importées dans ses shootings s\'afficheront ici.',
+    openProject: 'Ouvrir le shoot',
   },
   en: {
     title: 'Client Directory',
@@ -90,6 +95,11 @@ const translations = {
     errorCreate: 'Error creating client profile.',
     searchPlaceholder: 'Search clients...',
     noResults: 'No clients found matching your search.',
+    shootsTab: 'Shoots & Folders',
+    photosTab: 'Client Photos',
+    noPhotos: 'No photos found',
+    noPhotosDesc: 'Photos uploaded to this client\'s shoots will display here.',
+    openProject: 'Open shoot',
   }
 };
 
@@ -137,6 +147,10 @@ export default function ClientsPage() {
   const [editAddress, setEditAddress] = useState('');
   const [savingClient, setSavingClient] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [clientPhotos, setClientPhotos] = useState<any[]>([]);
+  const [loadingPhotos, setLoadingPhotos] = useState(false);
+  const [activeTab, setActiveTab] = useState<'shoots' | 'photos'>('shoots');
+  const [selectedPhoto, setSelectedPhoto] = useState<any>(null);
 
   const t = translations[lang];
 
@@ -164,13 +178,35 @@ export default function ClientsPage() {
     }
   }, []);
 
-  const handleOpenClientDetails = (client: any) => {
+  const handleOpenClientDetails = async (client: any) => {
     setSelectedClient(client);
     setIsEditing(false);
     setEditName(client.name);
     setEditPhone(client.phone || '');
     setEditEmail(client.email || '');
     setEditAddress(client.address || '');
+    setActiveTab('shoots');
+    
+    // Fetch photos for this client
+    setLoadingPhotos(true);
+    setClientPhotos([]);
+    try {
+      const clientProjects = projects.filter((p) => p.client_id === client.id);
+      const projectIds = clientProjects.map((p) => p.id);
+      if (projectIds.length > 0) {
+        const { data, error } = await supabase
+          .from('pf_photos')
+          .select('*')
+          .in('project_id', projectIds)
+          .order('created_at', { ascending: false });
+        if (error) throw error;
+        setClientPhotos(data || []);
+      }
+    } catch (err) {
+      console.error('Error fetching client photos:', err);
+    } finally {
+      setLoadingPhotos(false);
+    }
   };
 
   const handleSaveClientChanges = async (e: React.FormEvent) => {
@@ -347,7 +383,7 @@ export default function ClientsPage() {
         </div>
 
         {/* Clients Directory list */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mt-6">
           {clients.length === 0 ? (
             <div className="col-span-full glass-panel p-16 rounded-3xl text-center flex flex-col items-center justify-center border border-dashed border-outline-variant/40 bg-surface-container/5 backdrop-blur-md">
               <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mb-5 text-primary">
@@ -389,8 +425,14 @@ export default function ClientsPage() {
                 <div 
                   key={client.id}
                   onClick={() => handleOpenClientDetails(client)}
-                  className="glass-panel p-6 rounded-2xl border border-outline-variant/20 bg-surface-container/5 flex flex-col justify-between hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/5 hover:-translate-y-1.5 transition-all duration-300 cursor-pointer group relative overflow-hidden"
+                  className="glass-panel p-6 pt-8 rounded-2xl border border-outline-variant/20 bg-surface-container/5 flex flex-col justify-between hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/5 hover:-translate-y-1.5 transition-all duration-300 cursor-pointer group relative overflow-visible mt-4"
                 >
+                  {/* Folder Tab shape on top of the card */}
+                  <div className="absolute top-0 left-4 -translate-y-[calc(100%-1px)] bg-surface-container/20 border-t border-x border-outline-variant/20 rounded-t-xl px-3.5 py-1.5 text-[9px] text-primary font-bold tracking-wider uppercase flex items-center gap-1 backdrop-blur-md">
+                    <span className="material-symbols-outlined text-[12px] text-primary">folder_shared</span>
+                    <span>{lang === 'fr' ? 'Dossier Client' : 'Client File'}</span>
+                  </div>
+
                   {/* Subtle top glow on card hover */}
                   <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-primary/50 to-primary-container/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                   
@@ -762,46 +804,114 @@ export default function ClientsPage() {
                 )}
               </div>
 
-              {/* Right Column: Projects/Shoots folders (Col span 2) */}
+              {/* Right Column: Projects/Shoots folders or Photos Grid (Col span 2) */}
               <div className="md:col-span-2 space-y-4 flex flex-col h-full">
-                <h4 className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-xs">folder</span>
-                  {t.shootsTitle}
-                  <span className="text-[10px] bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded-full ml-1">
-                    {projects.filter(p => p.client_id === selectedClient.id).length}
-                  </span>
-                </h4>
+                
+                {/* Tab buttons */}
+                <div className="flex border-b border-outline-variant/15 gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('shoots')}
+                    className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-1.5 cursor-pointer ${
+                      activeTab === 'shoots'
+                        ? 'border-primary text-primary'
+                        : 'border-transparent text-on-surface-variant hover:text-white'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[16px]">folder</span>
+                    {t.shootsTab}
+                    <span className="text-[9px] bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded-full ml-1">
+                      {projects.filter(p => p.client_id === selectedClient.id).length}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('photos')}
+                    className={`pb-2 text-xs font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-1.5 cursor-pointer ${
+                      activeTab === 'photos'
+                        ? 'border-primary text-primary'
+                        : 'border-transparent text-on-surface-variant hover:text-white'
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-[16px]">photo_library</span>
+                    {t.photosTab}
+                    <span className="text-[9px] bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded-full ml-1">
+                      {clientPhotos.length}
+                    </span>
+                  </button>
+                </div>
 
-                <div className="space-y-3 overflow-y-auto custom-scrollbar flex-1 max-h-[300px] md:max-h-[350px]">
-                  {projects.filter(p => p.client_id === selectedClient.id).length === 0 ? (
-                    <div className="p-8 text-center text-xs text-on-surface-variant/50 bg-background/20 rounded-2xl border border-dashed border-outline-variant/30 flex flex-col items-center justify-center">
-                      <span className="material-symbols-outlined text-3xl text-on-surface-variant/30 mb-2">folder_open</span>
-                      {t.noAssociatedShoots}
+                {/* Tab content */}
+                <div className="flex-1 flex flex-col">
+                  {activeTab === 'shoots' ? (
+                    <div className="space-y-3 overflow-y-auto custom-scrollbar max-h-[300px] md:max-h-[350px] pr-1">
+                      {projects.filter(p => p.client_id === selectedClient.id).length === 0 ? (
+                        <div className="p-8 text-center text-xs text-on-surface-variant/50 bg-background/20 rounded-2xl border border-dashed border-outline-variant/30 flex flex-col items-center justify-center">
+                          <span className="material-symbols-outlined text-3xl text-on-surface-variant/30 mb-2">folder_open</span>
+                          {t.noAssociatedShoots}
+                        </div>
+                      ) : (
+                        projects.filter(p => p.client_id === selectedClient.id).map(proj => (
+                          <div 
+                            key={proj.id}
+                            onClick={() => {
+                              setSelectedClient(null);
+                              router.push(`/dashboard/projects/${proj.id}`);
+                            }}
+                            className="p-3 bg-background/40 hover:bg-background/80 border border-outline-variant/20 hover:border-primary/30 rounded-xl flex items-center justify-between cursor-pointer transition-all duration-300 group/item hover:shadow-lg shadow-sm"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover/item:scale-110 transition-transform">
+                                <span className="material-symbols-outlined text-lg">folder</span>
+                              </div>
+                              <div className="min-w-0">
+                                <div className="text-xs font-bold text-white truncate group-hover/item:text-primary transition-colors" title={proj.name}>{proj.name}</div>
+                                <div className="text-[9px] text-on-surface-variant/80 mt-0.5">
+                                  {proj.project_type || 'Shoot'} • {proj.date ? new Date(proj.date).toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-US') : t.undated}
+                                </div>
+                              </div>
+                            </div>
+                            <span className="material-symbols-outlined text-on-surface-variant group-hover/item:text-white text-sm transition-colors transform group-hover/item:translate-x-0.5 duration-300">chevron_right</span>
+                          </div>
+                        ))
+                      )}
                     </div>
                   ) : (
-                    projects.filter(p => p.client_id === selectedClient.id).map(proj => (
-                      <div 
-                        key={proj.id}
-                        onClick={() => {
-                          setSelectedClient(null);
-                          router.push(`/dashboard/projects/${proj.id}`);
-                        }}
-                        className="p-3 bg-background/40 hover:bg-background/80 border border-outline-variant/20 hover:border-primary/30 rounded-xl flex items-center justify-between cursor-pointer transition-all duration-300 group/item hover:shadow-lg shadow-sm"
-                      >
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary group-hover/item:scale-110 transition-transform">
-                            <span className="material-symbols-outlined text-lg">folder</span>
-                          </div>
-                          <div className="min-w-0">
-                            <div className="text-xs font-bold text-white truncate group-hover/item:text-primary transition-colors" title={proj.name}>{proj.name}</div>
-                            <div className="text-[9px] text-on-surface-variant/80 mt-0.5">
-                              {proj.project_type || 'Shoot'} • {proj.date ? new Date(proj.date).toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-US') : t.undated}
-                            </div>
-                          </div>
+                    <div className="flex-1">
+                      {loadingPhotos ? (
+                        <div className="flex items-center justify-center py-12">
+                          <div className="w-6 h-6 rounded-full border-2 border-primary border-t-transparent animate-spin"></div>
                         </div>
-                        <span className="material-symbols-outlined text-on-surface-variant group-hover/item:text-white text-sm transition-colors transform group-hover/item:translate-x-0.5 duration-300">chevron_right</span>
-                      </div>
-                    ))
+                      ) : clientPhotos.length === 0 ? (
+                        <div className="p-8 text-center text-xs text-on-surface-variant/50 bg-background/20 rounded-2xl border border-dashed border-outline-variant/30 flex flex-col items-center justify-center py-10">
+                          <span className="material-symbols-outlined text-3xl text-on-surface-variant/30 mb-2">photo_library</span>
+                          <div className="font-bold text-white mb-1">{t.noPhotos}</div>
+                          <div className="text-[10px] text-on-surface-variant/60 leading-relaxed max-w-xs">{t.noPhotosDesc}</div>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-2 overflow-y-auto max-h-[300px] md:max-h-[350px] pr-1 custom-scrollbar">
+                          {clientPhotos.map(photo => (
+                            <div 
+                              key={photo.id}
+                              onClick={() => setSelectedPhoto(photo)}
+                              className="relative aspect-square rounded-xl overflow-hidden border border-outline-variant/20 hover:border-primary/50 group/photo cursor-pointer bg-background/50 shadow-sm animate-in fade-in zoom-in-95 duration-200"
+                            >
+                              <img 
+                                src={photo.thumbnail_url || photo.processed_thumbnail_url || photo.processed_url || photo.original_url}
+                                alt=""
+                                className="w-full h-full object-cover group-hover/photo:scale-105 transition-transform duration-500"
+                                loading="lazy"
+                              />
+                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover/photo:opacity-100 transition-opacity duration-300 flex items-end p-2">
+                                <span className="text-[9px] font-bold text-white truncate w-full">
+                                  {projects.find(p => p.id === photo.project_id)?.name || 'Project'}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>
@@ -843,6 +953,70 @@ export default function ClientsPage() {
             >
               {t.successBtn}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Lightbox Modal */}
+      {selectedPhoto && (
+        <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="relative w-full max-w-3xl max-h-[85vh] flex flex-col items-center">
+            
+            {/* Close button */}
+            <button 
+              onClick={() => setSelectedPhoto(null)}
+              className="absolute top-[-50px] right-0 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all cursor-pointer z-50"
+            >
+              <span className="material-symbols-outlined">close</span>
+            </button>
+            
+            {/* Large Image Container */}
+            <div className="w-full h-full rounded-2xl overflow-hidden border border-white/10 bg-black/50 flex items-center justify-center relative">
+              <img 
+                src={selectedPhoto.processed_url || selectedPhoto.original_url}
+                alt=""
+                className="max-w-full max-h-[65vh] object-contain select-none rounded-xl"
+              />
+            </div>
+            
+            {/* Info panel */}
+            <div className="mt-4 w-full flex justify-between items-center bg-surface-container/10 border border-outline-variant/20 p-4 rounded-2xl backdrop-blur-md">
+              <div className="min-w-0">
+                <div className="text-xs text-on-surface-variant font-medium flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-sm text-primary">folder</span>
+                  {projects.find(p => p.id === selectedPhoto.project_id)?.name || 'Project'}
+                </div>
+                <div className="text-[10px] text-on-surface-variant/60 mt-0.5">
+                  Importé le {new Date(selectedPhoto.created_at).toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-US')}
+                </div>
+              </div>
+              
+              <div className="flex gap-2 shrink-0">
+                <a 
+                  href={selectedPhoto.original_url}
+                  download
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="px-4 py-2.5 bg-white/10 hover:bg-white/15 text-white font-semibold rounded-xl text-xs flex items-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <span className="material-symbols-outlined text-base">download</span>
+                  {lang === 'fr' ? 'Télécharger' : 'Download'}
+                </a>
+                <button
+                  onClick={() => {
+                    const projId = selectedPhoto.project_id;
+                    setSelectedPhoto(null);
+                    setSelectedClient(null);
+                    router.push(`/dashboard/projects/${projId}`);
+                  }}
+                  className="px-4 py-2.5 bg-primary text-on-primary hover:brightness-110 font-semibold rounded-xl text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-lg shadow-primary/20"
+                >
+                  <span className="material-symbols-outlined text-base">launch</span>
+                  {t.openProject}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
