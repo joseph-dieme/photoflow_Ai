@@ -325,6 +325,7 @@ export default function EditorPage() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isMobileDrawerCollapsed, setIsMobileDrawerCollapsed] = useState(false);
 
   // Before/after compare slider states
   const [sliderPosition, setSliderPosition] = useState(50);
@@ -2376,7 +2377,7 @@ export default function EditorPage() {
       </aside>
 
       {/* Main Studio Viewport (The Stage) */}
-      <main className="fixed inset-0 pt-16 pb-[292px] md:pb-16 pl-0 md:pl-[80px] pr-0 md:pr-[320px] bg-background flex items-center justify-center overflow-hidden">
+      <main className={`fixed inset-0 pt-16 bg-background flex items-center justify-center overflow-hidden transition-all duration-300 ${isMobileDrawerCollapsed ? 'pb-[152px]' : 'pb-[322px]'} md:pb-16 pl-0 md:pl-[80px] pr-0 md:pr-[320px]`}>
         <div className="relative w-full h-full flex items-center justify-center p-4 md:p-8 bg-surface-container-lowest">
           {/* AI Loader Progress Line */}
           {isProcessing && (
@@ -2588,7 +2589,28 @@ export default function EditorPage() {
       </main>
 
       {/* Right Sidebar - Adjustment Panels */}
-      <aside className="fixed bottom-28 left-0 right-0 h-[180px] md:h-auto md:w-[320px] md:top-16 md:bottom-0 md:left-auto md:right-0 glass-panel border-t md:border-t-0 md:border-l border-outline-variant z-20 flex flex-col">
+      <aside 
+        className={`fixed bottom-28 left-0 right-0 h-[210px] md:h-auto md:w-[320px] md:top-16 md:bottom-0 md:left-auto md:right-0 glass-panel border-t md:border-t-0 md:border-l border-outline-variant z-20 flex flex-col transition-all duration-300 ${
+          isMobileDrawerCollapsed ? 'translate-y-[170px] md:translate-y-0' : 'translate-y-0'
+        }`}
+      >
+        {/* Mobile Handle Toggle Bar */}
+        <div 
+          onClick={() => setIsMobileDrawerCollapsed(!isMobileDrawerCollapsed)}
+          className="md:hidden flex items-center justify-between px-4 py-2 border-b border-outline-variant/30 cursor-pointer bg-surface-container-high/40 hover:bg-surface-container-high/70 select-none"
+        >
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-primary text-sm font-bold">
+              {isMobileDrawerCollapsed ? 'expand_less' : 'expand_more'}
+            </span>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-on-surface-variant">
+              {isMobileDrawerCollapsed ? (lang === 'fr' ? 'Afficher les réglages' : 'Show Adjustments') : (lang === 'fr' ? 'Masquer les réglages' : 'Hide Adjustments')}
+            </span>
+          </div>
+          <div className="w-10 h-1 bg-outline-variant/50 rounded-full"></div>
+          <div className="w-12"></div>
+        </div>
+
         <div className="p-4 md:p-panel-padding flex-1 overflow-y-auto space-y-6 md:space-y-8 custom-scrollbar">
           {activeTool === 'crop' ? (
             /* Crop Settings Panel */
