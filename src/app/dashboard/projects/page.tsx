@@ -101,6 +101,19 @@ const translations = {
   }
 };
 
+const PROJECT_TYPES_CONFIG: Record<string, { icon: string; color: string }> = {
+  all: { icon: 'apps', color: 'text-primary bg-primary/10 border-primary/20' },
+  Mariage: { icon: 'favorite', color: 'text-rose-400 bg-rose-500/10 border-rose-500/20' },
+  Portrait: { icon: 'face', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' },
+  Mode: { icon: 'apparel', color: 'text-purple-400 bg-purple-500/10 border-purple-500/20' },
+  Sportif: { icon: 'sports_soccer', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' },
+  Paysage: { icon: 'landscape', color: 'text-cyan-400 bg-cyan-500/10 border-cyan-500/20' },
+  Anniversaire: { icon: 'cake', color: 'text-pink-400 bg-pink-500/10 border-pink-500/20' },
+  Baptême: { icon: 'child_care', color: 'text-blue-400 bg-blue-500/10 border-blue-500/20' },
+  Corporate: { icon: 'business', color: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20' },
+  Immobilier: { icon: 'home', color: 'text-teal-400 bg-teal-500/10 border-teal-500/20' },
+};
+
 export default function ProjectsPage() {
   const router = useRouter();
   const lang = useLanguage();
@@ -248,7 +261,11 @@ export default function ProjectsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background text-on-surface flex flex-col font-body-md overflow-x-hidden selection:bg-primary-container">
+    <div className="min-h-screen bg-background text-on-surface flex flex-col font-body-md overflow-x-hidden selection:bg-primary-container relative">
+      {/* Decorative Background Glows */}
+      <div className="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] rounded-full bg-primary/5 blur-[150px] pointer-events-none z-0" />
+      <div className="absolute bottom-[20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-primary-container/5 blur-[130px] pointer-events-none z-0" />
+
       <Navigation />
       
       <Sidebar 
@@ -256,37 +273,47 @@ export default function ProjectsPage() {
         activeProjectName={projects[0]?.name || 'PhotoFlow'} 
       />
 
-      <main className="md:ml-[280px] pt-24 px-6 md:px-margin-desktop pb-24 bg-background min-h-screen">
+      <main className="md:ml-[280px] pt-24 px-6 md:px-margin-desktop pb-24 bg-transparent min-h-screen relative z-10">
         {/* Header section */}
-        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-10">
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
           <div>
-            <h1 className="font-display-lg text-3xl font-bold text-on-surface mb-2">{t.title}</h1>
-            <p className="text-on-surface-variant font-body-md">{t.subtitle}</p>
+            <h1 className="font-display-lg text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+              <span className="material-symbols-outlined text-primary text-3xl">photo_camera</span>
+              {t.title}
+            </h1>
+            <p className="text-on-surface-variant text-sm mt-1">{t.subtitle}</p>
           </div>
+          
           <button
             onClick={handleOpenNewShootModal}
-            className="bg-primary-container text-on-primary-container font-semibold px-5 py-3 rounded-xl hover:brightness-110 active:scale-98 transition-all flex items-center gap-2 shadow-lg cursor-pointer"
+            className="bg-gradient-to-r from-primary to-primary-container hover:from-primary/90 hover:to-primary-container/90 text-white font-semibold px-5 py-3 rounded-xl active:scale-98 transition-all duration-300 flex items-center gap-2 shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 cursor-pointer self-start md:self-auto shrink-0"
           >
             <span className="material-symbols-outlined text-[20px]">add_circle</span>
             {t.newShoot}
           </button>
         </header>
 
-        {/* Filter categories */}
-        <div className="flex flex-wrap gap-2 mb-8 border-b border-outline-variant/30 pb-4">
+        {/* Filter categories bar */}
+        <div className="glass-panel p-2.5 rounded-2xl border border-outline-variant/30 mb-8 overflow-x-auto custom-scrollbar flex gap-2 backdrop-blur-md bg-surface-container/10 select-none">
           {projectTypes.map((type) => {
             const translationKey = `type_${type}` as keyof typeof t;
             const typeLabel = t[translationKey] || type;
+            const config = PROJECT_TYPES_CONFIG[type] || PROJECT_TYPES_CONFIG.all;
+            const isActive = filteredType === type;
+            
             return (
               <button
                 key={type}
                 onClick={() => setFilteredType(type)}
-                className={`px-4 py-1.5 rounded-full text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${
-                  filteredType === type
-                    ? 'bg-primary text-on-primary font-bold'
-                    : 'bg-surface-container-high text-on-surface-variant hover:text-on-surface'
+                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-300 flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                  isActive
+                    ? 'bg-primary text-on-primary shadow-md shadow-primary/20 scale-102'
+                    : 'text-on-surface-variant hover:text-white hover:bg-surface-container-high/40'
                 }`}
               >
+                <span className={`material-symbols-outlined text-sm ${isActive ? 'text-white' : 'text-on-surface-variant/70'}`}>
+                  {config.icon}
+                </span>
                 {typeLabel}
               </button>
             );
@@ -294,70 +321,107 @@ export default function ProjectsPage() {
         </div>
 
         {/* Projects Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {getFilteredProjects().length === 0 ? (
-            <div className="col-span-full glass-panel p-16 rounded-2xl text-center flex flex-col items-center justify-center border border-dashed border-outline-variant/50">
-              <span className="material-symbols-outlined text-outline text-6xl mb-4">folder_open</span>
-              <h3 className="font-headline-md text-lg font-bold text-white mb-2">{t.noProjectTitle}</h3>
+            <div className="col-span-full glass-panel p-16 rounded-3xl text-center flex flex-col items-center justify-center border border-dashed border-outline-variant/40 bg-surface-container/5 backdrop-blur-md">
+              <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mb-5 text-primary">
+                <span className="material-symbols-outlined text-3xl">folder_open</span>
+              </div>
+              <h3 className="font-headline-md text-xl font-bold text-white mb-2">{t.noProjectTitle}</h3>
               <p className="text-on-surface-variant text-sm mb-6 max-w-sm">
                 {t.noProjectDesc}
               </p>
               <button
                 onClick={handleOpenNewShootModal}
-                className="bg-primary-container text-on-primary-container px-4 py-2.5 rounded-lg text-xs font-semibold"
+                className="bg-primary text-on-primary hover:bg-primary/90 font-semibold px-5 py-2.5 rounded-xl transition-all duration-300 shadow-lg shadow-primary/20 active:scale-98 cursor-pointer"
               >
                 {t.createProjectBtn}
               </button>
             </div>
           ) : (
-            getFilteredProjects().map((proj, idx) => (
-              <div
-                key={proj.id}
-                onClick={() => router.push(`/dashboard/projects/${proj.id}`)}
-                className="glass-panel rounded-2xl overflow-hidden hover:border-primary/20 border border-outline-variant/20 hover:shadow-2xl transition-all cursor-pointer flex flex-col group"
-              >
-                {/* Cover Image preview */}
-                <div className="aspect-[16/10] relative overflow-hidden bg-surface-container-highest">
-                  <img
-                    alt={proj.name}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    src={
-                      (proj.pf_photos && proj.pf_photos.length > 0)
-                        ? [...proj.pf_photos].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0].original_url
-                        : (idx % 2 === 0
-                            ? "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&auto=format&fit=crop&q=80"
-                            : "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80")
-                    }
-                  />
-                  <div className="absolute top-4 left-4 bg-black/60 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider backdrop-blur-sm">
-                    {t[`type_${proj.project_type}` as keyof typeof t] || proj.project_type || 'Shoot'}
-                  </div>
-                  <div className="absolute bottom-4 right-4 bg-primary/20 border border-primary/30 text-primary px-3 py-1 rounded-full text-[10px] font-bold backdrop-blur-md">
-                    {proj.pf_photos?.length || 0} {t.photos}
-                  </div>
-                </div>
+            getFilteredProjects().map((proj, idx) => {
+              const config = PROJECT_TYPES_CONFIG[proj.project_type] || PROJECT_TYPES_CONFIG.all;
+              const photoCount = proj.pf_photos?.length || 0;
+              
+              // Get the newest image URL as the cover photo
+              const coverUrl = (proj.pf_photos && proj.pf_photos.length > 0)
+                ? [...proj.pf_photos].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0].original_url
+                : (idx % 2 === 0
+                    ? "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&auto=format&fit=crop&q=80"
+                    : "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80");
+                    
+              return (
+                <div
+                  key={proj.id}
+                  onClick={() => router.push(`/dashboard/projects/${proj.id}`)}
+                  className="glass-panel rounded-2xl overflow-hidden border border-outline-variant/20 hover:border-primary/30 hover:shadow-2xl hover:shadow-primary/5 hover:-translate-y-1.5 bg-surface-container/5 transition-all duration-300 cursor-pointer flex flex-col group relative"
+                >
+                  {/* Subtle top glow line */}
+                  <div className="absolute top-0 left-0 w-full h-[3px] bg-gradient-to-r from-primary/50 to-primary-container/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10" />
 
-                {/* Project Info details */}
-                <div className="p-6 flex-grow flex flex-col justify-between">
-                  <div>
-                    <h3 className="font-headline-md text-lg text-white font-bold mb-1 truncate">{proj.name}</h3>
-                    <p className="text-xs text-on-surface-variant line-clamp-2 min-h-[32px] mb-4">
-                      {proj.description || t.noDesc}
-                    </p>
+                  {/* Cover Image preview */}
+                  <div className="aspect-[16/10] relative overflow-hidden bg-surface-container-highest shrink-0">
+                    <img
+                      alt={proj.name}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 select-none"
+                      src={coverUrl}
+                      loading="lazy"
+                    />
+                    
+                    {/* Shadow overlay gradient on image */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-90" />
+
+                    {/* Floating Shoot Type Badge */}
+                    <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-xl text-[10px] font-bold uppercase tracking-wider text-white flex items-center gap-1.5">
+                      <span className={`material-symbols-outlined text-[13px] ${config.color.split(' ')[0]}`}>
+                        {config.icon}
+                      </span>
+                      <span>
+                        {t[`type_${proj.project_type}` as keyof typeof t] || proj.project_type || 'Shoot'}
+                      </span>
+                    </div>
+
+                    {/* Floating Photo Count Badge */}
+                    <div className="absolute bottom-4 right-4 bg-primary/15 backdrop-blur-md border border-primary/30 text-primary px-3 py-1 rounded-xl text-[10px] font-bold flex items-center gap-1">
+                      <span className="material-symbols-outlined text-[13px]">photo_camera</span>
+                      <span>{photoCount} {t.photos}</span>
+                    </div>
                   </div>
-                  <div className="pt-4 border-t border-outline-variant/10 flex items-center justify-between text-xs text-on-surface-variant">
-                    <span className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-sm">person</span>
-                      <span className="truncate max-w-[120px]">{proj.pf_clients?.name || t.noClient}</span>
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <span className="material-symbols-outlined text-sm">calendar_month</span>
-                      <span>{proj.date ? new Date(proj.date).toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-US') : t.unplanned}</span>
-                    </span>
+
+                  {/* Project Info details */}
+                  <div className="p-6 flex-grow flex flex-col justify-between">
+                    <div>
+                      <h3 className="font-headline-md text-base text-white font-bold mb-1.5 truncate group-hover:text-primary transition-colors duration-300" title={proj.name}>
+                        {proj.name}
+                      </h3>
+                      <p className="text-xs text-on-surface-variant/80 line-clamp-2 min-h-[32px] mb-4 leading-relaxed">
+                        {proj.description || t.noDesc}
+                      </p>
+                    </div>
+
+                    {/* Metadata Footer */}
+                    <div className="pt-4 border-t border-outline-variant/15 flex items-center justify-between text-xs text-on-surface-variant font-medium">
+                      <span className="flex items-center gap-1.5 min-w-0 flex-1">
+                        <span className="material-symbols-outlined text-sm text-primary/70 shrink-0">person</span>
+                        <span className="truncate max-w-[140px] text-[11px]" title={proj.pf_clients?.name || t.noClient}>
+                          {proj.pf_clients?.name || <span className="italic text-on-surface-variant/40">{t.noClient}</span>}
+                        </span>
+                      </span>
+                      
+                      <span className="flex items-center gap-1 text-[11px] shrink-0 text-on-surface-variant/80">
+                        <span className="material-symbols-outlined text-sm text-primary/70">calendar_month</span>
+                        <span>
+                          {proj.date 
+                            ? new Date(proj.date).toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' }) 
+                            : <span className="italic text-on-surface-variant/40">{t.unplanned}</span>
+                          }
+                        </span>
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </main>
@@ -366,38 +430,50 @@ export default function ProjectsPage() {
 
       {/* New Shoot Modal */}
       {showNewShootModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-lg glass-panel rounded-2xl p-6 border border-outline-variant/40 shadow-2xl animate-in scale-in duration-300">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="w-full max-w-lg glass-panel rounded-2xl p-6 border border-outline-variant/30 bg-surface-container/15 shadow-2xl animate-in scale-in duration-300 relative overflow-hidden">
+            {/* Subtle top glow border */}
+            <div className="absolute top-0 left-0 w-full h-[4px] bg-gradient-to-r from-primary to-primary-container" />
+            
             <div className="flex justify-between items-center mb-6">
-              <h3 className="font-headline-md text-xl font-bold text-white">{t.newShootTitle}</h3>
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary text-xl">add_photo_alternate</span>
+                <h3 className="font-headline-md text-xl font-bold text-white">{t.newShootTitle}</h3>
+              </div>
               <button 
                 onClick={() => setShowNewShootModal(false)}
-                className="material-symbols-outlined text-on-surface-variant hover:text-white cursor-pointer"
+                className="w-8 h-8 rounded-full bg-surface-container/50 hover:bg-surface-container-highest flex items-center justify-center text-on-surface-variant hover:text-white transition-all cursor-pointer"
               >
-                close
+                <span className="material-symbols-outlined text-lg">close</span>
               </button>
             </div>
 
             <form onSubmit={handleCreateShoot} className="space-y-4">
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">{t.shootNameLabel}</label>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-on-surface-variant/90 uppercase tracking-wider flex items-center gap-1">
+                  <span className="material-symbols-outlined text-xs">edit</span>
+                  {t.shootNameLabel} <span className="text-primary">*</span>
+                </label>
                 <input
                   type="text"
                   required
                   value={shootName}
                   onChange={(e) => setShootName(e.target.value)}
                   placeholder={PLACEHOLDERS_BY_TYPE[shootType] ? PLACEHOLDERS_BY_TYPE[shootType][lang] : "Ex: Session Photo"}
-                  className="w-full bg-surface-container border border-outline-variant/50 focus:border-primary/70 rounded-xl px-4 py-2.5 text-sm outline-none transition-colors"
+                  className="w-full bg-background/50 border border-outline-variant/50 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl px-4 py-2.5 text-sm outline-none transition-all placeholder:text-on-surface-variant/40 text-white"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">{t.shootTypeLabel}</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-on-surface-variant/90 uppercase tracking-wider flex items-center gap-1">
+                    <span className="material-symbols-outlined text-xs">category</span>
+                    {t.shootTypeLabel}
+                  </label>
                   <select
                     value={shootType}
                     onChange={(e) => setShootType(e.target.value)}
-                    className="w-full bg-surface-container border border-outline-variant/50 focus:border-primary/70 rounded-xl px-4 py-2.5 text-sm outline-none transition-colors cursor-pointer"
+                    className="w-full bg-background/50 border border-outline-variant/50 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl px-4 py-2.5 text-sm outline-none transition-all text-white cursor-pointer"
                   >
                     <option value="Mariage">{t.type_Mariage}</option>
                     <option value="Portrait">{t.type_Portrait}</option>
@@ -411,23 +487,29 @@ export default function ProjectsPage() {
                   </select>
                 </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">{t.shootDateLabel}</label>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-on-surface-variant/90 uppercase tracking-wider flex items-center gap-1">
+                    <span className="material-symbols-outlined text-xs">calendar_month</span>
+                    {t.shootDateLabel}
+                  </label>
                   <input
                     type="date"
                     value={shootDate}
                     onChange={(e) => setShootDate(e.target.value)}
-                    className="w-full bg-surface-container border border-outline-variant/50 focus:border-primary/70 rounded-xl px-4 py-2.5 text-sm outline-none transition-colors cursor-pointer"
+                    className="w-full bg-background/50 border border-outline-variant/50 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl px-4 py-2.5 text-sm outline-none transition-all text-white cursor-pointer"
                   />
                 </div>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">{t.clientLabel}</label>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-on-surface-variant/90 uppercase tracking-wider flex items-center gap-1">
+                  <span className="material-symbols-outlined text-xs">person_pin</span>
+                  {t.clientLabel}
+                </label>
                 <select
                   value={shootClientId}
                   onChange={(e) => setShootClientId(e.target.value)}
-                  className="w-full bg-surface-container border border-outline-variant/50 focus:border-primary/70 rounded-xl px-4 py-2.5 text-sm outline-none transition-colors cursor-pointer"
+                  className="w-full bg-background/50 border border-outline-variant/50 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl px-4 py-2.5 text-sm outline-none transition-all text-white cursor-pointer"
                 >
                   <option value="">{t.clientSelectPlaceholder}</option>
                   {clients.map((cl) => (
@@ -438,14 +520,17 @@ export default function ProjectsPage() {
                 </select>
               </div>
 
-              <div className="space-y-1">
-                <label className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">{t.descriptionLabel}</label>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-on-surface-variant/90 uppercase tracking-wider flex items-center gap-1">
+                  <span className="material-symbols-outlined text-xs">description</span>
+                  {t.descriptionLabel}
+                </label>
                 <textarea
                   value={shootDesc}
                   onChange={(e) => setShootDesc(e.target.value)}
                   placeholder={t.descriptionPlaceholder}
                   rows={3}
-                  className="w-full bg-surface-container border border-outline-variant/50 focus:border-primary/70 rounded-xl px-4 py-2.5 text-sm outline-none transition-colors resize-none"
+                  className="w-full bg-background/50 border border-outline-variant/50 focus:border-primary focus:ring-2 focus:ring-primary/20 rounded-xl px-4 py-2.5 text-sm outline-none transition-all placeholder:text-on-surface-variant/40 text-white resize-none"
                 />
               </div>
 
@@ -453,17 +538,17 @@ export default function ProjectsPage() {
                 <button
                   type="button"
                   onClick={() => setShowNewShootModal(false)}
-                  className="flex-1 py-3 border border-outline-variant text-on-surface font-semibold rounded-xl hover:bg-surface-container-highest transition-colors cursor-pointer"
+                  className="flex-1 py-3 border border-outline-variant hover:bg-surface-container-highest text-white font-semibold rounded-xl transition-all active:scale-98 cursor-pointer text-sm"
                 >
                   {t.cancel}
                 </button>
                 <button
                   type="submit"
                   disabled={creatingShoot}
-                  className="flex-1 py-3 bg-primary-container text-on-primary-container font-semibold rounded-xl hover:brightness-110 active:scale-98 transition-all flex items-center justify-center gap-2 shadow-lg cursor-pointer"
+                  className="flex-1 py-3 bg-gradient-to-r from-primary to-primary-container text-white font-semibold rounded-xl hover:brightness-110 active:scale-98 transition-all flex items-center justify-center gap-2 shadow-lg shadow-primary/25 cursor-pointer text-sm"
                 >
                   {creatingShoot ? (
-                    <span className="w-5 h-5 rounded-full border-2 border-on-primary-container/30 border-t-on-primary-container animate-spin"></span>
+                    <span className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin"></span>
                   ) : (
                     t.createShootBtn
                   )}
@@ -476,25 +561,27 @@ export default function ProjectsPage() {
 
       {/* Project Success Modal */}
       {showSuccessModal && (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="w-full max-w-sm glass-panel p-6 rounded-2xl border border-green-500/30 shadow-2xl text-center flex flex-col items-center animate-in zoom-in-95 duration-200">
-            <div className="w-16 h-16 rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center mb-4 text-green-400">
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="w-full max-w-sm glass-panel p-6 rounded-2xl border border-green-500/20 bg-surface-container/15 shadow-2xl text-center flex flex-col items-center animate-in zoom-in-95 duration-200 relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-[4px] bg-green-500" />
+            
+            <div className="w-16 h-16 rounded-2xl bg-green-500/10 border border-green-500/20 flex items-center justify-center mb-5 text-green-400 shadow-inner">
               <span className="material-symbols-outlined text-4xl">check_circle</span>
             </div>
             
             <h3 className="font-display-lg text-lg font-bold text-white mb-2">
               {t.successTitle}
             </h3>
-            <p className="text-on-surface-variant text-xs mb-6 px-2">
+            <p className="text-on-surface-variant text-xs mb-6 px-2 leading-relaxed">
               {t.successDesc}
             </p>
-
+ 
             <button
               onClick={() => {
                 setShowSuccessModal(false);
                 router.push(`/dashboard/projects/${createdProjectId}`);
               }}
-              className="w-full bg-primary-container text-on-primary-container font-semibold py-2.5 rounded-xl hover:brightness-110 active:scale-98 transition-all cursor-pointer text-xs shadow-lg"
+              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white font-semibold py-3 rounded-xl hover:brightness-110 active:scale-98 transition-all cursor-pointer text-xs shadow-lg shadow-green-950/20"
             >
               {t.successBtn}
             </button>
@@ -510,52 +597,55 @@ export default function ProjectsPage() {
         >
           <div 
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md bg-surface-container-high border border-primary/30 p-8 rounded-2xl shadow-2xl text-center flex flex-col items-center animate-in zoom-in-95 duration-200 cursor-default relative"
+            className="w-full max-w-md glass-panel border border-primary/30 p-8 rounded-2xl shadow-2xl text-center flex flex-col items-center animate-in zoom-in-95 duration-200 cursor-default relative overflow-hidden bg-surface-container/15"
           >
+            {/* Bright Pro glow indicator */}
+            <div className="absolute top-0 left-0 w-full h-[4px] bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600" />
+            
             <div className="absolute top-4 right-4">
               <button
                 onClick={() => setShowUpgradeModal(false)}
-                className="text-on-surface-variant hover:text-white material-symbols-outlined text-xl cursor-pointer"
+                className="w-8 h-8 rounded-full bg-surface-container/50 hover:bg-surface-container-highest flex items-center justify-center text-on-surface-variant hover:text-white transition-all cursor-pointer"
               >
-                close
+                <span className="material-symbols-outlined text-lg">close</span>
               </button>
             </div>
             
-            <div className="w-16 h-16 rounded-full bg-primary/10 border border-primary/30 flex items-center justify-center mb-6 text-primary">
+            <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center mb-6 text-amber-400 shadow-inner">
               <span className="material-symbols-outlined text-4xl" style={{ fontVariationSettings: "'FILL' 1" }}>workspace_premium</span>
             </div>
 
             <h3 className="font-display-lg text-2xl font-bold text-white mb-2">
               {lang === 'fr' ? 'Passez à la Version PRO !' : 'Upgrade to PRO Version!'}
             </h3>
-            <p className="text-on-surface-variant text-xs mb-6 px-4">
+            <p className="text-on-surface-variant text-xs mb-6 px-4 leading-relaxed">
               {lang === 'fr' 
-                ? 'Libérez toute la puissance de PhotoFlow AI. Obtenez 50 Go d\'espace de stockage, la retouche par prompt AI, et retirez/personnalisez les filigranes pour vos clients.'
-                : 'Unlock the full power of PhotoFlow AI. Get 50 GB of storage space, AI prompt retouching, and remove or customize watermarks for your clients.'}
+                ? 'Libérez toute la puissance de PhotoFlow AI. Obtenez 50 Go d\'espace de stockage, la retouche par prompt AI, et retirez ou personnalisez les filigranes de vos galeries.'
+                : 'Unlock the full power of PhotoFlow AI. Get 50 GB of storage space, AI prompt retouching, and remove or customize watermarks for your galleries.'}
             </p>
 
-            <div className="w-full space-y-3 mb-6 bg-surface-container-low/50 p-4 rounded-xl border border-outline-variant/20 text-left text-xs">
-              <div className="flex items-center gap-2 text-white">
-                <span className="material-symbols-outlined text-primary text-sm font-bold">check</span>
+            <div className="w-full space-y-3 mb-6 bg-background/30 p-4 rounded-xl border border-outline-variant/15 text-left text-xs">
+              <div className="flex items-center gap-2.5 text-white">
+                <span className="material-symbols-outlined text-amber-500 text-sm font-bold">check_circle</span>
                 <span>{lang === 'fr' ? 'Retouche de photos par Prompt AI' : 'AI Prompt photo retouching'}</span>
               </div>
-              <div className="flex items-center gap-2 text-white">
-                <span className="material-symbols-outlined text-primary text-sm font-bold">check</span>
+              <div className="flex items-center gap-2.5 text-white">
+                <span className="material-symbols-outlined text-amber-500 text-sm font-bold">check_circle</span>
                 <span>{lang === 'fr' ? '50 Go de stockage cloud sécurisé' : '50 GB of secure cloud storage'}</span>
               </div>
-              <div className="flex items-center gap-2 text-white">
-                <span className="material-symbols-outlined text-primary text-sm font-bold">check</span>
+              <div className="flex items-center gap-2.5 text-white">
+                <span className="material-symbols-outlined text-amber-500 text-sm font-bold">check_circle</span>
                 <span>{lang === 'fr' ? 'Filigrane personnalisé ou supprimé' : 'Custom or removed watermarks'}</span>
               </div>
-              <div className="flex items-center gap-2 text-white">
-                <span className="material-symbols-outlined text-primary text-sm font-bold">check</span>
+              <div className="flex items-center gap-2.5 text-white">
+                <span className="material-symbols-outlined text-amber-500 text-sm font-bold">check_circle</span>
                 <span>{lang === 'fr' ? 'Support prioritaire 24/7' : 'Priority 24/7 support'}</span>
               </div>
             </div>
 
             <button
               onClick={() => router.push('/dashboard/settings?upgrade=true')}
-              className="w-full bg-primary text-on-primary font-bold py-3 rounded-xl hover:brightness-110 active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer text-sm shadow-lg shadow-primary/20"
+              className="w-full bg-gradient-to-r from-amber-500 to-yellow-500 text-background font-bold py-3 rounded-xl hover:brightness-110 active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer text-sm shadow-lg shadow-amber-500/20"
             >
               <span className="material-symbols-outlined text-base">workspace_premium</span>
               {lang === 'fr' ? 'Passer à la version PRO' : 'Upgrade to PRO version'}
