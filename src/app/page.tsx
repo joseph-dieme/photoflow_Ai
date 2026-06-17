@@ -540,14 +540,53 @@ export default function LandingPage() {
                     {t.bento1Desc}
                   </p>
                 </div>
-                <div className="mt-8 flex gap-2">
-                  <div className="h-1.5 w-24 bg-primary rounded-full"></div>
-                  <div className="h-1.5 w-12 bg-outline-variant rounded-full"></div>
+                <div className="mt-8 relative w-full h-56 rounded-2xl overflow-hidden border border-outline-variant/30 bg-[#121214] flex flex-col shadow-2xl">
+                  {/* macOS Title Bar Mockup */}
+                  <div className="h-8 border-b border-outline-variant/20 px-4 flex justify-between items-center bg-[#18181b] shrink-0 select-none">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-[#ef4444]/80"></span>
+                      <span className="w-2 h-2 rounded-full bg-[#f59e0b]/80"></span>
+                      <span className="w-2 h-2 rounded-full bg-[#10b981]/80"></span>
+                      <span className="text-[9px] text-on-surface-variant font-mono ml-2 font-medium">editor_raw_preview.webp</span>
+                    </div>
+                    <div className="flex items-center gap-1 bg-primary/10 border border-primary/25 text-primary text-[8px] font-extrabold px-2 py-0.5 rounded-full">
+                      <span className="flex h-1.5 w-1.5 rounded-full bg-primary animate-ping"></span>
+                      <span>AI ENGINE v2.5</span>
+                    </div>
+                  </div>
+
+                  <div className="flex-1 relative overflow-hidden">
+                    {/* After Image (Full Color Retouched) */}
+                    <img 
+                      src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=600&auto=format&fit=crop&q=80" 
+                      alt="Retouch Demo" 
+                      className="absolute inset-0 w-full h-full object-cover opacity-80" 
+                    />
+                    {/* Before Image (Flat Raw, clipped via animation) */}
+                    <img 
+                      src="https://images.unsplash.com/photo-1531123897727-8f129e1688ce?w=600&auto=format&fit=crop&q=80" 
+                      alt="Raw Demo" 
+                      className="absolute inset-0 w-full h-full object-cover opacity-80 brightness-75 contrast-80 saturate-[0.65] sepia-[0.12] z-10 animate-[clip-auto-move_6s_ease-in-out_infinite]" 
+                    />
+                    {/* Sliding split line */}
+                    <div className="absolute inset-y-0 w-[2px] bg-white shadow-[0_0_10px_#ffffff] z-20 animate-[slider-auto-move_6s_ease-in-out_infinite]"></div>
+                    {/* Sliding handle button */}
+                    <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-white text-black flex items-center justify-center shadow-2xl border border-primary z-30 animate-[slider-auto-move_6s_ease-in-out_infinite]">
+                      <span className="material-symbols-outlined text-sm font-bold">swap_horiz</span>
+                    </div>
+                    {/* Before/after split badges */}
+                    <div className="absolute bottom-3 left-3 z-30 font-body-sm text-[9px] font-bold text-white bg-black/60 px-2 py-0.5 rounded uppercase tracking-wider select-none">
+                      {t.beforeLabel}
+                    </div>
+                    <div className="absolute bottom-3 right-3 z-30 font-body-sm text-[9px] font-bold text-primary bg-black/60 px-2 py-0.5 rounded uppercase tracking-wider select-none">
+                      {t.afterLabel}
+                    </div>
+                  </div>
                 </div>
               </div>
 
               {/* Bento Card 2: Secure Delivery */}
-              <div className="glass-card p-10 rounded-3xl border border-outline-variant/40 hover:border-primary/40 transition-all duration-500 flex flex-col justify-between min-h-[340px]">
+              <div className="glass-card p-10 rounded-3xl border border-outline-variant/40 hover:border-primary/40 transition-all duration-500 flex flex-col justify-between min-h-[340px] group">
                 <div>
                   <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 mb-8">
                     <span className="material-symbols-outlined text-primary text-3xl">cloud_upload</span>
@@ -557,14 +596,42 @@ export default function LandingPage() {
                     {t.bento2Desc}
                   </p>
                 </div>
-                <div className="mt-8 bg-background/50 p-4 rounded-2xl flex items-center gap-3 border border-outline-variant/30">
-                  <span className="material-symbols-outlined text-primary text-lg">lock</span>
-                  <span className="text-[10px] font-mono tracking-widest text-primary font-bold uppercase">{t.bento2Status}</span>
+                <div className="mt-8 relative w-full h-48 rounded-2xl overflow-hidden border border-outline-variant/30 bg-[#121214] flex items-center justify-center shadow-inner">
+                  {/* Orbits grid background */}
+                  <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:16px_16px]"></div>
+                  
+                  {/* Cyber glow sphere */}
+                  <div className="absolute w-28 h-28 bg-primary/5 rounded-full blur-2xl animate-pulse"></div>
+
+                  {/* Concentric pulsing rings */}
+                  <div className="absolute w-24 h-24 rounded-full border border-primary/20 animate-[pulse-ring_4s_infinite_linear]"></div>
+                  <div className="absolute w-36 h-36 rounded-full border border-indigo-500/10 animate-[pulse-ring_6s_infinite_linear] delay-1000"></div>
+                  
+                  {/* Radar Dotted Spinning Circles */}
+                  <div className="absolute w-28 h-28 rounded-full border border-dashed border-primary/30 animate-[security-spin_15s_linear_infinite]"></div>
+                  <div className="absolute w-32 h-32 rounded-full border border-dashed border-indigo-500/20 animate-[security-spin_20s_linear_infinite_reverse]"></div>
+
+                  {/* Cyber metadata tags */}
+                  <div className="absolute top-4 left-4 flex items-center gap-1 bg-black/60 px-2 py-0.5 rounded border border-white/5 text-[7px] font-mono text-outline animate-pulse">
+                    <span className="h-1 w-1 rounded-full bg-primary animate-ping"></span> SECURE_HOST
+                  </div>
+                  <div className="absolute bottom-4 right-4 flex items-center gap-1 bg-black/60 px-2 py-0.5 rounded border border-white/5 text-[7px] font-mono text-outline animate-pulse delay-500">
+                    <span className="h-1 w-1 rounded-full bg-[#10b981]"></span> SHA_256
+                  </div>
+
+                  <div className="flex flex-col items-center z-10 transition-transform duration-500 group-hover:scale-105">
+                    <span className="material-symbols-outlined text-primary text-5xl mb-2 filter drop-shadow-[0_0_12px_rgba(165,180,252,0.5)]">
+                      shield_lock
+                    </span>
+                    <span className="text-[9px] font-mono tracking-widest text-primary font-extrabold bg-primary-container/20 border border-primary/30 px-3 py-1 rounded-full uppercase">
+                      {t.bento2Status}
+                    </span>
+                  </div>
                 </div>
               </div>
 
               {/* Bento Card 3: Smart Organization */}
-              <div className="glass-card p-10 rounded-3xl border border-outline-variant/40 hover:border-primary/40 transition-all duration-500 flex flex-col justify-between min-h-[340px]">
+              <div className="glass-card p-10 rounded-3xl border border-outline-variant/40 hover:border-primary/40 transition-all duration-500 flex flex-col justify-between min-h-[340px] group">
                 <div>
                   <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 mb-8">
                     <span className="material-symbols-outlined text-primary text-3xl">folder_special</span>
@@ -574,14 +641,82 @@ export default function LandingPage() {
                     {t.bento3Desc}
                   </p>
                 </div>
-                <div className="mt-8 flex gap-2">
-                  <span className="px-3 py-1.5 text-[10px] font-bold text-white bg-surface-container-highest rounded-lg border border-outline-variant/30">{t.bento3Tag1}</span>
-                  <span className="px-3 py-1.5 text-[10px] font-bold text-white bg-surface-container-highest rounded-lg border border-outline-variant/30">{t.bento3Tag2}</span>
+                <div className="mt-8 relative w-full h-48 rounded-2xl overflow-hidden border border-outline-variant/30 bg-[#121214] flex flex-col justify-center p-4">
+                  {/* Grid background */}
+                  <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:16px_16px]"></div>
+                  
+                  <div className="flex items-center justify-around z-10 w-full relative">
+                    {/* Face Detections Column */}
+                    <div className="flex flex-col gap-4">
+                      {/* Floating Avatar 1 with Face Recognition Corner brackets */}
+                      <div className="relative group/avatar animate-[float-tag_3s_ease-in-out_infinite]">
+                        <div className="w-12 h-12 rounded-xl border border-white/20 overflow-hidden shadow-lg">
+                          <img src="https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=120&auto=format&fit=crop&q=80" alt="" className="w-full h-full object-cover" />
+                        </div>
+                        {/* Face recognition frame overlay */}
+                        <div className="absolute -inset-1 border border-primary/60 rounded-xl animate-pulse">
+                          <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-primary"></div>
+                          <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-primary"></div>
+                          <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-primary"></div>
+                          <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-primary"></div>
+                        </div>
+                        <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 text-[6px] font-mono text-primary bg-black/85 px-1 rounded border border-primary/20 select-none whitespace-nowrap">ID: MOUSSA</span>
+                      </div>
+
+                      {/* Floating Avatar 2 with Face Recognition Corner brackets */}
+                      <div className="relative group/avatar animate-[float-tag_3s_ease-in-out_infinite] delay-1000">
+                        <div className="w-12 h-12 rounded-xl border border-white/20 overflow-hidden shadow-lg">
+                          <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=120&auto=format&fit=crop&q=80" alt="" className="w-full h-full object-cover" />
+                        </div>
+                        {/* Face recognition frame overlay */}
+                        <div className="absolute -inset-1 border border-indigo-400/60 rounded-xl animate-pulse">
+                          <div className="absolute top-0 left-0 w-2 h-2 border-t border-l border-indigo-400"></div>
+                          <div className="absolute top-0 right-0 w-2 h-2 border-t border-r border-indigo-400"></div>
+                          <div className="absolute bottom-0 left-0 w-2 h-2 border-b border-l border-indigo-400"></div>
+                          <div className="absolute bottom-0 right-0 w-2 h-2 border-b border-r border-indigo-400"></div>
+                        </div>
+                        <span className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 text-[6px] font-mono text-indigo-300 bg-black/85 px-1 rounded border border-indigo-500/20 select-none whitespace-nowrap">ID: DIOP</span>
+                      </div>
+                    </div>
+
+                    {/* Flow arrow indicators */}
+                    <div className="flex flex-col gap-10 items-center justify-center select-none">
+                      <span className="material-symbols-outlined text-primary/50 animate-pulse text-base">
+                        double_arrow
+                      </span>
+                      <span className="material-symbols-outlined text-indigo-400/50 animate-pulse text-base delay-500">
+                        double_arrow
+                      </span>
+                    </div>
+                    
+                    {/* Organized Target Folders */}
+                    <div className="flex flex-col gap-3">
+                      <div className="w-28 bg-[#1e1e21] border border-outline-variant/30 px-3 py-2 rounded-xl shadow-lg flex items-center gap-2 group-hover:border-primary/45 transition-colors">
+                        <span className="material-symbols-outlined text-primary text-base">folder</span>
+                        <div className="text-left leading-none">
+                          <p className="text-[9px] font-bold text-white uppercase tracking-wider">Mariages</p>
+                          <span className="text-[7px] text-outline-variant font-mono mt-0.5 block">148 photos</span>
+                        </div>
+                      </div>
+                      <div className="w-28 bg-[#1e1e21] border border-outline-variant/30 px-3 py-2 rounded-xl shadow-lg flex items-center gap-2 group-hover:border-primary/45 transition-colors">
+                        <span className="material-symbols-outlined text-indigo-400 text-base">folder</span>
+                        <div className="text-left leading-none">
+                          <p className="text-[9px] font-bold text-white uppercase tracking-wider">Portraits</p>
+                          <span className="text-[7px] text-outline-variant font-mono mt-0.5 block">92 photos</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Small floating tag text */}
+                  <div className="absolute bottom-2 left-2 flex gap-1.5">
+                    <span className="px-2 py-0.5 text-[8px] font-bold text-white bg-black/60 rounded border border-white/10 uppercase tracking-wider">{t.bento3Tag1}</span>
+                    <span className="px-2 py-0.5 text-[8px] font-bold text-white bg-black/60 rounded border border-white/10 uppercase tracking-wider">{t.bento3Tag2}</span>
+                  </div>
                 </div>
               </div>
 
               {/* Bento Card 4: Local Payments */}
-              <div className="md:col-span-2 glass-card p-10 md:p-12 rounded-3xl flex flex-col md:flex-row items-start md:items-center gap-8 border border-outline-variant/40 hover:border-primary/40 transition-all duration-500 min-h-[340px]">
+              <div className="md:col-span-2 glass-card p-10 md:p-12 rounded-3xl flex flex-col md:flex-row items-start md:items-center gap-8 border border-outline-variant/40 hover:border-primary/40 transition-all duration-500 min-h-[340px] group/card4">
                 <div className="flex-1">
                   <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center border border-primary/20 mb-8">
                     <span className="material-symbols-outlined text-primary text-3xl">payments</span>
@@ -591,18 +726,47 @@ export default function LandingPage() {
                     {t.bento4Desc}
                   </p>
                 </div>
-                <div className="flex gap-4 shrink-0 w-full md:w-auto mt-4 md:mt-0">
-                  <div className="flex-1 md:flex-none w-24 h-24 bg-white/5 rounded-2xl flex flex-col items-center justify-center p-3 border border-outline-variant/20 hover:border-primary/30 transition-colors">
-                    <span className="text-[12px] font-bold text-[#4f46e5] mb-1">WAVE</span>
-                    <span className="text-[9px] text-on-surface-variant font-medium">{t.bento4Tag1}</span>
+                <div className="relative w-64 h-40 shrink-0 mx-auto mt-4 md:mt-0 flex items-center justify-center select-none">
+                  {/* Wave Card */}
+                  <div className="absolute w-36 h-24 bg-gradient-to-tr from-[#0a1e3f] via-[#1e40af] to-[#3b82f6] rounded-xl flex flex-col items-start justify-between p-3 border border-blue-500/30 shadow-2xl transition-all duration-500 origin-bottom-right rotate-[-12deg] z-10 translate-x-[-12px] group-hover/card4:rotate-[-24deg] group-hover/card4:translate-x-[-48px] group-hover/card4:translate-y-[-16px] group-hover/card4:shadow-blue-500/20 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full animate-[shimmer_2s_infinite]"></div>
+                    <div className="flex justify-between w-full items-center">
+                      <span className="text-[8px] font-bold text-blue-200 uppercase tracking-widest">WAVE</span>
+                      <span className="material-symbols-outlined text-blue-300 text-xs">wifi</span>
+                    </div>
+                    <div className="w-5 h-4 bg-gradient-to-tr from-amber-200 via-yellow-400 to-amber-300 rounded-sm opacity-80 my-1"></div>
+                    <div className="w-full">
+                      <span className="text-[6px] text-blue-200/60 font-mono block">CARD NUMBER</span>
+                      <span className="text-[7px] font-mono text-white tracking-wider font-semibold">•••• •••• •••• 4022</span>
+                    </div>
                   </div>
-                  <div className="flex-1 md:flex-none w-24 h-24 bg-white/5 rounded-2xl flex flex-col items-center justify-center p-3 border border-outline-variant/20 hover:border-orange-500/30 transition-colors">
-                    <span className="text-[12px] font-bold text-orange-400 mb-1">ORANGE</span>
-                    <span className="text-[9px] text-on-surface-variant font-medium">{t.bento4Tag2}</span>
+                  
+                  {/* Orange Money Card */}
+                  <div className="absolute w-36 h-24 bg-gradient-to-tr from-[#2d1208] via-[#c2410c] to-[#f97316] rounded-xl flex flex-col items-start justify-between p-3 border border-orange-500/30 shadow-2xl transition-all duration-500 origin-bottom z-20 group-hover/card4:translate-y-[-24px] group-hover/card4:scale-105 group-hover/card4:shadow-orange-500/20 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full animate-[shimmer_2s_infinite] delay-300"></div>
+                    <div className="flex justify-between w-full items-center">
+                      <span className="text-[8px] font-bold text-orange-200 uppercase tracking-widest">ORANGE</span>
+                      <span className="material-symbols-outlined text-orange-300 text-xs">contactless</span>
+                    </div>
+                    <div className="w-5 h-4 bg-gradient-to-tr from-amber-200 via-yellow-400 to-amber-300 rounded-sm opacity-80 my-1"></div>
+                    <div className="w-full">
+                      <span className="text-[6px] text-orange-200/60 font-mono block">CARD NUMBER</span>
+                      <span className="text-[7px] font-mono text-white tracking-wider font-semibold">•••• •••• •••• 7731</span>
+                    </div>
                   </div>
-                  <div className="flex-1 md:flex-none w-24 h-24 bg-white/5 rounded-2xl flex flex-col items-center justify-center p-3 border border-outline-variant/20 hover:border-red-500/30 transition-colors">
-                    <span className="text-[12px] font-bold text-red-500 mb-1">FREE</span>
-                    <span className="text-[9px] text-on-surface-variant font-medium">{t.bento4Tag2}</span>
+
+                  {/* Free Money Card */}
+                  <div className="absolute w-36 h-24 bg-gradient-to-tr from-[#30080d] via-[#b91c1c] to-[#ef4444] rounded-xl flex flex-col items-start justify-between p-3 border border-red-500/30 shadow-2xl transition-all duration-500 origin-bottom-left rotate-[12deg] z-30 translate-x-[12px] group-hover/card4:rotate-[24deg] group-hover/card4:translate-x-[48px] group-hover/card4:translate-y-[-16px] group-hover/card4:shadow-red-500/20 overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/15 to-transparent -translate-x-full animate-[shimmer_2s_infinite] delay-700"></div>
+                    <div className="flex justify-between w-full items-center">
+                      <span className="text-[8px] font-bold text-red-200 uppercase tracking-widest">FREE</span>
+                      <span className="material-symbols-outlined text-red-300 text-xs">credit_card</span>
+                    </div>
+                    <div className="w-5 h-4 bg-gradient-to-tr from-amber-200 via-yellow-400 to-amber-300 rounded-sm opacity-80 my-1"></div>
+                    <div className="w-full">
+                      <span className="text-[6px] text-red-200/60 font-mono block">CARD NUMBER</span>
+                      <span className="text-[7px] font-mono text-white tracking-wider font-semibold">•••• •••• •••• 9924</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -779,6 +943,40 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+      <style>{`
+        @keyframes scan {
+          0% { top: 0%; }
+          50% { top: 100%; }
+          100% { top: 0%; }
+        }
+        @keyframes pulse-ring {
+          0% { transform: scale(0.95); opacity: 0.5; }
+          50% { transform: scale(1.15); opacity: 0.1; }
+          100% { transform: scale(0.95); opacity: 0.5; }
+        }
+        @keyframes float-tag {
+          0% { transform: translateY(0px); }
+          50% { transform: translateY(-8px); }
+          100% { transform: translateY(0px); }
+        }
+        @keyframes slider-auto-move {
+          0% { left: 15%; }
+          50% { left: 85%; }
+          100% { left: 15%; }
+        }
+        @keyframes clip-auto-move {
+          0% { clip-path: inset(0 85% 0 0); }
+          50% { clip-path: inset(0 15% 0 0); }
+          100% { clip-path: inset(0 85% 0 0); }
+        }
+        @keyframes security-spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        @keyframes shimmer {
+          100% { transform: translateX(100%); }
+        }
+      `}</style>
     </div>
   );
 }

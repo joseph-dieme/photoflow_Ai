@@ -326,6 +326,7 @@ export default function EditorPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [isMobileDrawerCollapsed, setIsMobileDrawerCollapsed] = useState(false);
+  const [isUiHidden, setIsUiHidden] = useState(false);
 
   // Before/after compare slider states
   const [sliderPosition, setSliderPosition] = useState(50);
@@ -2277,18 +2278,24 @@ export default function EditorPage() {
 
   return (
     <div className="fixed inset-0 bg-background text-on-surface flex flex-col font-body-md overflow-hidden selection:bg-primary-container">
-      <Navigation />
+      <div className={`transition-transform duration-300 z-50 ${isUiHidden ? '-translate-y-16' : 'translate-y-0'}`}>
+        <Navigation />
+      </div>
 
       {/* Left Tool Palette (Adobe style) */}
       <aside 
         id="left-tool-palette"
-        className="fixed bottom-0 left-0 right-0 h-16 md:h-auto md:w-[80px] md:top-16 md:bottom-0 md:left-0 md:right-auto flex md:flex-col flex-row items-center justify-around md:justify-start md:py-6 bg-surface-container-low border-t md:border-t-0 md:border-r border-outline-variant z-40"
+        className={`fixed bottom-0 left-0 right-0 h-16 md:h-auto md:w-[80px] md:top-16 md:bottom-0 md:left-0 md:right-auto flex md:flex-col flex-row items-center justify-start md:justify-start md:py-6 bg-surface-container-low border-t md:border-t-0 md:border-r border-outline-variant z-40 transition-transform duration-300 overflow-x-auto overflow-y-hidden md:overflow-y-auto md:overflow-x-hidden custom-scrollbar ${
+          isUiHidden 
+            ? 'translate-y-20 md:translate-y-0 md:-translate-x-24' 
+            : 'translate-y-0 md:translate-x-0'
+        }`}
       >
-        <div className="flex md:flex-col flex-row gap-4 md:gap-6 px-4 md:px-0 items-center w-full justify-around md:justify-center">
+        <div className="flex md:flex-col flex-row gap-4 md:gap-6 px-4 md:px-0 items-center justify-start md:justify-center flex-nowrap py-1 md:py-2">
           <button 
             onClick={() => setActiveTool('select')}
             onFocus={() => setActiveTool('select')}
-            className={`p-2.5 md:p-3 rounded-xl transition-all hover:scale-105 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
+            className={`p-2.5 md:p-3 rounded-xl transition-all hover:scale-105 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none flex-shrink-0 ${
               activeTool === 'select' ? 'text-on-primary-container bg-primary-container' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
             }`} 
             title={t.toolSelect}
@@ -2298,7 +2305,7 @@ export default function EditorPage() {
           <button 
             onClick={() => setActiveTool('crop')}
             onFocus={() => setActiveTool('crop')}
-            className={`p-2.5 md:p-3 rounded-xl transition-all hover:scale-105 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
+            className={`p-2.5 md:p-3 rounded-xl transition-all hover:scale-105 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none flex-shrink-0 ${
               activeTool === 'crop' ? 'text-on-primary-container bg-primary-container' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
             }`} 
             title={t.toolCrop}
@@ -2308,7 +2315,7 @@ export default function EditorPage() {
           <button 
             onClick={() => setActiveTool('brush')}
             onFocus={() => setActiveTool('brush')}
-            className={`p-2.5 md:p-3 rounded-xl transition-all hover:scale-105 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
+            className={`p-2.5 md:p-3 rounded-xl transition-all hover:scale-105 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none flex-shrink-0 ${
               activeTool === 'brush' ? 'text-on-primary-container bg-primary-container' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
             }`} 
             title={t.toolBrush}
@@ -2318,18 +2325,18 @@ export default function EditorPage() {
           <button 
             onClick={() => setActiveTool('heal')}
             onFocus={() => setActiveTool('heal')}
-            className={`p-2.5 md:p-3 rounded-xl transition-all hover:scale-105 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
+            className={`p-2.5 md:p-3 rounded-xl transition-all hover:scale-105 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none flex-shrink-0 ${
               activeTool === 'heal' ? 'text-on-primary-container bg-primary-container' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
             }`} 
             title={t.toolHeal}
           >
             <span className="material-symbols-outlined text-base md:text-[24px]">healing</span>
           </button>
-          <div className="hidden md:block h-[1px] w-8 bg-outline-variant my-2"></div>
+          <div className="hidden md:block h-[1px] w-8 bg-outline-variant my-2 flex-shrink-0"></div>
           <button 
             onClick={() => setActiveTool('color')}
             onFocus={() => setActiveTool('color')}
-            className={`p-2.5 md:p-3 rounded-xl transition-all hover:scale-105 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
+            className={`p-2.5 md:p-3 rounded-xl transition-all hover:scale-105 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none flex-shrink-0 ${
               activeTool === 'color' ? 'text-on-primary-container bg-primary-container' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
             }`} 
             title={t.toolColor}
@@ -2339,7 +2346,7 @@ export default function EditorPage() {
           <button 
             onClick={() => setActiveTool('text')}
             onFocus={() => setActiveTool('text')}
-            className={`p-2.5 md:p-3 rounded-xl transition-all hover:scale-105 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
+            className={`p-2.5 md:p-3 rounded-xl transition-all hover:scale-105 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none flex-shrink-0 ${
               activeTool === 'text' ? 'text-on-primary-container bg-primary-container' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
             }`} 
             title={t.toolText}
@@ -2348,23 +2355,23 @@ export default function EditorPage() {
           </button>
           <button 
             onClick={() => handleRotateImage('left')}
-            className="p-2.5 md:p-3 rounded-xl transition-all hover:scale-105 cursor-pointer text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+            className="p-2.5 md:p-3 rounded-xl transition-all hover:scale-105 cursor-pointer text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none flex-shrink-0"
             title={lang === 'fr' ? "Pivoter à gauche (-90°)" : "Rotate Left (-90°)"}
           >
             <span className="material-symbols-outlined text-base md:text-[24px]">rotate_left</span>
           </button>
           <button 
             onClick={() => handleRotateImage('right')}
-            className="p-2.5 md:p-3 rounded-xl transition-all hover:scale-105 cursor-pointer text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+            className="p-2.5 md:p-3 rounded-xl transition-all hover:scale-105 cursor-pointer text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none flex-shrink-0"
             title={lang === 'fr' ? "Pivoter à droite (90°)" : "Rotate Right (90°)"}
           >
             <span className="material-symbols-outlined text-base md:text-[24px]">rotate_right</span>
           </button>
-          <div className="hidden md:block h-[1px] w-8 bg-outline-variant my-2"></div>
+          <div className="hidden md:block h-[1px] w-8 bg-outline-variant my-2 flex-shrink-0"></div>
           <button 
             onClick={handleUndo}
             disabled={historyStack.length === 0}
-            className={`p-2.5 md:p-3 rounded-xl transition-all hover:scale-105 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
+            className={`p-2.5 md:p-3 rounded-xl transition-all hover:scale-105 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none flex-shrink-0 ${
               historyStack.length === 0 
                 ? 'opacity-40 cursor-not-allowed text-on-surface-variant' 
                 : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
@@ -2377,7 +2384,11 @@ export default function EditorPage() {
       </aside>
 
       {/* Main Studio Viewport (The Stage) */}
-      <main className={`fixed inset-0 pt-16 bg-background flex items-center justify-center overflow-hidden transition-all duration-300 ${isMobileDrawerCollapsed ? 'pb-[152px]' : 'pb-[322px]'} md:pb-16 pl-0 md:pl-[80px] pr-0 md:pr-[320px]`}>
+      <main className={`fixed inset-0 bg-background flex items-center justify-center overflow-hidden transition-all duration-300 ${
+        isUiHidden 
+          ? 'pt-0 pb-0 pl-0 pr-0' 
+          : `${isMobileDrawerCollapsed ? 'pb-[152px]' : 'pb-[482px]'} pt-16 md:pb-16 pl-0 md:pl-[80px] pr-0 md:pr-[320px]`
+      }`}>
         <div className="relative w-full h-full flex items-center justify-center p-4 md:p-8 bg-surface-container-lowest">
           {/* AI Loader Progress Line */}
           {isProcessing && (
@@ -2385,7 +2396,9 @@ export default function EditorPage() {
           )}
  
           {/* Close Editor button & Importer RAW */}
-          <div className="absolute top-4 left-4 z-40 flex items-center gap-2">
+          <div className={`absolute top-4 left-4 z-40 flex items-center gap-2 transition-transform duration-300 ${
+            isUiHidden ? '-translate-y-20' : 'translate-y-0'
+          }`}>
             <Link 
               href={`/dashboard/projects/${project?.id}`} 
               className="bg-black/60 hover:bg-black/90 p-2.5 rounded-full text-white/80 hover:text-white border border-outline-variant/30 flex items-center justify-center shadow-lg transition-colors"
@@ -2505,7 +2518,9 @@ export default function EditorPage() {
                     ref={imageRef}
                     src={processedUrl}
                     alt="Edited Portrait Preview"
-                    className="block select-none max-h-[50vh] md:max-h-[80vh] w-auto origin-center"
+                    className={`block select-none w-auto origin-center transition-all duration-300 ${
+                      isUiHidden ? 'max-h-[85vh] md:max-h-[92vh]' : 'max-h-[50vh] md:max-h-[80vh]'
+                    }`}
                     style={{
                       transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${scaleVal})`,
                       transition: isPanning ? 'none' : 'transform 150ms ease-out',
@@ -2544,7 +2559,9 @@ export default function EditorPage() {
                       <img
                         src={originalUrl}
                         alt="Original Raw Before"
-                        className="max-h-[50vh] md:max-h-[80vh] w-auto max-w-none origin-center"
+                        className={`w-auto max-w-none origin-center transition-all duration-300 ${
+                          isUiHidden ? 'max-h-[85vh] md:max-h-[92vh]' : 'max-h-[50vh] md:max-h-[80vh]'
+                        }`}
                         style={{ 
                           width: compareContainerRef.current?.getBoundingClientRect().width,
                           transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${scaleVal})`,
@@ -2570,7 +2587,9 @@ export default function EditorPage() {
               )}
             
             {/* Camera Exif metadata glass badge */}
-            <div className="absolute top-4 right-4 glass-panel px-4 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity flex gap-4 pointer-events-none z-20">
+            <div className={`absolute top-4 right-4 glass-panel px-4 py-2 rounded-lg opacity-0 group-hover:opacity-100 transition-all duration-300 flex gap-4 pointer-events-none z-20 ${
+              isUiHidden ? '-translate-y-20' : 'translate-y-0'
+            }`}>
               <div className="flex flex-col">
                 <span className="text-[9px] text-outline uppercase font-bold tracking-wider">ISO</span>
                 <span className="font-label-md text-xs font-bold text-on-surface">{photo?.metadata?.iso || 100}</span>
@@ -2590,8 +2609,10 @@ export default function EditorPage() {
 
       {/* Right Sidebar - Adjustment Panels */}
       <aside 
-        className={`fixed bottom-28 left-0 right-0 h-[210px] md:h-auto md:w-[320px] md:top-16 md:bottom-0 md:left-auto md:right-0 glass-panel border-t md:border-t-0 md:border-l border-outline-variant z-20 flex flex-col transition-all duration-300 ${
-          isMobileDrawerCollapsed ? 'translate-y-[170px] md:translate-y-0' : 'translate-y-0'
+        className={`fixed bottom-28 left-0 right-0 h-[370px] md:h-auto md:w-[320px] md:top-16 md:bottom-0 md:left-auto md:right-0 glass-panel border-t md:border-t-0 md:border-l border-outline-variant z-20 flex flex-col transition-all duration-300 ${
+          isUiHidden 
+            ? 'translate-y-[450px] md:translate-y-0 md:translate-x-[360px]' 
+            : `md:translate-x-0 ${isMobileDrawerCollapsed ? 'translate-y-[330px] md:translate-y-0' : 'translate-y-0'}`
         }`}
       >
         {/* Mobile Handle Toggle Bar */}
@@ -2611,7 +2632,7 @@ export default function EditorPage() {
           <div className="w-12"></div>
         </div>
 
-        <div className="p-4 md:p-panel-padding flex-1 overflow-y-auto space-y-6 md:space-y-8 custom-scrollbar">
+        <div className="p-4 md:p-panel-padding flex-1 min-h-0 overflow-y-auto space-y-6 md:space-y-8 custom-scrollbar">
           {activeTool === 'crop' ? (
             /* Crop Settings Panel */
             <section className="space-y-6">
@@ -3755,7 +3776,11 @@ export default function EditorPage() {
       </aside>
 
       {/* Bottom control bar (Fitting & Comparing) */}
-      <footer className="fixed bottom-16 left-0 right-0 h-12 md:h-16 md:bottom-0 md:left-[80px] md:right-[320px] glass-panel border-t border-outline-variant flex items-center justify-between px-4 md:px-gutter z-30">
+      <footer className={`fixed bottom-16 left-0 right-0 h-12 md:h-16 md:bottom-0 md:left-[80px] md:right-[320px] glass-panel border-t border-outline-variant flex items-center justify-between px-4 md:px-gutter z-30 transition-transform duration-300 ${
+        isUiHidden 
+          ? 'translate-y-32 md:translate-y-24' 
+          : 'translate-y-0'
+      }`}>
         <div className="flex items-center gap-2 md:gap-4">
           <div className="flex items-center gap-1 bg-surface-container-high rounded-full p-0.5 md:p-1 border border-outline-variant/30">
             <button 
@@ -4063,6 +4088,39 @@ export default function EditorPage() {
           </div>
         </div>
       )}
+
+      {/* Dynamic Floating UI Toggle Button */}
+      <div 
+        className={`fixed z-50 transition-all duration-300 ${
+          isUiHidden 
+            ? 'bottom-4 right-4' 
+            : isMobileDrawerCollapsed 
+              ? 'bottom-[168px] right-4 md:bottom-20 md:right-[336px]' 
+              : 'bottom-[498px] right-4 md:bottom-20 md:right-[336px]'
+        }`}
+      >
+        {isUiHidden && (
+          <span className="absolute inset-0 rounded-full bg-primary/45 animate-ping pointer-events-none"></span>
+        )}
+        <button
+          onClick={() => setIsUiHidden(!isUiHidden)}
+          className={`relative z-10 flex items-center justify-center p-3.5 rounded-full shadow-[0_0_20px_rgba(165,180,252,0.15)] transition-all duration-300 cursor-pointer border ${
+            isUiHidden 
+              ? 'bg-primary text-on-primary border-primary/50 scale-105 shadow-primary/30' 
+              : 'glass-panel bg-surface-container-high/90 hover:bg-primary hover:text-on-primary hover:border-primary/50 text-primary border-primary/25'
+          }`}
+          title={isUiHidden ? (lang === 'fr' ? "Afficher l'interface" : "Show Interface") : (lang === 'fr' ? "Masquer l'interface" : "Hide Interface")}
+        >
+          <span className="material-symbols-outlined text-base">
+            {isUiHidden ? 'visibility' : 'visibility_off'}
+          </span>
+          <span className="hidden md:inline text-[10px] font-bold uppercase tracking-wider ml-1.5 select-none">
+            {isUiHidden 
+              ? (lang === 'fr' ? "Afficher" : "Show UI") 
+              : (lang === 'fr' ? "Masquer" : "Hide UI")}
+          </span>
+        </button>
+      </div>
     </div>
   );
 }
