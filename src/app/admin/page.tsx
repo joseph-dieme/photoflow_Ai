@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
@@ -64,6 +64,13 @@ const translations = {
     promoToggleSuccess: 'Statut du code mis à jour.',
     promoDeleteSuccess: 'Code promo supprimé.',
     promoDeleteConfirm: 'Voulez-vous supprimer ce code promo ?',
+    // Support additions
+    tabSupport: 'Support Clients',
+    chatActive: 'Conversation avec',
+    chatPlaceholder: 'Répondre à cet utilisateur...',
+    noChats: 'Aucune conversation de support pour le moment.',
+    online: 'En ligne',
+    adminLabel: 'Support Admin',
   },
   en: {
     deniedTitle: 'Access Denied',
@@ -121,6 +128,13 @@ const translations = {
     promoToggleSuccess: 'Code status updated.',
     promoDeleteSuccess: 'Promo code deleted.',
     promoDeleteConfirm: 'Are you sure you want to delete this promo code?',
+    // Support additions
+    tabSupport: 'Client Support',
+    chatActive: 'Chat with',
+    chatPlaceholder: 'Reply to this user...',
+    noChats: 'No support conversations yet.',
+    online: 'Online',
+    adminLabel: 'Admin Support',
   }
 };
 
@@ -130,7 +144,14 @@ export default function AdminPage() {
   const t = translations[lang] || translations.fr;
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [activeTab, setActiveTab] = useState<'artists' | 'promo'>('artists');
+  const [activeTab, setActiveTab] = useState<'artists' | 'promo' | 'support'>('artists');
+  
+  // Support Chat States
+  const [supportMessages, setSupportMessages] = useState<any[]>([]);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [adminReplyText, setAdminReplyText] = useState('');
+  const [sendingReply, setSendingReply] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
   
   // Platform Metrics States
   const [metrics, setMetrics] = useState({
@@ -179,6 +200,7 @@ export default function AdminPage() {
             setIsAdmin(true);
             fetchPlatformMetrics();
             fetchPromoCodes();
+            fetchSupportMessages();
           }
         } catch (err) {
           console.error('Error verifying admin status:', err);
@@ -231,6 +253,114 @@ export default function AdminPage() {
       console.error('Error fetching promo codes:', err);
     }
   }
+
+  async function fetchSupportMessages() {
+    try {
+      const { data, error } = await supabase
+        .from('pf_support_messages')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setSupportMessages(data || []);
+    } catch (err) {
+      console.error('Error fetching support messages:', err);
+    }
+  }
+
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    const channel = supabase
+      .channel('admin_support_chats')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'pf_support_messages',
+        },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+            setSupportMessages((prev) => {
+              if (prev.some((m) => m.id === payload.new.id)) return prev;
+              return [payload.new, ...prev];
+            });
+          } else if (payload.eventType === 'UPDATE') {
+            setSupportMessages((prev) =>
+              prev.map((msg) => (msg.id === payload.new.id ? payload.new : msg))
+            );
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isAdmin]);
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [supportMessages, selectedUserId]);
+
+  const markConversationAsRead = async (targetUserId: string) => {
+    try {
+      await supabase
+        .from('pf_support_messages')
+        .update({ is_read: true })
+        .eq('user_id', targetUserId)
+        .eq('sender_id', targetUserId)
+        .eq('is_read', false);
+
+      setSupportMessages((prev) =>
+        prev.map((msg) =>
+          msg.user_id === targetUserId && msg.sender_id === targetUserId
+            ? { ...msg, is_read: true }
+            : msg
+        )
+      );
+    } catch (err) {
+      console.error('Failed to mark conversation as read:', err);
+    }
+  };
+
+  const handleSendAdminReply = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminReplyText.trim() || !selectedUserId) return;
+    setSendingReply(true);
+
+    const replyText = adminReplyText.trim();
+    setAdminReplyText('');
+
+    try {
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!currentUser) throw new Error('No admin user');
+
+      const { data, error } = await supabase
+        .from('pf_support_messages')
+        .insert({
+          user_id: selectedUserId,
+          sender_id: currentUser.id,
+          content: replyText,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setSupportMessages((prev) => {
+        if (prev.some((m) => m.id === data.id)) return prev;
+        return [data, ...prev];
+      });
+    } catch (err) {
+      console.error('Failed to send admin reply:', err);
+      showToast('error', lang === 'fr' ? 'Erreur lors de l’envoi de la réponse.' : 'Failed to send reply.');
+      setAdminReplyText(replyText);
+    } finally {
+      setSendingReply(false);
+    }
+  };
 
   const handleUserRowChange = (userId: string, field: 'plan' | 'storage_limit', value: any) => {
     setUsers(prevUsers =>
@@ -463,6 +593,27 @@ export default function AdminPage() {
             }`}
           >
             {t.tabPromo}
+          </button>
+          <button
+            onClick={() => setActiveTab('support')}
+            className={`pb-4 text-xs font-bold tracking-widest uppercase transition-all cursor-pointer flex items-center gap-1.5 ${
+              activeTab === 'support'
+                ? 'text-primary border-b-2 border-primary'
+                : 'text-on-surface-variant hover:text-white'
+            }`}
+          >
+            {t.tabSupport}
+            {(() => {
+              const unreadCount = supportMessages.filter(m => m.sender_id === m.user_id && !m.is_read).length;
+              if (unreadCount > 0) {
+                return (
+                  <span className="bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full font-bold animate-pulse">
+                    {unreadCount}
+                  </span>
+                );
+              }
+              return null;
+            })()}
           </button>
         </div>
 
@@ -814,6 +965,195 @@ export default function AdminPage() {
                 </table>
               </div>
             </section>
+          </div>
+        )}
+
+        {/* Support Chat Directory Tab */}
+        {activeTab === 'support' && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[600px]">
+            {/* Conversations List */}
+            <div className="lg:col-span-1 glass-panel border border-outline-variant/30 rounded-2xl flex flex-col overflow-hidden">
+              <div className="p-4 bg-surface-container-high border-b border-outline-variant/50">
+                <h3 className="text-xs font-bold text-white uppercase tracking-wider">Conversations</h3>
+              </div>
+              
+              <div className="flex-grow overflow-y-auto divide-y divide-outline-variant/10">
+                {(() => {
+                  const chatsMap = new Map<string, any>();
+                  
+                  supportMessages.forEach((msg) => {
+                    if (!chatsMap.has(msg.user_id)) {
+                      chatsMap.set(msg.user_id, {
+                        userId: msg.user_id,
+                        latestMessage: msg,
+                        unreadCount: 0,
+                      });
+                    }
+                    if (msg.sender_id === msg.user_id && !msg.is_read) {
+                      const chat = chatsMap.get(msg.user_id);
+                      chat.unreadCount += 1;
+                    }
+                  });
+
+                  const chats = Array.from(chatsMap.values());
+
+                  if (chats.length === 0) {
+                    return (
+                      <div className="p-8 text-center text-on-surface-variant text-xs font-medium">
+                        {t.noChats}
+                      </div>
+                    );
+                  }
+
+                  return chats.map((chat) => {
+                    const profile = users.find((u) => u.id === chat.userId) || {
+                      full_name: 'Photographe',
+                      email: 'N/A',
+                    };
+                    const isSelected = selectedUserId === chat.userId;
+                    const latestText = chat.latestMessage.content;
+                    const time = new Date(chat.latestMessage.created_at).toLocaleDateString(lang === 'fr' ? 'fr-FR' : 'en-US', {
+                      month: 'short',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    });
+
+                    return (
+                      <button
+                        key={chat.userId}
+                        onClick={() => {
+                          setSelectedUserId(chat.userId);
+                          markConversationAsRead(chat.userId);
+                        }}
+                        className={`w-full text-left p-4 hover:bg-surface-container/20 transition-all flex justify-between items-start gap-3 border-l-4 ${
+                          isSelected
+                            ? 'bg-surface-container/30 border-primary'
+                            : 'border-transparent'
+                        }`}
+                      >
+                        <div className="flex-grow truncate flex flex-col">
+                          <h4 className="font-semibold text-xs text-white truncate">{profile.full_name}</h4>
+                          <span className="block text-[10px] text-zinc-500 font-mono mt-0.5 truncate">{profile.email}</span>
+                          <p className="text-[11px] text-zinc-450 mt-2 truncate font-medium">{latestText}</p>
+                        </div>
+                        <div className="flex flex-col items-end flex-shrink-0">
+                          <span className="text-[9px] text-zinc-500 font-mono">{time}</span>
+                          {chat.unreadCount > 0 && (
+                            <span className="bg-primary text-on-primary text-[9px] font-bold px-2 py-0.5 rounded-full mt-2">
+                              {chat.unreadCount}
+                            </span>
+                          )}
+                        </div>
+                      </button>
+                    );
+                  });
+                })()}
+              </div>
+            </div>
+
+            {/* Chat Thread Panel */}
+            <div className="lg:col-span-2 glass-panel border border-outline-variant/30 rounded-2xl flex flex-col overflow-hidden">
+              {selectedUserId ? (
+                (() => {
+                  const targetUser = users.find((u) => u.id === selectedUserId) || {
+                    full_name: 'Photographe',
+                    email: 'N/A',
+                  };
+                  
+                  const threadMessages = [...supportMessages]
+                    .filter((m) => m.user_id === selectedUserId)
+                    .reverse();
+
+                  return (
+                    <>
+                      {/* Thread Header */}
+                      <div className="p-4 bg-surface-container-high border-b border-outline-variant/50 flex items-center justify-between">
+                        <div>
+                          <h3 className="text-xs font-bold text-white uppercase tracking-wider">
+                            {t.chatActive} {targetUser.full_name}
+                          </h3>
+                          <span className="text-[9px] text-zinc-400 font-mono mt-0.5 block">{targetUser.email}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                          <span className="text-[10px] font-bold text-green-400 uppercase tracking-wider">{t.online}</span>
+                        </div>
+                      </div>
+
+                      {/* Messages list */}
+                      <div className="flex-grow p-4 overflow-y-auto space-y-4 bg-background/50 flex flex-col">
+                        {threadMessages.map((msg) => {
+                          const isOwn = msg.sender_id !== selectedUserId;
+                          const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                          return (
+                            <div
+                              key={msg.id}
+                              className={`flex gap-2 max-w-[85%] ${
+                                isOwn ? 'self-end flex-row-reverse ml-auto' : 'self-start mr-auto'
+                              }`}
+                            >
+                              {!isOwn && (
+                                <div className="w-7 h-7 rounded-full bg-zinc-800 flex items-center justify-center border border-outline-variant/30 flex-shrink-0">
+                                  <span className="material-symbols-outlined text-sm text-primary">person</span>
+                                </div>
+                              )}
+                              <div>
+                                <div
+                                  className={`text-xs p-3 rounded-2xl shadow-sm leading-relaxed break-words whitespace-pre-wrap ${
+                                    isOwn
+                                      ? 'bg-gradient-to-br from-primary to-primary-container text-white rounded-tr-none'
+                                      : 'bg-zinc-800 border border-outline-variant/20 text-on-surface rounded-tl-none'
+                                  }`}
+                                >
+                                  {msg.content}
+                                </div>
+                                <span className={`block text-[9px] text-zinc-500 font-mono mt-1 ${isOwn ? 'text-right' : 'text-left'}`}>
+                                  {time} {isOwn && msg.is_read && <span className="text-primary ml-1 font-semibold">✓ Lu</span>}
+                                </span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                        <div ref={chatEndRef} />
+                      </div>
+
+                      {/* Reply form */}
+                      <form onSubmit={handleSendAdminReply} className="p-3 border-t border-outline-variant/30 bg-surface-container-low/50 flex gap-2 items-center">
+                        <input
+                          type="text"
+                          value={adminReplyText}
+                          onChange={(e) => setAdminReplyText(e.target.value)}
+                          placeholder={t.chatPlaceholder}
+                          className="flex-grow bg-background border border-outline-variant/50 focus:border-primary/70 rounded-xl px-4 py-2.5 text-xs outline-none text-white transition-all"
+                        />
+                        <button
+                          type="submit"
+                          disabled={!adminReplyText.trim() || sendingReply}
+                          className={`p-2.5 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
+                            adminReplyText.trim()
+                              ? 'bg-primary text-white hover:brightness-110 active:scale-95 shadow-md shadow-primary/20'
+                              : 'bg-zinc-800 text-zinc-500 cursor-not-allowed border border-zinc-700/50'
+                          }`}
+                        >
+                          {sendingReply ? (
+                            <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                          ) : (
+                            <span className="material-symbols-outlined text-sm">send</span>
+                          )}
+                        </button>
+                      </form>
+                    </>
+                  );
+                })()
+              ) : (
+                <div className="flex-grow flex flex-col items-center justify-center text-center p-6 text-on-surface-variant my-auto">
+                  <span className="material-symbols-outlined text-5xl text-on-surface-variant/40 mb-3 font-light animate-pulse">forum</span>
+                  <p className="text-xs font-semibold">Sélectionnez une conversation pour commencer à échanger</p>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </main>

@@ -46,6 +46,7 @@ const translations = {
     excellent: 'Excellentes',
     blurry: 'Floues',
     exposure: 'Exposition',
+    flat: 'Contraste',
     quickActions: 'Actions Rapides',
     selectBlurry: 'Sélectionner Floues',
     selectTops: 'Sélectionner Tops',
@@ -115,6 +116,7 @@ const translations = {
     excellent: 'Excellent',
     blurry: 'Blurry',
     exposure: 'Exposure',
+    flat: 'Contrast',
     quickActions: 'Quick Actions',
     selectBlurry: 'Select Blurry',
     selectTops: 'Select Tops',
@@ -189,10 +191,6 @@ export default function ProjectDetailPage() {
   const [uploadQueue, setUploadQueue] = useState<UploadQueueItem[]>([]);
   const [uploading, setUploading] = useState(false);
 
-  // AI Generation states
-  const [aiGenPrompt, setAiGenPrompt] = useState('');
-  const [selectedGenModel, setSelectedGenModel] = useState('black-forest-labs/flux-schnell');
-  const [isGeneratingAiImage, setIsGeneratingAiImage] = useState(false);
 
   // Load project details when ID is available
   useEffect(() => {
@@ -257,6 +255,12 @@ export default function ProjectDetailPage() {
 
   const saveGallerySettings = async () => {
     if (!gallery) return;
+    if (isProtected && !passcode.trim()) {
+      alert(lang === 'fr' 
+        ? 'Veuillez saisir un mot de passe pour sécuriser la galerie.' 
+        : 'Please enter a password to secure the gallery.');
+      return;
+    }
     setSavingSettings(true);
     try {
       const { error } = await supabase
@@ -381,17 +385,21 @@ export default function ProjectDetailPage() {
           });
         }
 
-        // Generate the base thumbnail file from optimizedFile (original)
-        const originalThumbFile = await compressAndConvert(optimizedFile, {
+        // Keep the original un-retouched file
+        const originalUploadFile = optimizedFile;
+
+        // Generate the base thumbnail file from originalUploadFile (original)
+        const originalThumbFile = await compressAndConvert(originalUploadFile, {
           maxWidth: 600,
           maxHeight: 600,
           quality: 0.75,
           format: 'image/jpeg',
         });
-        let thumbnailUploadFile = originalThumbFile;
 
-        // 1.5. Apply auto retouching if configured
+        let processedUploadFile: File | null = null;
+        let processedThumbFile: File | null = null;
         let appliedAdjustmentsObj = DEFAULT_ADJUSTMENTS;
+
         if (autoRetouch !== 'none') {
           updateQueueItem(queueItem.id, { progress: 45 });
           
@@ -407,12 +415,12 @@ export default function ProjectDetailPage() {
           }
           appliedAdjustmentsObj = adj;
 
-          // Convert optimizedFile to data URL
+          // Convert originalUploadFile to data URL
           const fileDataUrl = await new Promise<string>((resolveData, rejectData) => {
             const reader = new FileReader();
             reader.onload = () => resolveData(reader.result as string);
             reader.onerror = rejectData;
-            reader.readAsDataURL(optimizedFile);
+            reader.readAsDataURL(originalUploadFile);
           });
 
           // Apply adjustments
@@ -423,7 +431,6 @@ export default function ProjectDetailPage() {
           const res = await fetch(processedBase64);
           const blob = await res.blob();
           
-          // Detect the format from processedBase64
           let formatType = 'image/jpeg';
           let extension = '.jpg';
           if (processedBase64.startsWith('data:image/webp')) {
@@ -434,75 +441,99 @@ export default function ProjectDetailPage() {
             extension = '.png';
           }
           
-          const newName = optimizedFile.name.replace(/\.[^/.]+$/, "") + extension;
-          optimizedFile = new File([blob], newName, { type: formatType });
+          const newName = originalUploadFile.name.replace(/\.[^/.]+$/, "") + extension;
+          processedUploadFile = new File([blob], newName, { type: formatType });
 
           // Convert processedThumbBase64 back to File
           const thumbRes = await fetch(processedThumbBase64);
           const thumbBlob = await thumbRes.blob();
-          const newThumbName = optimizedFile.name.replace(/\.[^/.]+$/, "") + '-thumb.jpg';
-          thumbnailUploadFile = new File([thumbBlob], newThumbName, { type: 'image/jpeg' });
+          const newThumbName = originalUploadFile.name.replace(/\.[^/.]+$/, "") + '-thumb.jpg';
+          processedThumbFile = new File([thumbBlob], newThumbName, { type: 'image/jpeg' });
         }
 
-        // 2. Upload to Supabase Storage bucket 'photos'
+        // Upload files
         updateQueueItem(queueItem.id, { progress: 60 });
-        const storagePath = `${projectId}/${Date.now()}-${Math.random().toString(36).substring(2, 6)}-${optimizedFile.name}`;
         
-        let publicUrl = '';
-        
-        const { data: uploadData, error: uploadError } = await supabase.storage
+        // 1. Upload original
+        const origStoragePath = `${projectId}/${Date.now()}-${Math.random().toString(36).substring(2, 6)}-original-${originalUploadFile.name}`;
+        let originalUrl = '';
+        const { error: origUploadError } = await supabase.storage
           .from('photos')
-          .upload(storagePath, optimizedFile, {
-            cacheControl: '3600',
-            upsert: false,
-          });
+          .upload(origStoragePath, originalUploadFile, { cacheControl: '3600', upsert: false });
 
-        if (uploadError) {
-          // If storage fails (e.g. bucket doesn't exist yet or config error), we fallback to persistent base64 Data URL so it is fully preserved across refreshes!
-          console.warn('Supabase storage upload failed, falling back to base64 Data URL.');
-          publicUrl = await new Promise<string>((resolveData, rejectData) => {
+        if (origUploadError) {
+          console.warn('Supabase storage original upload failed, falling back to base64.');
+          originalUrl = await new Promise<string>((resolveData) => {
             const reader = new FileReader();
             reader.onloadend = () => resolveData(reader.result as string);
-            reader.onerror = rejectData;
-            reader.readAsDataURL(optimizedFile);
+            reader.readAsDataURL(originalUploadFile);
           });
         } else {
-          // Get public URL
-          const { data: urlData } = supabase.storage
-            .from('photos')
-            .getPublicUrl(storagePath);
-          publicUrl = urlData?.publicUrl || '';
+          const { data: urlData } = supabase.storage.from('photos').getPublicUrl(origStoragePath);
+          originalUrl = urlData?.publicUrl || '';
         }
 
-        // Upload thumbnail
-        const thumbStoragePath = `${projectId}/${Date.now()}-${Math.random().toString(36).substring(2, 6)}-thumb.jpg`;
-        const { error: thumbUploadError } = await supabase.storage
+        // 2. Upload original thumbnail
+        const origThumbStoragePath = `${projectId}/${Date.now()}-${Math.random().toString(36).substring(2, 6)}-thumb-original.jpg`;
+        let originalThumbUrl = '';
+        const { error: origThumbError } = await supabase.storage
           .from('photos')
-          .upload(thumbStoragePath, thumbnailUploadFile, {
-            cacheControl: '3600',
-            upsert: false,
-          });
+          .upload(origThumbStoragePath, originalThumbFile, { cacheControl: '3600', upsert: false });
 
-        let thumbnailUrl = '';
-        if (thumbUploadError) {
-          console.warn('Supabase thumbnail upload failed, falling back to base64.');
-          thumbnailUrl = await new Promise<string>((resolveData, rejectData) => {
+        if (origThumbError) {
+          originalThumbUrl = await new Promise<string>((resolveData) => {
             const reader = new FileReader();
             reader.onloadend = () => resolveData(reader.result as string);
-            reader.onerror = rejectData;
-            reader.readAsDataURL(thumbnailUploadFile);
+            reader.readAsDataURL(originalThumbFile);
           });
         } else {
-          const { data: thumbUrlData } = supabase.storage
-            .from('photos')
-            .getPublicUrl(thumbStoragePath);
-          thumbnailUrl = thumbUrlData?.publicUrl || '';
+          const { data: urlData } = supabase.storage.from('photos').getPublicUrl(origThumbStoragePath);
+          originalThumbUrl = urlData?.publicUrl || '';
         }
 
-        // Get actual dimensions of the uploaded image
-        const dimensions = await getImageDimensions(optimizedFile);
+        let processedUrl = null;
+        let processedThumbUrl = undefined;
 
-        // Mock camera metadata but with actual dimensions
+        // 3. Upload processed if auto-retouch was enabled
+        if (processedUploadFile && processedThumbFile) {
+          const procStoragePath = `${projectId}/${Date.now()}-${Math.random().toString(36).substring(2, 6)}-processed-${processedUploadFile.name}`;
+          const { error: procUploadError } = await supabase.storage
+            .from('photos')
+            .upload(procStoragePath, processedUploadFile, { cacheControl: '3600', upsert: false });
+
+          if (procUploadError) {
+            console.warn('Supabase storage processed upload failed, falling back to base64.');
+            processedUrl = await new Promise<string>((resolveData) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolveData(reader.result as string);
+              reader.readAsDataURL(processedUploadFile!);
+            });
+          } else {
+            const { data: urlData } = supabase.storage.from('photos').getPublicUrl(procStoragePath);
+            processedUrl = urlData?.publicUrl || '';
+          }
+
+          const procThumbStoragePath = `${projectId}/${Date.now()}-${Math.random().toString(36).substring(2, 6)}-thumb-processed.jpg`;
+          const { error: procThumbError } = await supabase.storage
+            .from('photos')
+            .upload(procThumbStoragePath, processedThumbFile, { cacheControl: '3600', upsert: false });
+
+          if (procThumbError) {
+            processedThumbUrl = await new Promise<string>((resolveData) => {
+              const reader = new FileReader();
+              reader.onloadend = () => resolveData(reader.result as string);
+              reader.readAsDataURL(processedThumbFile!);
+            });
+          } else {
+            const { data: urlData } = supabase.storage.from('photos').getPublicUrl(procThumbStoragePath);
+            processedThumbUrl = urlData?.publicUrl || '';
+          }
+        }
+
+        // Get actual dimensions
+        const dimensionsFile = processedUploadFile || originalUploadFile;
+        const dimensions = await getImageDimensions(dimensionsFile);
+
         const mockMetadata = {
           iso: [100, 200, 400, 800][Math.floor(Math.random() * 4)],
           shutter: ['1/125', '1/250', '1/500', '1/1000'][Math.floor(Math.random() * 4)],
@@ -510,20 +541,21 @@ export default function ProjectDetailPage() {
           width: dimensions.width,
           height: dimensions.height,
           adjustments: appliedAdjustmentsObj,
-          thumbnail_url: thumbnailUrl,
-          processed_thumbnail_url: autoRetouch !== 'none' ? thumbnailUrl : undefined,
+          thumbnail_url: originalThumbUrl,
+          processed_thumbnail_url: processedThumbUrl,
         };
 
         // 3. Write Photo details in pf_photos
         updateQueueItem(queueItem.id, { progress: 85 });
-        const fileExt = optimizedFile.name.split('.').pop()?.toUpperCase() || 'JPG';
+        const fileExt = originalUploadFile.name.split('.').pop()?.toUpperCase() || 'JPG';
         const { error: dbError } = await supabase
           .from('pf_photos')
           .insert({
             project_id: projectId,
-            filename: optimizedFile.name,
-            original_url: publicUrl,
-            size_bytes: optimizedFile.size,
+            filename: originalUploadFile.name,
+            original_url: originalUrl,
+            processed_url: processedUrl,
+            size_bytes: originalUploadFile.size,
             format: fileExt,
             metadata: mockMetadata,
           });
@@ -564,141 +596,6 @@ export default function ProjectDetailPage() {
     );
   };
 
-  const handleGenerateAiImage = async () => {
-    if (!aiGenPrompt.trim() || !projectId) return;
-    setIsGeneratingAiImage(true);
-
-    try {
-      const response = await fetch('/api/ai/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt: aiGenPrompt,
-          model: selectedGenModel,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || data.error) {
-        throw new Error(data.error || 'Failed to generate image');
-      }
-
-      const base64Url = data.imageUrl;
-
-      // Convert Base64 to Blob
-      const base64ToBlob = (base64: string) => {
-        const parts = base64.split(';base64,');
-        const contentType = parts[0].split(':')[1];
-        const raw = window.atob(parts[1]);
-        const rawLength = raw.length;
-        const uInt8Array = new Uint8Array(rawLength);
-        for (let i = 0; i < rawLength; ++i) {
-          uInt8Array[i] = raw.charCodeAt(i);
-        }
-        return new Blob([uInt8Array], { type: contentType });
-      };
-
-      const imageBlob = base64ToBlob(base64Url);
-      const fileExt = imageBlob.type.split('/')[1] || 'png';
-      const fileName = `ai-${Date.now()}.${fileExt}`;
-      const imageFile = new File([imageBlob], fileName, { type: imageBlob.type });
-
-      // Generate thumbnail using applyAdjustments (which accepts base64 URL strings)
-      const thumbBase64 = await applyAdjustments(base64Url, DEFAULT_ADJUSTMENTS, undefined, 600);
-      const thumbBlob = base64ToBlob(thumbBase64);
-      const thumbFile = new File([thumbBlob], `thumb-${fileName}`, { type: 'image/jpeg' });
-
-      // Upload original to storage
-      const storagePath = `${projectId}/${Date.now()}-ai-generated.${fileExt}`;
-      let publicUrl = '';
-      
-      const { data: uploadData, error: uploadError } = await supabase.storage
-         .from('photos')
-         .upload(storagePath, imageFile, {
-           cacheControl: '3600',
-           upsert: false,
-         });
-
-      if (uploadError) {
-        console.warn('Supabase image upload failed, falling back to base64.');
-        publicUrl = base64Url;
-      } else {
-        const { data: urlData } = supabase.storage
-          .from('photos')
-          .getPublicUrl(storagePath);
-        publicUrl = urlData?.publicUrl || '';
-      }
-
-      // Upload thumbnail
-      const thumbStoragePath = `${projectId}/${Date.now()}-ai-generated-thumb.jpg`;
-      const { error: thumbUploadError } = await supabase.storage
-         .from('photos')
-         .upload(thumbStoragePath, thumbFile, {
-           cacheControl: '3600',
-           upsert: false,
-         });
-
-      let thumbnailUrl = '';
-      if (thumbUploadError) {
-        console.warn('Supabase thumbnail upload failed, falling back to base64.');
-        thumbnailUrl = thumbBase64;
-      } else {
-        const { data: thumbUrlData } = supabase.storage
-          .from('photos')
-          .getPublicUrl(thumbStoragePath);
-        thumbnailUrl = thumbUrlData?.publicUrl || '';
-      }
-
-      // Insert photo details in database
-      const mockMetadata = {
-        iso: 100,
-        shutter: '1/250',
-        aperture: 'f/2.8',
-        width: 1024,
-        height: 1024,
-        adjustments: DEFAULT_ADJUSTMENTS,
-        thumbnail_url: thumbnailUrl,
-        processed_thumbnail_url: undefined,
-        ai_generated: true,
-        ai_prompt: aiGenPrompt,
-        ai_model: selectedGenModel
-      };
-
-      const { error: dbError } = await supabase
-        .from('pf_photos')
-        .insert({
-          project_id: projectId,
-          filename: fileName,
-          original_url: publicUrl,
-          size_bytes: imageFile.size,
-          format: fileExt.toUpperCase(),
-          metadata: mockMetadata,
-        });
-
-      if (dbError) throw dbError;
-
-      setAiGenPrompt('');
-      alert(lang === 'fr' ? 'Image IA générée et importée avec succès !' : 'AI image successfully generated and imported!');
-      
-      // Refresh photos grid
-      fetchProjectData(projectId);
-
-    } catch (err: any) {
-      console.error('AI Image generation failed:', err);
-      if (err.message?.includes('API key is missing')) {
-        alert(
-          lang === 'fr' 
-            ? "Erreur : Clé API manquante. Veuillez configurer OPENROUTER_API_KEY dans votre fichier .env.local pour utiliser le générateur d'images IA." 
-            : "Error: API key is missing. Please configure OPENROUTER_API_KEY in your .env.local file to use the AI Image Generator."
-        );
-      } else {
-        alert(lang === 'fr' ? `Erreur lors de la génération : ${err.message}` : `Generation failed: ${err.message}`);
-      }
-    } finally {
-      setIsGeneratingAiImage(false);
-    }
-  };
 
   // Selection and Deletion States
   const [selectedPhotoIds, setSelectedPhotoIds] = useState<string[]>([]);
@@ -949,7 +846,7 @@ export default function ProjectDetailPage() {
     try {
       let completed = 0;
       for (const photo of photos) {
-        const sourceUrl = photo.processed_url || photo.original_url;
+        const sourceUrl = photo.metadata?.processed_thumbnail_url || photo.metadata?.thumbnail_url || photo.processed_url || photo.original_url;
         const triageData = await analyzeImageTriage(sourceUrl);
 
         const newMetadata = {
@@ -1383,6 +1280,17 @@ export default function ProjectDetailPage() {
                           <span className="flex items-center gap-1"><span className="material-symbols-outlined text-sm">light_mode</span>{t.exposure}</span>
                           <span className="text-[10px] opacity-85">{photos.filter(p => p.metadata?.triage?.status === 'dark' || p.metadata?.triage?.status === 'bright').length}</span>
                         </button>
+                        <button
+                          onClick={() => setTriageFilter('flat')}
+                          className={`col-span-2 px-3 py-2 text-left text-xs rounded-xl flex items-center justify-between transition-all cursor-pointer ${
+                            triageFilter === 'flat' 
+                              ? 'bg-[#FFD700]/20 text-[#FFD700] border border-[#FFD700]/30 font-semibold' 
+                              : 'bg-surface-container border border-outline-variant/20 text-on-surface-variant hover:text-white'
+                          }`}
+                        >
+                          <span className="flex items-center gap-1"><span className="material-symbols-outlined text-sm">contrast</span>{t.flat}</span>
+                          <span className="text-[10px] opacity-85">{photos.filter(p => p.metadata?.triage?.status === 'flat').length}</span>
+                        </button>
                       </div>
                     </div>
 
@@ -1441,72 +1349,6 @@ export default function ProjectDetailPage() {
               </div>
             </section>
 
-            {/* AI Image Generation Panel */}
-            <section className="glass-panel p-6 rounded-2xl border border-outline-variant/30 space-y-4">
-              <div>
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="material-symbols-outlined text-primary text-xl">palette</span>
-                  <h3 className="font-headline-md text-lg font-bold text-white">
-                    {lang === 'fr' ? "Générateur d'Images IA" : "AI Image Generator"}
-                  </h3>
-                </div>
-                <p className="text-xs text-on-surface-variant">
-                  {lang === 'fr' 
-                    ? "Générez un nouveau cliché unique pour ce projet à partir d'une description textuelle." 
-                    : "Generate a new unique shot for this project from a text description."}
-                </p>
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">
-                    {lang === 'fr' ? "Description (Prompt)" : "Description (Prompt)"}
-                  </label>
-                  <textarea
-                    value={aiGenPrompt}
-                    onChange={(e) => setAiGenPrompt(e.target.value)}
-                    placeholder={lang === 'fr' 
-                      ? "Ex: Un magnifique coucher de soleil sur les plages de Dakar, style cinématique, 8k..." 
-                      : "e.g., A beautiful sunset over the beaches of Dakar, cinematic style, 8k..."}
-                    rows={3}
-                    className="w-full bg-surface-container border border-outline-variant/50 focus:border-primary/70 rounded-xl px-3 py-2 text-xs outline-none transition-colors text-white resize-none"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-[10px] font-bold text-on-surface-variant uppercase tracking-wider">
-                    {lang === 'fr' ? "Modèle d'Image" : "Image Model"}
-                  </label>
-                  <select
-                    value={selectedGenModel}
-                    onChange={(e) => setSelectedGenModel(e.target.value)}
-                    className="w-full bg-surface-container border border-outline-variant/50 focus:border-primary/70 rounded-xl px-3 py-2 text-xs outline-none transition-colors cursor-pointer text-white"
-                  >
-                    <option value="black-forest-labs/flux-schnell">FLUX Schnell (Rapide & Précis)</option>
-                    <option value="stabilityai/stable-diffusion-xl">Stable Diffusion XL</option>
-                    <option value="google/imagen-3.0-generate-002">Google Imagen 3</option>
-                  </select>
-                </div>
-
-                <button
-                  onClick={handleGenerateAiImage}
-                  disabled={isGeneratingAiImage || !aiGenPrompt.trim()}
-                  className="w-full py-2.5 bg-primary-container text-on-primary-container font-bold text-xs rounded-xl hover:brightness-110 active:scale-98 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:pointer-events-none"
-                >
-                  {isGeneratingAiImage ? (
-                    <>
-                      <span className="w-4 h-4 rounded-full border-2 border-on-primary-container/30 border-t-on-primary-container animate-spin"></span>
-                      <span>{lang === 'fr' ? "Génération..." : "Generating..."}</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="material-symbols-outlined text-sm">palette</span>
-                      <span>{lang === 'fr' ? "Générer et Importer" : "Generate & Import"}</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </section>
 
             <section className="glass-panel p-6 rounded-2xl border border-outline-variant/30 space-y-6">
               <div>

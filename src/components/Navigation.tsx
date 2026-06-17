@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import ChatWidget from './ChatWidget';
 
 // Simple translation object
 const translations = {
@@ -115,118 +116,121 @@ export default function Navigation() {
   }
 
   return (
-    <nav className="flex justify-between items-center px-margin-mobile md:px-margin-desktop h-16 w-full fixed top-0 z-50 bg-surface-container border-b border-outline-variant backdrop-blur-md">
-      <div className="flex items-center gap-8">
-        <Link href="/" className="font-headline-md text-headline-md font-bold text-primary tracking-wide">
-          PhotoFlow AI
-        </Link>
-      </div>
+    <>
+      <nav className="flex justify-between items-center px-margin-mobile md:px-margin-desktop h-16 w-full fixed top-0 z-50 bg-surface-container border-b border-outline-variant backdrop-blur-md">
+        <div className="flex items-center gap-8">
+          <Link href="/" className="font-headline-md text-headline-md font-bold text-primary tracking-wide">
+            PhotoFlow AI
+          </Link>
+        </div>
 
-      <div className="flex items-center gap-4">
-        {/* Language selector */}
-        <button
-          onClick={toggleLanguage}
-          className="px-2.5 py-1 text-[11px] font-bold border border-outline-variant hover:border-primary rounded bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-all uppercase"
-          title="Switch Language"
-        >
-          {lang === 'fr' ? 'EN' : 'FR'}
-        </button>
+        <div className="flex items-center gap-4">
+          {/* Language selector */}
+          <button
+            onClick={toggleLanguage}
+            className="px-2.5 py-1 text-[11px] font-bold border border-outline-variant hover:border-primary rounded bg-surface-container-high text-on-surface-variant hover:text-on-surface transition-all uppercase"
+            title="Switch Language"
+          >
+            {lang === 'fr' ? 'EN' : 'FR'}
+          </button>
 
-        {user ? (
-          <>
-            {/* Pro Plan badge */}
-            <span className="hidden md:inline-block font-label-md text-label-md text-primary bg-primary-container/20 px-3 py-1 rounded-full border border-primary/30">
-              {profile?.plan === 'pro' ? t.proBadge : t.freeBadge}
-            </span>
+          {user ? (
+            <>
+              {/* Pro Plan badge */}
+              <span className="hidden md:inline-block font-label-md text-label-md text-primary bg-primary-container/20 px-3 py-1 rounded-full border border-primary/30">
+                {profile?.plan === 'pro' ? t.proBadge : t.freeBadge}
+              </span>
 
-            {/* Profile Avatar & Dropdown */}
-            <div className="relative flex items-center gap-1">
-              <Link
-                href="/dashboard/settings"
-                className="w-8 h-8 rounded-full overflow-hidden bg-surface-container-highest border border-outline-variant hover:border-primary transition-all flex items-center justify-center cursor-pointer"
-                title="Paramètres"
-              >
-                {profile?.avatar_url ? (
-                  <img
-                    alt="Profile Avatar"
-                    className="w-full h-full object-cover"
-                    src={profile.avatar_url}
-                  />
-                ) : (
-                  <span className="material-symbols-outlined text-[18px] text-on-surface-variant">person</span>
-                )}
-              </Link>
+              {/* Profile Avatar & Dropdown */}
+              <div className="relative flex items-center gap-1">
+                <Link
+                  href="/dashboard/settings"
+                  className="w-8 h-8 rounded-full overflow-hidden bg-surface-container-highest border border-outline-variant hover:border-primary transition-all flex items-center justify-center cursor-pointer"
+                  title="Paramètres"
+                >
+                  {profile?.avatar_url ? (
+                    <img
+                      alt="Profile Avatar"
+                      className="w-full h-full object-cover"
+                      src={profile.avatar_url}
+                    />
+                  ) : (
+                    <span className="material-symbols-outlined text-[18px] text-on-surface-variant">person</span>
+                  )}
+                </Link>
 
-              <button
-                onClick={() => setShowDropdown(!showDropdown)}
-                className="p-1 rounded hover:bg-surface-container-highest text-on-surface-variant hover:text-white transition-all cursor-pointer flex items-center justify-center"
-                title="Menu"
-              >
-                <span className="material-symbols-outlined text-[16px] select-none">
-                  {showDropdown ? 'keyboard_arrow_up' : 'keyboard_arrow_down'}
-                </span>
-              </button>
+                <button
+                  onClick={() => setShowDropdown(!showDropdown)}
+                  className="p-1 rounded hover:bg-surface-container-highest text-on-surface-variant hover:text-white transition-all cursor-pointer flex items-center justify-center"
+                  title="Menu"
+                >
+                  <span className="material-symbols-outlined text-[16px] select-none">
+                    {showDropdown ? 'keyboard_arrow_up' : 'keyboard_arrow_down'}
+                  </span>
+                </button>
 
-              {showDropdown && (
-                <div className="absolute right-0 top-10 w-48 glass-panel rounded-xl shadow-2xl overflow-hidden py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div className="px-4 py-3 border-b border-outline-variant">
-                    <p className="text-xs text-on-surface-variant">Connecté en tant que</p>
-                    <p className="text-sm font-semibold truncate text-on-surface">
-                      {profile?.full_name || user.email}
-                    </p>
+                {showDropdown && (
+                  <div className="absolute right-0 top-10 w-48 glass-panel rounded-xl shadow-2xl overflow-hidden py-1 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="px-4 py-3 border-b border-outline-variant">
+                      <p className="text-xs text-on-surface-variant">Connecté en tant que</p>
+                      <p className="text-sm font-semibold truncate text-on-surface">
+                        {profile?.full_name || user.email}
+                      </p>
+                    </div>
+                    <Link
+                      href="/dashboard"
+                      onClick={() => setShowDropdown(false)}
+                      className="block px-4 py-2.5 text-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors"
+                    >
+                      {t.dashboard}
+                    </Link>
+                    {profile?.is_admin && (
+                      <Link
+                        href="/admin"
+                        onClick={() => setShowDropdown(false)}
+                        className="block px-4 py-2.5 text-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors border-t border-outline-variant/30"
+                      >
+                        {t.admin}
+                      </Link>
+                    )}
+                    {profile?.plan !== 'pro' && (
+                      <Link
+                        href="/checkout/select-plan?plan=pro"
+                        onClick={() => setShowDropdown(false)}
+                        className="block px-4 py-2.5 text-xs text-primary font-bold hover:bg-surface-container-highest transition-colors"
+                      >
+                        {t.upgrade}
+                      </Link>
+                    )}
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left block px-4 py-2.5 text-xs text-error hover:bg-surface-container-highest transition-colors"
+                    >
+                      {t.logout}
+                    </button>
                   </div>
-                  <Link
-                    href="/dashboard"
-                    onClick={() => setShowDropdown(false)}
-                    className="block px-4 py-2.5 text-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors"
-                  >
-                    {t.dashboard}
-                  </Link>
-                  {profile?.is_admin && (
-                    <Link
-                      href="/admin"
-                      onClick={() => setShowDropdown(false)}
-                      className="block px-4 py-2.5 text-xs text-on-surface-variant hover:text-on-surface hover:bg-surface-container-highest transition-colors border-t border-outline-variant/30"
-                    >
-                      {t.admin}
-                    </Link>
-                  )}
-                  {profile?.plan !== 'pro' && (
-                    <Link
-                      href="/checkout/select-plan?plan=pro"
-                      onClick={() => setShowDropdown(false)}
-                      className="block px-4 py-2.5 text-xs text-primary font-bold hover:bg-surface-container-highest transition-colors"
-                    >
-                      {t.upgrade}
-                    </Link>
-                  )}
-                  <button
-                    onClick={handleLogout}
-                    className="w-full text-left block px-4 py-2.5 text-xs text-error hover:bg-surface-container-highest transition-colors"
-                  >
-                    {t.logout}
-                  </button>
-                </div>
-              )}
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="flex gap-4">
+              <Link
+                href="/login"
+                className="text-on-surface-variant hover:text-on-surface font-body-md text-body-md transition-colors"
+              >
+                {t.login}
+              </Link>
+              <Link
+                href="/signup"
+                className="bg-primary-container text-on-primary-container px-4 py-1.5 rounded-lg font-body-md text-body-md hover:brightness-110 transition-all"
+              >
+                {t.signup}
+              </Link>
             </div>
-          </>
-        ) : (
-          <div className="flex gap-4">
-            <Link
-              href="/login"
-              className="text-on-surface-variant hover:text-on-surface font-body-md text-body-md transition-colors"
-            >
-              {t.login}
-            </Link>
-            <Link
-              href="/signup"
-              className="bg-primary-container text-on-primary-container px-4 py-1.5 rounded-lg font-body-md text-body-md hover:brightness-110 transition-all"
-            >
-              {t.signup}
-            </Link>
-          </div>
-        )}
-      </div>
-    </nav>
+          )}
+        </div>
+      </nav>
+      <ChatWidget />
+    </>
   );
 }

@@ -328,13 +328,31 @@ export async function applyAdjustments(
     let height = img.naturalHeight;
     const maxPreviewDim = typeof isPreview === 'number' ? isPreview : 1200;
     
-    if (isPreview && (width > maxPreviewDim || height > maxPreviewDim)) {
-      if (width > height) {
-        height = Math.round((maxPreviewDim / width) * height);
-        width = maxPreviewDim;
-      } else {
-        width = Math.round((maxPreviewDim / height) * width);
-        height = maxPreviewDim;
+    let wasUpscaled = false;
+    const targetDim = 3840; // 4K resolution on the longest side
+    
+    if (isPreview) {
+      if (width > maxPreviewDim || height > maxPreviewDim) {
+        if (width > height) {
+          height = Math.round((maxPreviewDim / width) * height);
+          width = maxPreviewDim;
+        } else {
+          width = Math.round((maxPreviewDim / height) * width);
+          height = maxPreviewDim;
+        }
+      }
+    } else {
+      // For full-resolution export, if the image's longest side is less than 3840px, upscale it to 4K
+      const longestSide = Math.max(width, height);
+      if (longestSide < targetDim) {
+        wasUpscaled = true;
+        if (width > height) {
+          height = Math.round((targetDim / width) * height);
+          width = targetDim;
+        } else {
+          width = Math.round((targetDim / height) * width);
+          height = targetDim;
+        }
       }
     }
 
@@ -827,9 +845,11 @@ export async function applyAdjustments(
       );
     }
 
-    // Apply Sharpening if enabled
-    if (adjustments.sharpening > 0) {
-      applySharpen(canvas, ctx, adjustments.sharpening / 100);
+    // Apply Sharpening if enabled or if automatic detail recovery is needed for upscaled 4K images
+    const autoSharpenWeight = wasUpscaled ? 0.35 : 0; // 35% sharpening to restore crisp details in upscaled 4K
+    const finalSharpening = Math.max(adjustments.sharpening / 100, autoSharpenWeight);
+    if (finalSharpening > 0) {
+      applySharpen(canvas, ctx, finalSharpening);
     }
 
     // Apply skin smoothing (blur only over skin tone regions using a soft feathered mask)

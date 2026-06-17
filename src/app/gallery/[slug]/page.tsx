@@ -421,6 +421,7 @@ export default function ClientGalleryPage() {
     
     showNotification('info', t.notifDownloadStartedTitle, t.notifDownloadStartedMsg);
     
+    let hasFailed = false;
     for (const p of photos) {
       let url = p.processed_url || p.original_url;
       if (watermarkText) {
@@ -435,10 +436,16 @@ export default function ClientGalleryPage() {
           url = await applyAdjustments(url, DEFAULT_ADJUSTMENTS, watermarkText, false, formatMime);
         } catch (err) {
           console.error("Watermark download error", err);
+          hasFailed = true;
+          continue;
         }
       }
       await triggerDownload(url, p.filename);
       await new Promise((resolve) => setTimeout(resolve, 300));
+    }
+
+    if (hasFailed) {
+      showNotification('error', lang === 'fr' ? 'Sécurité de la galerie' : 'Gallery Security', lang === 'fr' ? 'Certaines photos n\'ont pas pu être téléchargées car l\'application du filigrane a échoué par sécurité.' : 'Some photos could not be downloaded because the watermark application failed for security.');
     }
   };
 
@@ -460,6 +467,8 @@ export default function ClientGalleryPage() {
         downloadUrl = await applyAdjustments(downloadUrl, DEFAULT_ADJUSTMENTS, watermarkText, false, formatMime);
       } catch (err) {
         console.error("Failed to apply watermark for download", err);
+        showNotification('error', lang === 'fr' ? 'Échec de la protection' : 'Protection Failed', lang === 'fr' ? 'Impossible d\'appliquer le filigrane de sécurité. Le téléchargement a été annulé par sécurité.' : 'Unable to apply security watermark. Download aborted for security.');
+        return;
       }
     }
 
@@ -517,6 +526,7 @@ export default function ClientGalleryPage() {
     showNotification('info', t.notifDownloadStartedTitle, t.notifDownloadStartedMsg);
     
     const selectedPhotos = photos.filter(p => selectedPhotoIds.has(p.id));
+    let hasFailed = false;
     for (const p of selectedPhotos) {
       let url = p.processed_url || p.original_url;
       if (watermarkText) {
@@ -531,10 +541,16 @@ export default function ClientGalleryPage() {
           url = await applyAdjustments(url, DEFAULT_ADJUSTMENTS, watermarkText, false, formatMime);
         } catch (err) {
           console.error("Watermark download error", err);
+          hasFailed = true;
+          continue;
         }
       }
       await triggerDownload(url, p.filename);
       await new Promise((resolve) => setTimeout(resolve, 300));
+    }
+
+    if (hasFailed) {
+      showNotification('error', lang === 'fr' ? 'Sécurité de la galerie' : 'Gallery Security', lang === 'fr' ? 'Certaines photos n\'ont pas pu être téléchargées car l\'application du filigrane a échoué par sécurité.' : 'Some photos could not be downloaded because the watermark application failed for security.');
     }
   };
 
