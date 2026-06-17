@@ -187,6 +187,7 @@ export default function DashboardPage() {
   const [createdProjectId, setCreatedProjectId] = useState('');
   const [isAiProcessing, setIsAiProcessing] = useState(true);
   const [aiProgress, setAiProgress] = useState(78);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   
   // New Shoot Form State
   const [shootName, setShootName] = useState('');
@@ -198,7 +199,20 @@ export default function DashboardPage() {
 
   const t = translations[lang];
 
+  const handleDismissOnboarding = () => {
+    setShowOnboarding(false);
+    localStorage.setItem('pf_onboarding_dismissed', 'true');
+  };
+
   useEffect(() => {
+    // Check Onboarding dismissed status
+    if (typeof window !== 'undefined') {
+      const dismissed = localStorage.getItem('pf_onboarding_dismissed');
+      if (dismissed !== 'true') {
+        setShowOnboarding(true);
+      }
+    }
+
     // Check Auth State
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session) {
@@ -477,16 +491,41 @@ export default function DashboardPage() {
       
       {/* Main Canvas */}
       <main className="md:ml-[280px] pt-24 px-6 md:px-margin-desktop pb-24 bg-background min-h-screen">
-        <header className="mb-10">
-          <h1 className="font-display-lg text-3xl font-bold text-on-surface mb-2">
-            {t.hello}, {profile?.full_name?.split(' ')[0] || t.photographer}
-          </h1>
-          <p className="text-on-surface-variant font-body-md">{t.activityOverview}</p>
+        {/* Welcome Header Banner */}
+        <header className="relative p-8 rounded-3xl bg-gradient-to-r from-surface-container-low/90 via-primary/5 to-surface-container-low/90 border border-outline-variant/30 overflow-hidden shadow-lg mb-10">
+          <div className="absolute top-0 right-0 w-80 h-80 bg-primary/10 rounded-full blur-[100px] pointer-events-none -mr-20 -mt-20"></div>
+          <div className="absolute bottom-0 left-0 w-60 h-60 bg-secondary/5 rounded-full blur-[80px] pointer-events-none -ml-20 -mb-20"></div>
+          
+          <div className="relative flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+            <div>
+              <h1 className="font-display-lg text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-white via-white/95 to-primary/80 mb-2">
+                {t.hello}, {profile?.full_name?.split(' ')[0] || t.photographer} ✨
+              </h1>
+              <p className="text-on-surface-variant font-body-md text-sm">{t.activityOverview}</p>
+            </div>
+            
+            <button
+              onClick={handleOpenNewShootModal}
+              className="px-5 py-3 bg-primary text-on-primary hover:brightness-110 active:scale-98 text-xs font-bold rounded-2xl transition-all flex items-center gap-2 shadow-lg shadow-primary/20 cursor-pointer"
+            >
+              <span className="material-symbols-outlined text-sm font-bold">add_a_photo</span>
+              {lang === 'fr' ? 'Nouveau Shooting' : 'New Shoot'}
+            </button>
+          </div>
         </header>
 
         {/* Guide de démarrage (Onboarding Wizard) */}
-        {!isAllCompleted && (
-          <section className="glass-panel p-6 rounded-2xl mb-10 border border-primary/20 bg-gradient-to-br from-surface-container/85 to-surface-container-low/85 relative overflow-hidden shadow-xl animate-in fade-in duration-300">
+        {!isAllCompleted && showOnboarding && (
+          <section className="glass-panel p-6 rounded-3xl mb-10 border border-primary/20 bg-gradient-to-br from-surface-container/80 via-surface-container/90 to-surface-container-low/85 relative overflow-hidden shadow-xl animate-in fade-in duration-300">
+            {/* Dismiss button */}
+            <button 
+              onClick={handleDismissOnboarding}
+              className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-surface-container-highest border border-outline-variant hover:text-white flex items-center justify-center transition-colors cursor-pointer"
+              title={lang === 'fr' ? 'Masquer le guide' : 'Dismiss guide'}
+            >
+              <span className="material-symbols-outlined text-base">close</span>
+            </button>
+
             {/* Background radial glow */}
             <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-primary/5 rounded-full blur-[80px] pointer-events-none"></div>
             
@@ -504,7 +543,7 @@ export default function DashboardPage() {
               </div>
               
               {/* Progress meter */}
-              <div className="flex flex-col items-end gap-1.5 min-w-[120px]">
+              <div className="flex flex-col items-end gap-1.5 min-w-[120px] mr-8">
                 <div className="text-xs font-bold text-white flex items-center gap-1">
                   <span className="text-primary text-sm font-extrabold">{Math.round(progressPercent)}%</span> {t.completedLabel}
                 </div>
@@ -524,19 +563,19 @@ export default function DashboardPage() {
                 return (
                   <div 
                     key={step.id} 
-                    className={`p-4 rounded-xl border transition-all flex flex-col justify-between ${
+                    className={`p-4 rounded-2xl border transition-all flex flex-col justify-between hover:scale-[1.02] duration-300 ${
                       step.isCompleted 
-                        ? 'bg-green-950/15 border-green-800/30 opacity-70' 
+                        ? 'bg-green-950/10 border-green-800/20 opacity-70' 
                         : isCurrent 
-                          ? 'bg-surface-container-highest/60 border-primary/40 shadow-md scale-[1.01]' 
-                          : 'bg-surface-container-low/40 border-outline-variant/20 opacity-85'
+                          ? 'bg-surface-container-highest/80 border-primary/40 shadow-lg ring-1 ring-primary/20' 
+                          : 'bg-surface-container-low/30 border-outline-variant/15 opacity-90'
                     }`}
                   >
                     <div>
                       <div className="flex items-center justify-between mb-3">
                         <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                           step.isCompleted 
-                            ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                            ? 'bg-green-500/25 text-green-400 border border-green-500/30' 
                             : isCurrent 
                               ? 'bg-primary/20 text-primary border border-primary/30' 
                               : 'bg-surface-container-highest text-on-surface-variant'
@@ -588,59 +627,71 @@ export default function DashboardPage() {
         )}
 
         {/* Stats Grid */}
-        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-gutter mb-10">
+        <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
           {/* Card 1: Projects */}
-          <div className="glass-panel p-6 rounded-xl flex flex-col gap-2 relative overflow-hidden group hover:border-primary/20 transition-all">
+          <div className="glass-panel p-6 rounded-2xl flex flex-col gap-3 relative overflow-hidden group hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/5 hover:border-primary/20 transition-all duration-300">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-full blur-2xl pointer-events-none"></div>
             <div className="flex justify-between items-center text-on-surface-variant">
-              <span className="font-label-md text-[10px] uppercase tracking-wider font-bold">{t.projects}</span>
-              <span className="material-symbols-outlined text-primary text-xl">camera</span>
+              <span className="font-label-md text-[10px] uppercase tracking-wider font-extrabold text-on-surface-variant/80">{t.projects}</span>
+              <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center">
+                <span className="material-symbols-outlined text-xl">camera</span>
+              </div>
             </div>
-            <div className="font-headline-lg text-3xl font-bold">{stats.projects}</div>
-            <div className="text-[10px] text-primary font-semibold"> {t.shootsCreated}</div>
+            <div className="font-headline-lg text-3xl font-extrabold text-white mt-1">{stats.projects}</div>
+            <div className="text-[10px] text-purple-400 font-bold tracking-wide"> {t.shootsCreated}</div>
           </div>
 
           {/* Card 2: Photos */}
-          <div className="glass-panel p-6 rounded-xl flex flex-col gap-2 relative overflow-hidden group hover:border-primary/20 transition-all">
+          <div className="glass-panel p-6 rounded-2xl flex flex-col gap-3 relative overflow-hidden group hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/5 hover:border-primary/20 transition-all duration-300">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/5 rounded-full blur-2xl pointer-events-none"></div>
             <div className="flex justify-between items-center text-on-surface-variant">
-              <span className="font-label-md text-[10px] uppercase tracking-wider font-bold">{t.photos}</span>
-              <span className="material-symbols-outlined text-primary text-xl">image</span>
+              <span className="font-label-md text-[10px] uppercase tracking-wider font-extrabold text-on-surface-variant/80">{t.photos}</span>
+              <div className="w-10 h-10 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20 flex items-center justify-center">
+                <span className="material-symbols-outlined text-xl">image</span>
+              </div>
             </div>
-            <div className="font-headline-lg text-3xl font-bold">{stats.photos}</div>
-            <div className="text-[10px] text-on-surface-variant">{t.syncedCloud}</div>
+            <div className="font-headline-lg text-3xl font-extrabold text-white mt-1">{stats.photos}</div>
+            <div className="text-[10px] text-blue-400 font-bold tracking-wide">{t.syncedCloud}</div>
           </div>
 
           {/* Card 3: Storage */}
-          <div className="glass-panel p-6 rounded-xl flex flex-col gap-3 relative overflow-hidden group hover:border-primary/20 transition-all">
+          <div className="glass-panel p-6 rounded-2xl flex flex-col gap-3 relative overflow-hidden group hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/5 hover:border-primary/20 transition-all duration-300">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none"></div>
             <div className="flex justify-between items-center text-on-surface-variant">
-              <span className="font-label-md text-[10px] uppercase tracking-wider font-bold">{t.storage}</span>
-              <span className="material-symbols-outlined text-primary text-xl">cloud_done</span>
+              <span className="font-label-md text-[10px] uppercase tracking-wider font-extrabold text-on-surface-variant/80">{t.storage}</span>
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
+                <span className="material-symbols-outlined text-xl">cloud_done</span>
+              </div>
             </div>
-            <div className="flex items-end justify-between">
-              <div className="font-headline-lg text-2xl font-bold">
+            <div className="flex items-end justify-between mt-1">
+              <div className="font-headline-lg text-2xl font-extrabold text-white">
                 {formatStorage(stats.storage)}
               </div>
-              <div className="text-xs text-on-surface-variant font-medium">
+              <div className="text-xs text-on-surface-variant font-semibold">
                 / {formatStorage(profile?.storage_limit || 1073741824)}
               </div>
             </div>
-            <div className="w-full bg-surface-container-highest h-1.5 rounded-full overflow-hidden">
+            <div className="w-full bg-surface-container-highest h-2 rounded-full overflow-hidden border border-outline-variant/20 mt-1">
               <div 
-                className="bg-primary h-full rounded-full transition-all duration-500" 
+                className="bg-emerald-500 h-full rounded-full transition-all duration-500" 
                 style={{ width: `${getStoragePercent()}%` }}
               ></div>
             </div>
           </div>
 
           {/* Card 4: Revenue */}
-          <div className="glass-panel p-6 rounded-xl flex flex-col gap-2 relative overflow-hidden group hover:border-primary/20 transition-all">
+          <div className="glass-panel p-6 rounded-2xl flex flex-col gap-3 relative overflow-hidden group hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/5 hover:border-primary/20 transition-all duration-300">
+            <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-2xl pointer-events-none"></div>
             <div className="flex justify-between items-center text-on-surface-variant">
-              <span className="font-label-md text-[10px] uppercase tracking-wider font-bold">{t.income}</span>
-              <span className="material-symbols-outlined text-primary text-xl">payments</span>
+              <span className="font-label-md text-[10px] uppercase tracking-wider font-extrabold text-on-surface-variant/80">{t.income}</span>
+              <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20 flex items-center justify-center">
+                <span className="material-symbols-outlined text-xl">payments</span>
+              </div>
             </div>
-            <div className="font-headline-lg text-2xl font-bold">
-              {stats.income.toLocaleString(lang === 'fr' ? 'fr-FR' : 'en-US')} <span className="text-sm text-primary font-bold">FCFA</span>
+            <div className="font-headline-lg text-2xl font-extrabold text-white mt-1">
+              {stats.income.toLocaleString(lang === 'fr' ? 'fr-FR' : 'en-US')} <span className="text-sm text-amber-400 font-bold">FCFA</span>
             </div>
-            <div className="text-[10px] text-primary font-semibold">{t.incomeValidated}</div>
+            <div className="text-[10px] text-amber-400 font-bold tracking-wide">{t.incomeValidated}</div>
           </div>
         </section>
 
@@ -657,12 +708,12 @@ export default function DashboardPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
               {projects.length === 0 ? (
-                <div className="col-span-2 glass-panel p-10 rounded-xl text-center flex flex-col items-center justify-center border border-dashed border-outline-variant">
+                <div className="col-span-2 glass-panel p-10 rounded-2xl text-center flex flex-col items-center justify-center border border-dashed border-outline-variant/40">
                   <span className="material-symbols-outlined text-outline text-5xl mb-4">folder_open</span>
                   <p className="text-on-surface-variant text-sm mb-4">{t.noProjectCreated}</p>
                   <button 
                     onClick={handleOpenNewShootModal}
-                    className="bg-primary-container text-on-primary-container px-4 py-2 rounded-lg text-xs font-semibold hover:brightness-110 animate-pulse hover:animate-none"
+                    className="bg-primary/20 text-primary border border-primary/30 px-5 py-2.5 rounded-xl text-xs font-bold hover:brightness-110 cursor-pointer shadow-lg"
                   >
                     {t.createFirstProject}
                   </button>
@@ -672,27 +723,35 @@ export default function DashboardPage() {
                   <div 
                     key={proj.id}
                     onClick={() => router.push(`/dashboard/projects/${proj.id}`)}
-                    className="group relative aspect-[4/3] rounded-xl overflow-hidden cursor-pointer border border-outline-variant/30"
+                    className="group relative aspect-[4/3] rounded-2xl overflow-hidden cursor-pointer border border-outline-variant/20 hover:-translate-y-1 hover:shadow-xl transition-all duration-300"
                   >
+                    {/* Photo count pill top left */}
+                    <div className="absolute top-4 left-4 z-10 px-2.5 py-1 rounded-full text-[9px] font-bold bg-black/60 text-white backdrop-blur-md border border-white/10 flex items-center gap-1 uppercase tracking-wider">
+                      <span className="material-symbols-outlined text-[10px]">image</span>
+                      {proj.pf_photos ? proj.pf_photos.length : 0} {proj.pf_photos && proj.pf_photos.length > 1 ? 'photos' : 'photo'}
+                    </div>
+
+                    {/* Category badge top right */}
+                    <div className="absolute top-4 right-4 z-10 px-2.5 py-1 rounded-full text-[9px] font-bold bg-primary/20 text-primary backdrop-blur-md border border-primary/30 uppercase tracking-widest font-mono">
+                      {proj.project_type || 'Shoot'}
+                    </div>
+
                     <img
                       alt={proj.name}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                       src={
                         (proj.pf_photos && proj.pf_photos.length > 0)
                           ? [...proj.pf_photos].sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0].original_url
                           : (idx === 0 
-                              ? "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=400&auto=format&fit=crop&q=80"
-                              : "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&auto=format&fit=crop&q=80")
+                              ? "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=600&auto=format&fit=crop&q=80"
+                              : "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=600&auto=format&fit=crop&q=80")
                       }
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-transparent"></div>
                     <div className="absolute bottom-0 left-0 p-6 w-full">
-                      <div className="text-[10px] text-primary font-bold uppercase tracking-widest mb-1">
-                        {proj.project_type || 'Shoot'}
-                      </div>
-                      <h3 className="font-headline-md text-lg text-white font-bold">{proj.name}</h3>
-                      <p className="text-xs text-on-surface-variant mt-1 truncate">
-                        {t.clientLabel} : {proj.pf_clients?.name || t.notAssigned}
+                      <h3 className="font-headline-md text-lg text-white font-extrabold">{proj.name}</h3>
+                      <p className="text-xs text-on-surface-variant/80 mt-1 truncate">
+                        {t.clientLabel} : <span className="text-white/95 font-semibold">{proj.pf_clients?.name || t.notAssigned}</span>
                       </p>
                     </div>
                   </div>
@@ -702,32 +761,38 @@ export default function DashboardPage() {
 
             {/* AI Active Tasks */}
             {projects.length > 0 && (
-              <div className="glass-panel p-6 rounded-xl border border-outline-variant/30">
-                <div className="flex items-center gap-3 mb-6">
-                  <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
-                    auto_awesome
-                  </span>
-                  <h2 className="font-headline-md text-lg font-bold">{t.aiActiveTasks}</h2>
+              <div className="glass-panel p-6 rounded-2xl border border-outline-variant/30 relative overflow-hidden">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2.5">
+                    <span className="material-symbols-outlined text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
+                      auto_awesome
+                    </span>
+                    <h2 className="font-headline-md text-base font-bold text-white">{t.aiActiveTasks}</h2>
+                  </div>
+                  <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-primary/10 text-primary border border-primary/20">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-ping"></span>
+                    <span>ACTIVE</span>
+                  </div>
                 </div>
-                <div className="space-y-6">
+                <div className="space-y-5">
                   <div className="space-y-2">
-                    <div className="flex justify-between items-center text-xs font-semibold">
-                      <span className="text-on-surface">{t.hdrEnhancement} - {projects[0]?.name}</span>
-                      <span className="text-primary font-bold">{Math.floor(aiProgress)}%</span>
+                    <div className="flex justify-between items-center text-xs font-bold">
+                      <span className="text-on-surface-variant">{t.hdrEnhancement} - <span className="text-white">{projects[0]?.name}</span></span>
+                      <span className="text-primary">{Math.floor(aiProgress)}%</span>
                     </div>
-                    <div className="relative h-1 bg-surface-container-highest rounded-full overflow-hidden">
+                    <div className="relative h-2 bg-surface-container-highest rounded-full overflow-hidden border border-outline-variant/10">
                       <div 
-                        className="absolute inset-y-0 left-0 bg-primary electric-glow transition-all duration-300"
+                        className="absolute inset-y-0 left-0 bg-primary electric-glow rounded-full transition-all duration-300"
                         style={{ width: `${aiProgress}%` }}
                       ></div>
                     </div>
                   </div>
-                  <div className="space-y-2 opacity-60">
-                    <div className="flex justify-between items-center text-xs font-semibold">
-                      <span className="text-on-surface">{t.noiseReduction}</span>
-                      <span className="text-on-surface-variant font-medium">{t.waitingState}</span>
+                  <div className="space-y-2 opacity-50">
+                    <div className="flex justify-between items-center text-xs font-bold">
+                      <span className="text-on-surface-variant">{t.noiseReduction}</span>
+                      <span className="text-on-surface-variant/80 font-medium">{t.waitingState}</span>
                     </div>
-                    <div className="h-1 bg-surface-container-highest rounded-full"></div>
+                    <div className="h-2 bg-surface-container-highest rounded-full border border-outline-variant/10"></div>
                   </div>
                 </div>
               </div>
@@ -738,34 +803,36 @@ export default function DashboardPage() {
           <div className="space-y-10">
             <section>
               <div className="flex justify-between items-center mb-6">
-                <h2 className="font-headline-md text-lg font-bold">{t.recentClients}</h2>
+                <h2 className="font-headline-md text-base font-extrabold text-white">{t.recentClients}</h2>
                 <Link 
                   href="/dashboard/clients"
-                  className="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors text-xl"
+                  className="w-8 h-8 rounded-full bg-surface-container hover:bg-primary/15 border border-outline-variant hover:border-primary text-on-surface-variant hover:text-primary flex items-center justify-center transition-all cursor-pointer"
+                  title={lang === 'fr' ? 'Ajouter un client' : 'Add a client'}
                 >
-                  add_circle
+                  <span className="material-symbols-outlined text-lg">add</span>
                 </Link>
               </div>
 
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-3">
                 {clients.length === 0 ? (
-                  <div className="glass-panel p-6 rounded-xl text-center text-xs text-on-surface-variant border border-dashed border-outline-variant/50">
+                  <div className="glass-panel p-6 rounded-2xl text-center text-xs text-on-surface-variant border border-dashed border-outline-variant/50">
                     {t.noClientsSaved}
                   </div>
                 ) : (
                   clients.slice(0, 3).map((cl) => (
                     <div 
                       key={cl.id}
-                      className="glass-panel p-4 rounded-xl flex items-center gap-4 hover:bg-surface-container transition-all cursor-pointer border border-transparent hover:border-primary/20"
+                      onClick={() => router.push(`/dashboard/clients`)}
+                      className="glass-panel p-3.5 rounded-2xl flex items-center gap-3.5 hover:bg-surface-container-high border border-transparent hover:border-primary/20 hover:-translate-x-0.5 transition-all duration-300 cursor-pointer"
                     >
-                      <div className="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center font-bold text-primary text-sm uppercase">
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/10 to-primary-container/20 text-primary border border-primary/20 flex items-center justify-center font-bold text-xs uppercase shadow-sm">
                         {cl.name.substring(0, 2)}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-body-md text-xs font-bold truncate text-on-surface">{cl.name}</div>
-                        <div className="text-[10px] text-on-surface-variant truncate">{cl.email || cl.phone}</div>
+                        <div className="font-body-md text-xs font-extrabold truncate text-white">{cl.name}</div>
+                        <div className="text-[10px] text-on-surface-variant/80 truncate mt-0.5">{cl.email || cl.phone}</div>
                       </div>
-                      <span className="material-symbols-outlined text-on-surface-variant text-sm">chevron_right</span>
+                      <span className="material-symbols-outlined text-on-surface-variant/60 text-sm">chevron_right</span>
                     </div>
                   ))
                 )}
@@ -773,23 +840,25 @@ export default function DashboardPage() {
             </section>
 
             {/* Next Shooting Calendar */}
-            <section className="glass-panel p-6 rounded-xl border border-outline-variant/30">
-              <h3 className="font-label-md text-[10px] uppercase tracking-wider mb-6 text-on-surface-variant font-bold">
+            <section className="glass-panel p-6 rounded-2xl border border-outline-variant/30 relative overflow-hidden group hover:border-primary/20 transition-all duration-300">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full blur-2xl pointer-events-none"></div>
+              <h3 className="font-label-md text-[10px] uppercase tracking-wider mb-6 text-on-surface-variant font-extrabold">
                 {t.nextShootTitle}
               </h3>
               {nextShoot ? (
                 <div className="flex items-start gap-4">
-                  <div className="flex flex-col items-center justify-center bg-primary text-on-primary p-2.5 rounded-lg min-w-[50px]">
-                    <span className="text-xl font-bold leading-none">{nextShootDay}</span>
-                    <span className="text-[9px] font-bold uppercase mt-1">{nextShootMonth}</span>
+                  <div className="flex flex-col items-center justify-center bg-gradient-to-br from-primary to-primary-container text-white p-2.5 rounded-2xl min-w-[54px] min-h-[54px] border border-primary/30 shadow-md">
+                    <span className="text-lg font-black leading-none">{nextShootDay}</span>
+                    <span className="text-[8px] font-extrabold uppercase tracking-wider mt-1">{nextShootMonth}</span>
                   </div>
-                  <div>
-                    <div className="font-body-md text-sm font-bold text-on-surface">{nextShoot.name}</div>
-                    <div className="text-xs text-on-surface-variant mt-1">
-                      {nextShoot.project_type || 'Shoot'} • {t.clientLabel} : {nextShoot.pf_clients?.name || t.notAssigned}
+                  <div className="min-w-0">
+                    <div className="font-body-md text-sm font-extrabold text-white truncate max-w-[170px]">{nextShoot.name}</div>
+                    <div className="text-xs text-on-surface-variant/90 mt-1 font-medium flex items-center gap-1.5">
+                      <span className="px-1.5 py-0.5 rounded bg-surface-container-highest text-[9px] font-bold uppercase tracking-wider text-primary border border-outline-variant/30">{nextShoot.project_type || 'Shoot'}</span>
+                      <span className="truncate">• {t.clientLabel} : <span className="text-white/80 font-bold">{nextShoot.pf_clients?.name || t.notAssigned}</span></span>
                     </div>
                     {nextShoot.description && (
-                      <div className="text-[10px] text-on-surface-variant mt-1.5 truncate max-w-[180px] italic">
+                      <div className="text-[10px] text-on-surface-variant/80 mt-2 truncate max-w-[200px] italic border-l-2 border-primary/30 pl-2">
                         "{nextShoot.description}"
                       </div>
                     )}
