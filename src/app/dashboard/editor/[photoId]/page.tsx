@@ -2184,109 +2184,108 @@ export default function EditorPage() {
       {/* Left Tool Palette (Adobe style) */}
       <aside 
         id="left-tool-palette"
-        className="fixed left-0 top-16 bottom-0 w-[80px] flex flex-col items-center py-6 bg-surface-container-low border-r border-outline-variant z-40 overflow-y-auto"
-        style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}
+        className="fixed bottom-0 left-0 right-0 h-16 md:h-auto md:w-[80px] md:top-16 md:bottom-0 md:left-0 md:right-auto flex md:flex-col flex-row items-center justify-around md:justify-start md:py-6 bg-surface-container-low border-t md:border-t-0 md:border-r border-outline-variant z-40"
       >
-        <div className="flex flex-col gap-6 pb-12">
+        <div className="flex md:flex-col flex-row gap-4 md:gap-6 px-4 md:px-0 items-center w-full justify-around md:justify-center">
           <button 
             onClick={() => setActiveTool('select')}
             onFocus={() => setActiveTool('select')}
-            className={`p-3 rounded-xl transition-all hover:scale-105 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
+            className={`p-2.5 md:p-3 rounded-xl transition-all hover:scale-105 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
               activeTool === 'select' ? 'text-on-primary-container bg-primary-container' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
             }`} 
             title={t.toolSelect}
           >
-            <span className="material-symbols-outlined">near_me</span>
+            <span className="material-symbols-outlined text-base md:text-[24px]">near_me</span>
           </button>
           <button 
             onClick={() => setActiveTool('crop')}
             onFocus={() => setActiveTool('crop')}
-            className={`p-3 rounded-xl transition-all hover:scale-105 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
+            className={`p-2.5 md:p-3 rounded-xl transition-all hover:scale-105 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
               activeTool === 'crop' ? 'text-on-primary-container bg-primary-container' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
             }`} 
             title={t.toolCrop}
           >
-            <span className="material-symbols-outlined">crop_free</span>
+            <span className="material-symbols-outlined text-base md:text-[24px]">crop_free</span>
           </button>
           <button 
             onClick={() => setActiveTool('brush')}
             onFocus={() => setActiveTool('brush')}
-            className={`p-3 rounded-xl transition-all hover:scale-105 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
+            className={`p-2.5 md:p-3 rounded-xl transition-all hover:scale-105 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
               activeTool === 'brush' ? 'text-on-primary-container bg-primary-container' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
             }`} 
             title={t.toolBrush}
           >
-            <span className="material-symbols-outlined">brush</span>
+            <span className="material-symbols-outlined text-base md:text-[24px]">brush</span>
           </button>
           <button 
             onClick={() => setActiveTool('heal')}
             onFocus={() => setActiveTool('heal')}
-            className={`p-3 rounded-xl transition-all hover:scale-105 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
+            className={`p-2.5 md:p-3 rounded-xl transition-all hover:scale-105 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
               activeTool === 'heal' ? 'text-on-primary-container bg-primary-container' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
             }`} 
             title={t.toolHeal}
           >
-            <span className="material-symbols-outlined">healing</span>
+            <span className="material-symbols-outlined text-base md:text-[24px]">healing</span>
           </button>
-          <div className="h-[1px] w-8 bg-outline-variant my-2"></div>
+          <div className="hidden md:block h-[1px] w-8 bg-outline-variant my-2"></div>
           <button 
             onClick={() => setActiveTool('color')}
             onFocus={() => setActiveTool('color')}
-            className={`p-3 rounded-xl transition-all hover:scale-105 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
+            className={`p-2.5 md:p-3 rounded-xl transition-all hover:scale-105 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
               activeTool === 'color' ? 'text-on-primary-container bg-primary-container' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
             }`} 
             title={t.toolColor}
           >
-            <span className="material-symbols-outlined">colorize</span>
+            <span className="material-symbols-outlined text-base md:text-[24px]">colorize</span>
           </button>
           <button 
             onClick={() => setActiveTool('text')}
             onFocus={() => setActiveTool('text')}
-            className={`p-3 rounded-xl transition-all hover:scale-105 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
+            className={`p-2.5 md:p-3 rounded-xl transition-all hover:scale-105 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
               activeTool === 'text' ? 'text-on-primary-container bg-primary-container' : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
             }`} 
             title={t.toolText}
           >
-            <span className="material-symbols-outlined">title</span>
+            <span className="material-symbols-outlined text-base md:text-[24px]">title</span>
           </button>
           <button 
             onClick={() => handleRotateImage('left')}
-            className="p-3 rounded-xl transition-all hover:scale-105 cursor-pointer text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+            className="p-2.5 md:p-3 rounded-xl transition-all hover:scale-105 cursor-pointer text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
             title={lang === 'fr' ? "Pivoter à gauche (-90°)" : "Rotate Left (-90°)"}
           >
-            <span className="material-symbols-outlined">rotate_left</span>
+            <span className="material-symbols-outlined text-base md:text-[24px]">rotate_left</span>
           </button>
           <button 
             onClick={() => handleRotateImage('right')}
-            className="p-3 rounded-xl transition-all hover:scale-105 cursor-pointer text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
+            className="p-2.5 md:p-3 rounded-xl transition-all hover:scale-105 cursor-pointer text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none"
             title={lang === 'fr' ? "Pivoter à droite (90°)" : "Rotate Right (90°)"}
           >
-            <span className="material-symbols-outlined">rotate_right</span>
+            <span className="material-symbols-outlined text-base md:text-[24px]">rotate_right</span>
           </button>
-          <div className="h-[1px] w-8 bg-outline-variant my-2"></div>
+          <div className="hidden md:block h-[1px] w-8 bg-outline-variant my-2"></div>
           <button 
             onClick={handleUndo}
             disabled={historyStack.length === 0}
-            className={`p-3 rounded-xl transition-all hover:scale-105 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
+            className={`p-2.5 md:p-3 rounded-xl transition-all hover:scale-105 cursor-pointer focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none ${
               historyStack.length === 0 
                 ? 'opacity-40 cursor-not-allowed text-on-surface-variant' 
                 : 'text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface'
             }`} 
             title={lang === 'fr' ? "Annuler l'action (Ctrl+Z)" : "Undo Action (Ctrl+Z)"}
           >
-            <span className="material-symbols-outlined">undo</span>
+            <span className="material-symbols-outlined text-base md:text-[24px]">undo</span>
           </button>
         </div>
       </aside>
 
       {/* Main Studio Viewport (The Stage) */}
-      <main className="fixed inset-0 pt-16 pb-16 pl-[80px] pr-[320px] bg-background flex items-center justify-center overflow-hidden">
-        <div className="relative w-full h-full flex items-center justify-center p-8 bg-surface-container-lowest">
+      <main className="fixed inset-0 pt-16 pb-[292px] md:pb-16 pl-0 md:pl-[80px] pr-0 md:pr-[320px] bg-background flex items-center justify-center overflow-hidden">
+        <div className="relative w-full h-full flex items-center justify-center p-4 md:p-8 bg-surface-container-lowest">
           {/* AI Loader Progress Line */}
           {isProcessing && (
             <div className="absolute top-8 left-1/2 -translate-x-1/2 w-3/4 h-[2px] flow-progress z-30 opacity-80" id="ai-loader"></div>
           )}
-
+ 
           {/* Close Editor button & Importer RAW */}
           <div className="absolute top-4 left-4 z-40 flex items-center gap-2">
             <Link 
@@ -2296,13 +2295,13 @@ export default function EditorPage() {
             >
               <span className="material-symbols-outlined text-sm">close</span>
             </Link>
-
+ 
             <button
               onClick={() => fileInputRef.current?.click()}
               className="bg-primary-container text-on-primary-container hover:brightness-110 hover:scale-[1.02] active:scale-[0.98] font-bold text-[11px] px-3.5 py-1.5 rounded-full border border-primary/20 flex items-center gap-1.5 shadow-lg transition-all cursor-pointer"
             >
               <span className="material-symbols-outlined text-sm">upload_file</span>
-              <span>{lang === 'fr' ? 'Importer RAW / Image' : 'Import RAW / Image'}</span>
+              <span className="hidden sm:inline">{lang === 'fr' ? 'Importer RAW / Image' : 'Import RAW / Image'}</span>
             </button>
             <input 
               ref={fileInputRef}
@@ -2312,7 +2311,7 @@ export default function EditorPage() {
               className="hidden"
             />
           </div>
-
+ 
           {/* Image Display Container */}
           <div className="relative max-w-full max-h-full shadow-2xl overflow-hidden group">
             {activeTool === 'crop' && cropBox && (
@@ -2339,7 +2338,7 @@ export default function EditorPage() {
                 </button>
               </div>
             )}
-
+ 
             {(() => {
               const scaleVal = zoomLevel === '100' ? 1.5 : zoomLevel === '200' ? 2.5 : 1.0;
               const canPan = zoomLevel !== 'fit' && (activeTool === 'select' || isSpacePressed);
@@ -2408,13 +2407,13 @@ export default function EditorPage() {
                     ref={imageRef}
                     src={processedUrl}
                     alt="Edited Portrait Preview"
-                    className="block select-none max-h-[80vh] w-auto origin-center"
+                    className="block select-none max-h-[50vh] md:max-h-[80vh] w-auto origin-center"
                     style={{
                       transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${scaleVal})`,
                       transition: isPanning ? 'none' : 'transform 150ms ease-out',
                     }}
                   />
-
+ 
                   {/* Interactive Overlay Canvas */}
                   {activeTool !== 'select' && imgNaturalSize.width > 0 && (
                     <canvas
@@ -2434,7 +2433,7 @@ export default function EditorPage() {
                       }}
                     />
                   )}
-
+ 
                   {/* Before image overlay (Grayscale/Unedited) */}
                   {isComparing && activeTool === 'select' && (
                     <div 
@@ -2444,7 +2443,7 @@ export default function EditorPage() {
                       <img
                         src={originalUrl}
                         alt="Original Raw Before"
-                        className="max-h-[80vh] w-auto max-w-none origin-center"
+                        className="max-h-[50vh] md:max-h-[80vh] w-auto max-w-none origin-center"
                         style={{ 
                           width: compareContainerRef.current?.getBoundingClientRect().width,
                           transform: `translate(${panOffset.x}px, ${panOffset.y}px) scale(${scaleVal})`,
@@ -2456,7 +2455,7 @@ export default function EditorPage() {
                 </div>
               );
             })()}
-
+ 
               {/* Before/After Labels */}
               {activeTool === 'select' && (
                 <>
@@ -2489,8 +2488,8 @@ export default function EditorPage() {
       </main>
 
       {/* Right Sidebar - Adjustment Panels */}
-      <aside className="fixed right-0 top-16 bottom-0 w-[320px] glass-panel border-l border-outline-variant z-40 flex flex-col">
-        <div className="p-panel-padding flex-1 overflow-y-auto space-y-8 custom-scrollbar">
+      <aside className="fixed bottom-28 left-0 right-0 h-[180px] md:h-auto md:w-[320px] md:top-16 md:bottom-0 md:left-auto md:right-0 glass-panel border-t md:border-t-0 md:border-l border-outline-variant z-20 flex flex-col">
+        <div className="p-4 md:p-panel-padding flex-1 overflow-y-auto space-y-6 md:space-y-8 custom-scrollbar">
           {activeTool === 'crop' ? (
             /* Crop Settings Panel */
             <section className="space-y-6">
@@ -3634,12 +3633,12 @@ export default function EditorPage() {
       </aside>
 
       {/* Bottom control bar (Fitting & Comparing) */}
-      <footer className="fixed bottom-0 left-[80px] right-[320px] h-16 glass-panel border-t border-outline-variant flex items-center justify-between px-gutter z-50">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1 bg-surface-container-high rounded-full p-1 border border-outline-variant/30">
+      <footer className="fixed bottom-16 left-0 right-0 h-12 md:h-16 md:bottom-0 md:left-[80px] md:right-[320px] glass-panel border-t border-outline-variant flex items-center justify-between px-4 md:px-gutter z-30">
+        <div className="flex items-center gap-2 md:gap-4">
+          <div className="flex items-center gap-1 bg-surface-container-high rounded-full p-0.5 md:p-1 border border-outline-variant/30">
             <button 
               onClick={() => setZoomLevel('fit')}
-              className={`px-4 py-1 rounded-full text-[11px] font-bold cursor-pointer transition-colors ${
+              className={`px-2 md:px-4 py-1 rounded-full text-[10px] md:text-[11px] font-bold cursor-pointer transition-colors ${
                 zoomLevel === 'fit' ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:text-on-surface'
               }`}
             >
@@ -3647,7 +3646,7 @@ export default function EditorPage() {
             </button>
             <button 
               onClick={() => setZoomLevel('100')}
-              className={`px-4 py-1 rounded-full text-[11px] font-bold cursor-pointer transition-colors ${
+              className={`px-2 md:px-4 py-1 rounded-full text-[10px] md:text-[11px] font-bold cursor-pointer transition-colors ${
                 zoomLevel === '100' ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:text-on-surface'
               }`}
             >
@@ -3655,28 +3654,28 @@ export default function EditorPage() {
             </button>
             <button 
               onClick={() => setZoomLevel('200')}
-              className={`px-4 py-1 rounded-full text-[11px] font-bold cursor-pointer transition-colors ${
+              className={`px-2 md:px-4 py-1 rounded-full text-[10px] md:text-[11px] font-bold cursor-pointer transition-colors ${
                 zoomLevel === '200' ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:text-on-surface'
               }`}
             >
               200%
             </button>
           </div>
-          <div className="h-6 w-[1px] bg-outline-variant"></div>
+          <div className="hidden md:block h-6 w-[1px] bg-outline-variant"></div>
           <button 
             onClick={() => setIsComparing(!isComparing)}
-            className={`flex items-center gap-2 px-4 py-1.5 rounded-lg border transition-all cursor-pointer ${
+            className={`flex items-center gap-1.5 px-3 py-1 md:py-1.5 rounded-lg border transition-all cursor-pointer ${
               isComparing 
                 ? 'bg-primary-container text-on-primary-container border-primary' 
                 : 'bg-surface-container-highest border-outline-variant text-on-surface hover:border-primary/50'
             }`}
           >
-            <span className="material-symbols-outlined text-sm">compare</span>
-            <span className="text-[11px] font-bold">{t.zoomCompare}</span>
+            <span className="material-symbols-outlined text-xs md:text-sm">compare</span>
+            <span className="text-[10px] md:text-[11px] font-bold">{t.zoomCompare}</span>
           </button>
         </div>
 
-        <div className="flex items-center gap-6 text-xs font-semibold text-on-surface-variant">
+        <div className="hidden sm:flex items-center gap-6 text-xs font-semibold text-on-surface-variant">
           <div className="flex items-center gap-2">
             <span className="text-[11px] text-outline">{t.zoomAiQuality}</span>
             <span className="text-[11px] font-bold text-primary">{t.zoomAiQualityVal}</span>
