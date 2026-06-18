@@ -42,7 +42,7 @@ const translations = {
     saveErrorMsg: 'Une erreur est survenue lors de la mise à jour des paramètres.',
     // Plan Modal
     upgradeConfirmTitle: 'Devenir Membre Pro ?',
-    upgradeConfirmMsg: 'Voulez-vous activer la simulation de l\'abonnement immédiat à la formule Pro (12 500 FCFA/mois) ? Vous bénéficierez de 50 Go de stockage et de filigranes personnalisés.',
+    upgradeConfirmMsg: 'Voulez-vous activer la simulation de l\'abonnement immédiat à la formule Pro (6 900 FCFA/mois ou 58 800 FCFA/an) ? Vous bénéficierez de 50 Go de stockage et de filigranes personnalisés.',
     upgradeSuccessTitle: 'Forfait Pro Activé !',
     upgradeSuccessMsg: 'Votre compte a été surclassé avec succès.',
     downgradeConfirmTitle: 'Repasser au Forfait Gratuit ?',
@@ -94,7 +94,7 @@ const translations = {
     saveErrorMsg: 'An error occurred while updating the settings.',
     // Plan Modal
     upgradeConfirmTitle: 'Upgrade to Pro?',
-    upgradeConfirmMsg: 'Would you like to simulate an immediate upgrade to the Pro plan (12,500 FCFA/month)? You will unlock 50 GB of storage and custom watermarks.',
+    upgradeConfirmMsg: 'Would you like to simulate an immediate upgrade to the Pro plan (6,900 FCFA/month or 58,800 FCFA/year)? You will unlock 50 GB of storage and custom watermarks.',
     upgradeSuccessTitle: 'Pro Plan Activated!',
     upgradeSuccessMsg: 'Your account has been upgraded successfully.',
     downgradeConfirmTitle: 'Downgrade to Free?',

@@ -24,8 +24,11 @@ const translations = {
     proWatermark: 'Filigrane 100% personnalisé',
     proCameraRaw: 'Outils de retouche avancés Camera Raw',
     proSharing: 'Partage WhatsApp instantané',
-    proPrice: '12 500 FCFA (env. 19 € / $20)',
-    proPeriod: '/ mois',
+    proPriceMonthly: '6 900 FCFA',
+    proPriceYearly: '58 800 FCFA',
+    proPeriodMonthly: '/ mois',
+    proPeriodYearly: '/ an',
+    proSaveText: 'Économisez 24 000 FCFA (29% de réduction !)',
     proCTAActive: 'Votre forfait actuel',
     proCTASelect: 'Choisir le Plan Pro',
     paymentModalTitle: 'Mode de paiement',
@@ -56,8 +59,11 @@ const translations = {
     proWatermark: '100% Custom watermark',
     proCameraRaw: 'Advanced Camera Raw editing tools',
     proSharing: 'Instant WhatsApp sharing',
-    proPrice: '12,500 FCFA (approx. $20 / 19 €)',
-    proPeriod: '/ month',
+    proPriceMonthly: '6,900 FCFA',
+    proPriceYearly: '58,800 FCFA',
+    proPeriodMonthly: '/ month',
+    proPeriodYearly: '/ year',
+    proSaveText: 'Save 24,000 FCFA (29% off !)',
     proCTAActive: 'Your current plan',
     proCTASelect: 'Choose Pro Plan',
     paymentModalTitle: 'Payment Method',
@@ -86,6 +92,7 @@ function SelectPlanContent() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showDowngradeModal, setShowDowngradeModal] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -154,10 +161,11 @@ function SelectPlanContent() {
   const triggerPaymentRoute = (method: 'wave' | 'card') => {
     if (!user) return;
     setShowPaymentModal(false);
+    const amount = billingCycle === 'monthly' ? '6900' : '58800';
     if (method === 'wave') {
-      router.push(`/checkout/wave?amount=12500&email=${encodeURIComponent(user.email || '')}`);
+      router.push(`/checkout/wave?amount=${amount}&email=${encodeURIComponent(user.email || '')}`);
     } else {
-      router.push(`/checkout/card?amount=12500&email=${encodeURIComponent(user.email || '')}`);
+      router.push(`/checkout/card?amount=${amount}&email=${encodeURIComponent(user.email || '')}`);
     }
   };
 
@@ -177,9 +185,40 @@ function SelectPlanContent() {
       <Navigation />
 
       <main className="max-w-4xl mx-auto pt-24 px-6 pb-24 w-full flex-grow flex flex-col justify-center">
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <h1 className="font-display-lg text-3xl md:text-4xl font-black text-white mb-3">{t.title}</h1>
           <p className="text-on-surface-variant text-xs md:text-sm max-w-lg mx-auto">{t.subtitle}</p>
+        </div>
+
+        {/* Billing Cycle Toggle */}
+        <div className="flex justify-center mb-10 select-none">
+          <div className="bg-surface-container-high/60 border border-outline-variant/30 p-1.5 rounded-2xl flex gap-1 backdrop-blur-md">
+            <button
+              type="button"
+              onClick={() => setBillingCycle('monthly')}
+              className={`px-5 py-2 rounded-xl text-xs font-bold transition-all duration-300 cursor-pointer ${
+                billingCycle === 'monthly'
+                  ? 'bg-primary text-on-primary shadow-lg shadow-primary/10'
+                  : 'text-on-surface-variant hover:text-white hover:bg-surface-container-highest/20'
+              }`}
+            >
+              {lang === 'fr' ? 'Facturé Mensuellement' : 'Monthly Billing'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setBillingCycle('yearly')}
+              className={`px-5 py-2 rounded-xl text-xs font-bold transition-all duration-300 flex items-center gap-2 cursor-pointer ${
+                billingCycle === 'yearly'
+                  ? 'bg-primary text-on-primary shadow-lg shadow-primary/10'
+                  : 'text-on-surface-variant hover:text-white hover:bg-surface-container-highest/20'
+              }`}
+            >
+              <span>{lang === 'fr' ? 'Facturé Annuellement' : 'Yearly Billing'}</span>
+              <span className="text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.5 rounded font-black uppercase tracking-wider">
+                -29%
+              </span>
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch max-w-3xl mx-auto w-full">
@@ -252,9 +291,21 @@ function SelectPlanContent() {
                 <p className="text-on-surface-variant text-xs leading-relaxed">{t.proDesc}</p>
               </div>
 
-              <div className="flex items-baseline gap-1.5 py-4 border-y border-outline-variant/15">
-                <span className="text-3xl font-black text-primary">{t.proPrice}</span>
-                <span className="text-xs text-on-surface-variant">{t.proPeriod}</span>
+              <div className="flex flex-col py-4 border-y border-outline-variant/15 gap-1">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-3xl font-black text-primary">
+                    {billingCycle === 'monthly' ? t.proPriceMonthly : t.proPriceYearly}
+                  </span>
+                  <span className="text-xs text-on-surface-variant">
+                    {billingCycle === 'monthly' ? t.proPeriodMonthly : t.proPeriodYearly}
+                  </span>
+                </div>
+                {billingCycle === 'yearly' && (
+                  <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1 mt-0.5">
+                    <span className="material-symbols-outlined text-[12px] font-bold">savings</span>
+                    {t.proSaveText}
+                  </span>
+                )}
               </div>
 
               <ul className="space-y-3.5 text-xs text-zinc-300">

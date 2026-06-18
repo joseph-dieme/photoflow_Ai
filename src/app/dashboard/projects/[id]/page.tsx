@@ -1605,7 +1605,9 @@ export default function ProjectDetailPage() {
               {lang === 'fr' ? 'Passer à la version PRO' : 'Upgrade to PRO version'}
             </button>
             <p className="text-[10px] text-on-surface-variant/70 mt-3 font-semibold">
-              {lang === 'fr' ? 'Seulement 12 500 FCFA / mois • Annulable à tout moment' : 'Only 12,500 FCFA / month • Cancel anytime'}
+              {lang === 'fr' 
+                ? 'Seulement 6 900 FCFA / mois ou 58 800 FCFA / an (Économisez 24 000 FCFA)' 
+                : 'Only 6,900 FCFA / month or 58,800 FCFA / year (Save 24,000 FCFA)'}
             </p>
           </div>
         </div>

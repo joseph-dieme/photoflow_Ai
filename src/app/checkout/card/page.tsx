@@ -68,7 +68,7 @@ function CardCheckoutForm() {
   const searchParams = useSearchParams();
   
   // URL Query Params
-  const amount = searchParams.get('amount') || '12500';
+  const amount = searchParams.get('amount') || '6900';
   const email = searchParams.get('email') || '';
 
   // Language switcher state
@@ -166,7 +166,7 @@ function CardCheckoutForm() {
   };
 
   // Recalculate amounts
-  const baseAmount = parseInt(amount) || 12500;
+  const baseAmount = parseInt(amount) || 6900;
   const discountAmount = promoApplied
     ? promoDiscountType === 'percent'
       ? Math.round((baseAmount * promoDiscountValue) / 100)

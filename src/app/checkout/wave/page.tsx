@@ -74,7 +74,7 @@ function WaveCheckoutForm() {
   const searchParams = useSearchParams();
   
   // URL Query Params
-  const amount = searchParams.get('amount') || '12500';
+  const amount = searchParams.get('amount') || '6900';
   const invoiceId = searchParams.get('invoiceId') || '';
   const email = searchParams.get('email') || '';
 
@@ -248,7 +248,7 @@ function WaveCheckoutForm() {
     }, 1000);
   };
 
-  const baseAmount = parseInt(amount) || 12500;
+  const baseAmount = parseInt(amount) || 6900;
   const discountAmount = promoApplied
     ? promoDiscountType === 'percent'
       ? Math.round((baseAmount * promoDiscountValue) / 100)

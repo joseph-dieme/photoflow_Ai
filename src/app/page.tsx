@@ -34,15 +34,20 @@ const translations = {
     pricingSubtitle: "Commencez gratuitement, passez Pro au fur et à mesure que votre activité grandit.",
     pricingFreeTitle: "Formule Gratuite",
     pricingFreePrice: "0",
-    pricingPeriod: "FCFA / mois (ou env. 19€)",
+    pricingPeriod: "FCFA / mois",
     pricingFreeFeature1: "7 photos retouchées / mois",
     pricingFreeFeature2: "1 galerie client active",
     pricingFreeFeature3: "Maximum 7 photos par galerie",
     pricingFreeFeature4: "Filigrane PhotoFlow AI sur les exports",
     pricingFreeCTA: "Choisir la formule Free",
-    pricingProTitle: "Formule Pro",
-    pricingProPrice: "12 500",
-    pricingRecommended: "Recommandé",
+    pricingProTitle: "Formule Pro Mensuelle",
+    pricingProPrice: "6 900",
+    pricingRecommended: "Populaire",
+    pricingProYearlyTitle: "Formule Pro Annuelle",
+    pricingProYearlyPrice: "58 800",
+    pricingProYearlyPeriod: "FCFA / an",
+    pricingProYearlySave: "Économisez 24 000 FCFA !",
+    pricingRecommendedYearly: "Recommandé (-29%)",
     pricingProFeature1: "Photos retouchées illimitées",
     pricingProFeature2: "Galeries clients illimitées",
     pricingProFeature3: "Téléchargements illimités en HD",
@@ -84,15 +89,20 @@ const translations = {
     pricingSubtitle: "Start for free, upgrade to Pro as your business grows.",
     pricingFreeTitle: "Free Plan",
     pricingFreePrice: "0",
-    pricingPeriod: "FCFA / month (or approx. $20)",
+    pricingPeriod: "FCFA / month",
     pricingFreeFeature1: "7 retouched photos / month",
     pricingFreeFeature2: "1 active client gallery",
     pricingFreeFeature3: "Maximum 7 photos per gallery",
     pricingFreeFeature4: "PhotoFlow AI watermark on exports",
     pricingFreeCTA: "Choose Free Plan",
-    pricingProTitle: "Pro Plan",
-    pricingProPrice: "12,500",
-    pricingRecommended: "Recommended",
+    pricingProTitle: "Pro Monthly Plan",
+    pricingProPrice: "6,900",
+    pricingRecommended: "Popular",
+    pricingProYearlyTitle: "Pro Yearly Plan",
+    pricingProYearlyPrice: "58,800",
+    pricingProYearlyPeriod: "FCFA / year",
+    pricingProYearlySave: "Save 24,000 FCFA !",
+    pricingRecommendedYearly: "Best Value (-29%)",
     pricingProFeature1: "Unlimited retouched photos",
     pricingProFeature2: "Unlimited client galleries",
     pricingProFeature3: "Unlimited high-res downloads",
@@ -783,10 +793,10 @@ export default function LandingPage() {
               <p className="font-body-lg text-on-surface-variant text-base">{t.pricingSubtitle}</p>
             </div>
 
-            <div className="flex flex-col md:flex-row gap-8 items-stretch justify-center max-w-4xl mx-auto">
+            <div className="flex flex-col lg:flex-row gap-8 items-stretch justify-center max-w-5xl mx-auto">
               {/* Free Plan */}
-              <div className="flex-1 glass-panel p-10 md:p-12 rounded-3xl flex flex-col border border-outline-variant/40 bg-surface-container-low/40 backdrop-blur-xl">
-                <h3 className="font-headline-md text-2xl font-bold mb-2 text-white">{t.pricingFreeTitle}</h3>
+              <div className="flex-1 glass-panel p-8 rounded-3xl flex flex-col border border-outline-variant/40 bg-surface-container-low/40 backdrop-blur-xl">
+                <h3 className="font-headline-md text-xl font-bold mb-2 text-white">{t.pricingFreeTitle}</h3>
                 <div className="flex items-baseline gap-1 mb-8">
                   <span className="font-price-lg text-4xl font-extrabold text-white">{t.pricingFreePrice}</span>
                   <span className="font-label-md text-xs font-semibold text-on-surface-variant">{t.pricingPeriod}</span>
@@ -811,21 +821,67 @@ export default function LandingPage() {
                 </ul>
                 <Link
                   href={user ? "/checkout/select-plan" : "/signup"}
-                  className="w-full text-center border border-outline-variant/80 py-3.5 rounded-xl hover:bg-surface-container-high hover:text-white transition-all font-semibold text-sm cursor-pointer"
+                  className="w-full text-center border border-outline-variant/80 py-3 rounded-xl hover:bg-surface-container-high hover:text-white transition-all font-semibold text-sm cursor-pointer"
                 >
                   {t.pricingFreeCTA}
                 </Link>
               </div>
 
-              {/* Pro Plan */}
-              <div className="flex-1 glass-panel p-10 md:p-12 rounded-3xl border-2 border-primary/80 bg-gradient-to-b from-primary/10 to-indigo-500/5 flex flex-col relative scale-[1.03] shadow-2xl backdrop-blur-xl">
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-on-secondary px-5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-lg">
+              {/* Pro Monthly Plan */}
+              <div className="flex-1 glass-panel p-8 rounded-3xl border border-outline-variant/40 bg-surface-container-low/40 backdrop-blur-xl flex flex-col relative shadow-xl">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-surface-container-highest border border-outline-variant/50 text-on-surface px-4 py-1 rounded-full text-[9px] font-bold uppercase tracking-wider">
                   {t.pricingRecommended}
                 </div>
-                <h3 className="font-headline-md text-2xl font-bold mb-2 text-white">{t.pricingProTitle}</h3>
+                <h3 className="font-headline-md text-xl font-bold mb-2 text-white">{t.pricingProTitle}</h3>
                 <div className="flex items-baseline gap-1 mb-8">
-                  <span className="font-price-lg text-4xl font-extrabold text-primary">{t.pricingProPrice}</span>
+                  <span className="font-price-lg text-4xl font-extrabold text-white">{t.pricingProPrice}</span>
                   <span className="font-label-md text-xs font-semibold text-on-surface-variant">{t.pricingPeriod}</span>
+                </div>
+                <ul className="space-y-4 mb-10 flex-grow text-zinc-300">
+                  <li className="flex items-center gap-3 text-sm">
+                    <span className="material-symbols-outlined text-primary text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                    <span>{t.pricingProFeature1}</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-sm">
+                    <span className="material-symbols-outlined text-primary text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                    <span>{t.pricingProFeature2}</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-sm">
+                    <span className="material-symbols-outlined text-primary text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                    <span>{t.pricingProFeature3}</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-sm">
+                    <span className="material-symbols-outlined text-primary text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                    <span>{t.pricingProFeature4}</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-sm">
+                    <span className="material-symbols-outlined text-primary text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                    <span>{t.pricingProFeature5}</span>
+                  </li>
+                </ul>
+                <Link
+                  href={user ? "/checkout/select-plan?plan=pro" : "/signup?plan=pro"}
+                  className="w-full text-center border border-outline-variant/80 py-3 rounded-xl hover:bg-surface-container-high hover:text-white transition-all font-semibold text-sm cursor-pointer"
+                >
+                  {t.pricingProCTA}
+                </Link>
+              </div>
+
+              {/* Pro Yearly Plan */}
+              <div className="flex-1 glass-panel p-8 rounded-3xl border-2 border-primary/80 bg-gradient-to-b from-primary/10 to-indigo-500/5 flex flex-col relative scale-[1.02] shadow-2xl backdrop-blur-xl">
+                <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-primary text-on-secondary px-5 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-lg animate-pulse">
+                  {t.pricingRecommendedYearly}
+                </div>
+                <h3 className="font-headline-md text-xl font-bold mb-2 text-white">{t.pricingProYearlyTitle}</h3>
+                <div className="flex flex-col gap-1 mb-8">
+                  <div className="flex items-baseline gap-1">
+                    <span className="font-price-lg text-4xl font-extrabold text-primary">{t.pricingProYearlyPrice}</span>
+                    <span className="font-label-md text-xs font-semibold text-on-surface-variant">{t.pricingProYearlyPeriod}</span>
+                  </div>
+                  <span className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
+                    <span className="material-symbols-outlined text-[12px] font-bold">savings</span>
+                    {t.pricingProYearlySave}
+                  </span>
                 </div>
                 <ul className="space-y-4 mb-10 flex-grow text-zinc-200">
                   <li className="flex items-center gap-3 text-sm font-semibold">
