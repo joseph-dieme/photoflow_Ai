@@ -325,6 +325,12 @@ function SelectPlanContent() {
                   <span className="material-symbols-outlined text-primary text-sm mt-0.5">check_circle</span>
                   <span>{t.proSharing}</span>
                 </li>
+                {billingCycle === 'yearly' && (
+                  <li className="flex items-start gap-2.5 text-emerald-400 font-semibold animate-in slide-in-from-left duration-300">
+                    <span className="material-symbols-outlined text-emerald-400 text-sm mt-0.5" style={{ fontVariationSettings: "'FILL' 1" }}>support_agent</span>
+                    <span>{lang === 'fr' ? 'Support client prioritaire 24/7' : 'Priority 24/7 customer support'}</span>
+                  </li>
+                )}
               </ul>
             </div>
 

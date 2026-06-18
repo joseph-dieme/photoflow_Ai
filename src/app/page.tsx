@@ -53,6 +53,7 @@ const translations = {
     pricingProFeature3: "Téléchargements illimités en HD",
     pricingProFeature4: "Sans filigrane & Branding personnalisé",
     pricingProFeature5: "IA avancée & Export ZIP automatique",
+    pricingProFeature6: "Support client prioritaire 24/7",
     pricingProCTA: "S'abonner maintenant Pro",
     faqTitle: "Questions Fréquentes",
     footerText: "© 2026 PhotoFlow AI. Conçu pour les créateurs du monde entier.",
@@ -108,6 +109,7 @@ const translations = {
     pricingProFeature3: "Unlimited high-res downloads",
     pricingProFeature4: "No watermark & custom branding",
     pricingProFeature5: "Advanced AI & automatic ZIP export",
+    pricingProFeature6: "Priority 24/7 customer support",
     pricingProCTA: "Subscribe to Pro Now",
     faqTitle: "Frequently Asked Questions",
     footerText: "© 2026 PhotoFlow AI. Designed for creators worldwide.",
@@ -903,6 +905,10 @@ export default function LandingPage() {
                   <li className="flex items-center gap-3 text-sm font-semibold">
                     <span className="material-symbols-outlined text-primary text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
                     <span>{t.pricingProFeature5}</span>
+                  </li>
+                  <li className="flex items-center gap-3 text-sm font-semibold text-emerald-400">
+                    <span className="material-symbols-outlined text-emerald-400 text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>support_agent</span>
+                    <span>{t.pricingProFeature6}</span>
                   </li>
                 </ul>
                 <Link
